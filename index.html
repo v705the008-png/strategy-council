@@ -279,6 +279,9 @@ function saveCurrent(){
 // ─── RENDER ───
 function S(u){
   Object.assign(st,u);
+  if(!Array.isArray(st.brushupLog))st.brushupLog=[];
+  if(!Array.isArray(st.files))st.files=[];
+  if(!Array.isArray(st.history))st.history=[];
   if(st.step!=="projects"&&st.step!=="apikey"&&st.step!=="input")saveCurrent();
   render();
 }
@@ -368,6 +371,10 @@ function openProject(id){
   if(proj.state){
     Object.assign(st,proj.state);
     st.busy=false;st.loading=null;st.error="";
+    // 配列フィールドを確実に初期化
+    if(!Array.isArray(st.brushupLog))st.brushupLog=[];
+    if(!Array.isArray(st.files))st.files=[];
+    if(!Array.isArray(st.history))st.history=[];
   }
   render();
   // 進行中なら続きから自動再開
@@ -381,8 +388,10 @@ async function resumeFromSave(){
   // バイナリファイルが[binary]になっている場合は警告
   const binaryFiles=st.files.filter(f=>f.data==="[binary]");
   if(binaryFiles.length>0){
-    S({error:`添付ファイル（${binaryFiles.map(f=>f.name).join("・")}）は再開時に再添付が必要です。ファイルを再添付してからリトライしてください。`});
-    return;
+    // [binary]ファイルをリストから除去して続行（テキストのみで再開）
+    st.files=st.files.filter(f=>f.data!=="[binary]");
+    S({needsReattach:binaryFiles.map(f=>f.name)});
+    // ファイルなしで続行
   }
   const h=st.history||[];
   const phasesDone=h.length;
@@ -443,6 +452,13 @@ function renderMeeting(){
   }).join("");
   const sdot=st.error?`<div class="sdot err"></div>`:`<div class="sdot ${st.busy?"running":"ok"}"></div>`;
   const statusBox=`<div class="status-bar">${sdot}<span style="font-size:12px">${st.error||st.statusMsg||"自動実行中..."}</span></div>`;
+  const reattachBanner=st.needsReattach?.length>0?`
+    <div style="background:#1A1300;border:1px solid #3A2E00;border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:12px;color:var(--amber)">資料を再添付してください：${st.needsReattach.join("・")}</span>
+      <button onclick="document.getElementById('reattachInput').click()" style="padding:5px 12px;border-radius:6px;border:1px solid var(--amber);background:none;color:var(--amber);font-size:11px;font-family:inherit;cursor:pointer;white-space:nowrap">ファイルを選択</button>
+    </div>
+    <input type="file" id="reattachInput" multiple accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.txt,.md,.csv,.json" style="display:none" onchange="reattachFiles(this)"/>
+  `:"";
   const hist=st.history.map((r,ri)=>`<div class="hist-block"><div class="hist-div">── ${PHASES[ri]} · ${PHASE_JA[ri]} ──</div>${Object.entries(r.answers).map(([id,a])=>`<div class="agent-card" style="border-color:var(--border2)"><div class="agent-head"><span style="color:var(--text3);display:flex">${ICONS[AGENTS[id].icon]}</span><span class="agent-name" style="color:var(--accent)">${AGENTS[id].name}</span></div><div class="agent-ans">${a}</div></div>`).join("")}</div>`).join("");
   let cur="";
   if(!st.questions&&st.busy){cur=`<div class="spinner">質問を生成中...</div>`;}
@@ -458,7 +474,7 @@ function renderMeeting(){
     }).join("");
     cur=`<div class="fade"><div class="phase-lbl">${PHASES[st.phaseIdx]}</div><div class="phase-ttl">${PHASE_JA[st.phaseIdx]}</div>${st.ctx?`<div class="ctx-box">${st.ctx}</div>`:""}${cards}</div>`;
   }
-  return`<div><div class="prog-wrap"><div class="prog-stages">${progDots}</div></div>${statusBox}${hist}${cur}${st.error?`<div class="err">${st.error}<br><button class="retry-btn" onclick="retryFromError()">リトライ</button></div>`:""}</div>`;
+  return`<div><div class="prog-wrap"><div class="prog-stages">${progDots}</div></div>${statusBox}${reattachBanner}${hist}${cur}${st.error?`<div class="err">${st.error}<br><button class="retry-btn" onclick="retryFromError()">リトライ</button></div>`:""}</div>`;
 }
 
 // ── MANAGER ──
@@ -496,7 +512,7 @@ function renderManager(){
         ${m.verdict?`<div class="mgr-verdict">${m.verdict}</div>`:""}
         ${m.feedback&&!approved?`<div class="mgr-feedback">${m.feedback}</div>`:""}
         ${st.busy && !st.brushupProgress?.active ? `<div style="font-size:12px;color:var(--text3);padding:6px 0;animation:blink 1.5s infinite">${st.statusMsg||"マネージャーが審査中..."}</div>` : statusMsg}
-        ${(()=>{return st.brushupLog && st.brushupLog.length > 0 ? renderBrushupProgress() : "";})()}
+        ${(()=>{return (st.brushupLog&&Array.isArray(st.brushupLog)&&st.brushupLog.length>0)?renderBrushupProgress():"";})()}
       </div>
     </div>
     ${st.error?`<div class="err">${st.error}<br><button class="retry-btn" onclick="retryBrushup()">リトライ</button></div>`:""}
@@ -504,7 +520,7 @@ function renderManager(){
 }
 
 function renderBrushupProgress(){
-  if(!st.brushupLog||st.brushupLog.length===0)return"";
+  if(!st.brushupLog||!Array.isArray(st.brushupLog)||st.brushupLog.length===0)return"";
   const rounds=st.brushupLog.map(round=>{
     const cards=Object.keys(AGENTS).map(id=>{
       const entry=round.agents[id];
@@ -807,6 +823,23 @@ async function generateFinalAuto(history,mgrResult){
   }catch(e){if(e.message==="__CANCELLED__")return;S({error:e.message,busy:false,statusMsg:""});}
 }
 
+async function reattachFiles(input){
+  const raw=Array.from(input.files);
+  const processed=await Promise.all(raw.map(pf));
+  // 既存ファイルと重複しないよう追加
+  const existing=st.files.map(f=>f.name);
+  const newFiles=processed.filter(f=>!existing.includes(f.name));
+  st.files=[...st.files,...newFiles];
+  // 再添付リストから削除
+  const reattached=processed.map(f=>f.name);
+  const remaining=(st.needsReattach||[]).filter(n=>!reattached.includes(n));
+  S({needsReattach:remaining.length>0?remaining:null});
+  input.value="";
+  // 全て再添付完了したら自動再開
+  if(remaining.length===0){
+    setTimeout(()=>resumeFromSave(),500);
+  }
+}
 async function retryFromError(){
   S({error:""});
   await resumeFromSave();
@@ -815,7 +848,7 @@ async function retryBrushup(){if(!st.mgrState)return;S({error:""});await brushup
 function buildHistText(hist){return hist.map((r,i)=>`[Phase ${i+1}: ${PHASE_JA[i]}]\n`+Object.entries(r.answers).map(([id,a])=>`${AGENTS[id].name}: ${a}`).join("\n")).join("\n\n");}
 
 function confirmReset(){if(confirm("このプロジェクトをリセットしますか？")){cancelled=true;setTimeout(()=>{cancelled=false;resetCurrent();},100);}}
-function resetCurrent(){st={...st,step:"input",phaseIdx:0,questions:null,ctx:"",answers:{},loading:null,history:[],mgrState:null,loopCount:0,summary:null,error:"",busy:false,statusMsg:"",brushupProgress:null,brushupLog:[]};render();}
+function resetCurrent(){st={...st,step:"input",phaseIdx:0,questions:null,ctx:"",answers:{},loading:null,history:[],mgrState:null,loopCount:0,summary:null,error:"",busy:false,statusMsg:"",brushupProgress:null,brushupLog:[],needsReattach:null};render();}
 
 // ── INIT ──
 (function(){
