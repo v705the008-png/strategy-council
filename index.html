@@ -378,6 +378,12 @@ function openProject(id){
 
 async function resumeFromSave(){
   cancelled=false;
+  // バイナリファイルが[binary]になっている場合は警告
+  const binaryFiles=st.files.filter(f=>f.data==="[binary]");
+  if(binaryFiles.length>0){
+    S({error:`添付ファイル（${binaryFiles.map(f=>f.name).join("・")}）は再開時に再添付が必要です。ファイルを再添付してからリトライしてください。`});
+    return;
+  }
   const h=st.history||[];
   const phasesDone=h.length;
   if(st.step==="manager"){
