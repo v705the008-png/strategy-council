@@ -229,10 +229,10 @@ const ICONS={
   globe:      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
 };
 const ROLES={
-  marketer:"あなたはシニアマーケターです。市場分析、ターゲット設定、顧客獲得戦略、ブランドポジショニング、KPI設計の専門家です。添付資料がある場合はその内容も踏まえて、データドリブンな視点で200字以内で端的に答えてください。",
-  designer:"あなたはUX/ブランドデザイナーです。ユーザー体験設計、ビジュアルアイデンティティの専門家です。添付資料がある場合はその内容も踏まえて、感情的訴求と使いやすさの視点で200字以内で端的に答えてください。",
-  consultant:"あなたはMcKinsey出身の経営コンサルタントです。事業戦略、競合分析、P&L管理の専門家です。添付資料がある場合はその内容も踏まえて、MECE思考と構造化フレームワークで200字以内で端的に答えてください。",
-  researcher:"あなたはUXリサーチャーです。定性・定量調査、ペルソナ構築の専門家です。添付資料がある場合はその内容も踏まえて、ユーザーの潜在ニーズの視点で200字以内で端的に答えてください。",
+  marketer:"あなたはシニアマーケターです。市場分析、ターゲット設定、顧客獲得戦略、ブランドポジショニング、KPI設計の専門家です。添付資料がある場合はその内容も踏まえて、データドリブンな視点で100字以内で端的に答えてください。",
+  designer:"あなたはUX/ブランドデザイナーです。ユーザー体験設計、ビジュアルアイデンティティの専門家です。添付資料がある場合はその内容も踏まえて、感情的訴求と使いやすさの視点で100字以内で端的に答えてください。",
+  consultant:"あなたはMcKinsey出身の経営コンサルタントです。事業戦略、競合分析、P&L管理の専門家です。添付資料がある場合はその内容も踏まえて、MECE思考と構造化フレームワークで100字以内で端的に答えてください。",
+  researcher:"あなたはUXリサーチャーです。定性・定量調査、ペルソナ構築の専門家です。添付資料がある場合はその内容も踏まえて、ユーザーの潜在ニーズの視点で100字以内で端的に答えてください。",
 };
 const PHASES=["課題定義","市場分析","戦略立案","実行計画"];
 const PHASE_JA=["課題・ゴール定義","市場・ユーザー分析","戦略立案","実行計画・KPI"];
@@ -421,7 +421,7 @@ function renderMeeting(){
     const cards=Object.keys(AGENTS).map(id=>{
       const a=st.answers[id],isL=st.loading===id,q=st.questions[id]||"";
       return`<div class="agent-card" style="border-color:${a?AGENTS[id].color+"30":"var(--border)"}">
-        <div class="agent-head"><span>${AGENTS[id].emoji}</span><span class="agent-name" style="color:${AGENTS[id].color}">${AGENTS[id].name}</span>
+        <div class="agent-head"><span style="color:var(--text3);display:flex;align-items:center">${ICONS[AGENTS[id].icon]||""}</span><span class="agent-name" style="color:var(--accent)">${AGENTS[id].name}</span>
         <span style="margin-left:auto;font-size:10px;color:${a?"var(--green)":isL?"var(--accent)":"var(--text3)"}">${a?"✓ 完了":isL?"考え中...":"待機中..."}</span>
         </div>${q?`<div class="agent-q">${q}</div>`:""}
         ${a?`<div class="agent-ans">${a}</div>`:isL?`<div class="dots"><div class="dot b1" style="background:${AGENTS[id].color}"></div><div class="dot b2" style="background:${AGENTS[id].color}"></div><div class="dot b3" style="background:${AGENTS[id].color}"></div></div>`:""}
@@ -657,17 +657,28 @@ async function api(system,msg,retryCount=0){
   const content=[];
   for(const f of st.files){if(f.type==="pdf")content.push({type:"document",source:{type:"base64",media_type:"application/pdf",data:f.data}});else if(f.type==="image")content.push({type:"image",source:{type:"base64",media_type:f.mimeType,data:f.data}});else content.push({type:"text",text:`[Attached: ${f.name}]\n${f.data}`});}
   content.push({type:"text",text:msg});
-  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1200,system,messages:[{role:"user",content}]})});
+  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:800,system,messages:[{role:"user",content}]})});
   const data=await res.json();
-  if(data.error)throw new Error(data.error.message);
-  if(!res.ok && res.status === 0) throw new Error("ネットワークエラー：ローカルファイルからは動作しません。Vercelにアップロードしてブラウザで開いてください。");
+  if(data.error){
+    if(res.status===429||data.error.message?.includes("rate limit")||data.error.message?.includes("token")){
+      if(retryCount>=5)throw new Error("レート制限：5回リトライしました。しばらく待ってから再試行してください。");
+      for(let i=70;i>0;i--){
+        checkCancelled();
+        S({statusMsg:`レート制限中 — ${i}秒後に自動リトライ (${retryCount+1}/5回目)`});
+        await new Promise(r=>setTimeout(r,1000));
+      }
+      return api(system,msg,retryCount+1);
+    }
+    throw new Error(data.error.message);
+  }
+  if(!res.ok&&res.status===0)throw new Error("ネットワークエラー：Vercelから開いてください。");
   return data.content[0].text;
 }
 function pj(t){try{return JSON.parse(t.replace(/```json\n?|```/g,"").trim());}catch{return null;}}
 
 // ── PROMPTS ──
 const FAC=`あなたはマーケティング戦略会議の司会AIです。参加エージェント：マーケター、デザイナー、経営コンサルタント、ユーザーリサーチャー。添付資料がある場合はその内容を踏まえて進行してください。JSONのみ出力：{"phase":"フェーズ名","questions":{"marketer":"質問","designer":"質問","consultant":"質問","researcher":"質問"},"context":"このフェーズで明らかにしたいこと50字以内"}`;
-const MGR=`あなたはシニアマーケティングマネージャーです。エージェントチームが策定したマーケティング戦略を、企画内容に最適な仮想空間（Instagram、Web、店舗、SNS広告など）でシミュレーションテストし、以下5項目を各20点満点で採点してください。採点基準：市場性（市場規模・需要の確かさ）、実現性（予算・リソースの実現可能性）、独自性（競合との差別化度）、戦略整合性（各施策の一貫性）、ユーザー共感度（ターゲットへの刺さり度）。JSONのみ出力：{"env":"テストした仮想空間名","scores":{"市場性":数値,"実現性":数値,"独自性":数値,"戦略整合性":数値,"ユーザー共感度":数値},"verdict":"総評100字以内","feedback":"95点未満の場合の具体的改善指示100字（95点以上は空文字）","revisedStrategy":"改善した戦略の要点200字（95点未満の場合、95点以上は空文字）"}`;
+const MGR=`あなたはシニアマーケティングマネージャーです。エージェントチームが策定したマーケティング戦略を、企画内容に最適な仮想空間（Instagram、Web、店舗、SNS広告など）でシミュレーションテストし、以下5項目を各20点満点で採点してください。採点基準：市場性（市場規模・需要の確かさ）、実現性（予算・リソースの実現可能性）、独自性（競合との差別化度）、戦略整合性（各施策の一貫性）、ユーザー共感度（ターゲットへの刺さり度）。JSONのみ出力：{"env":"テストした仮想空間名","scores":{"市場性":数値,"実現性":数値,"独自性":数値,"戦略整合性":数値,"ユーザー共感度":数値},"verdict":"総評50字以内","feedback":"改善指示50字（95点以上は空文字）","revisedStrategy":"改善戦略100字（95点未満のみ）"}`;
 const SUM=`マーケティング戦略会議の統括AIとして、マネージャーに承認された最終戦略をまとめてください。JSONのみ：{"title":"戦略タイトル","keyInsight":"最重要インサイト50字","strategy":"統合戦略200字","actions":["アクション1","アクション2","アクション3"],"kpi":["KPI1","KPI2","KPI3"],"nextStep":"今すぐやること50字"}`;
 
 // ── FULL AUTO FLOW ──
@@ -744,7 +755,7 @@ async function brushupAuto(histText,prevMgr,newCount,history){
       checkCancelled();
       const ans=await api(
         ROLES[id]+"\n改善フィードバックを受けて戦略をブラッシュアップしてください。",
-        `企画：${st.project}\nManager改善指示：${feedback}\n前回の議論：${histText}\n200字以内で改善案を述べてください。`
+        `企画：${st.project}\nManager改善指示：${feedback}\n前回の議論：${histText}\n100字以内で改善案を述べてください。`
       );
       revised[id]=ans;
       // done state - fully immutable update
@@ -767,7 +778,18 @@ async function generateFinalAuto(history,mgrResult){
   }catch(e){if(e.message==="__CANCELLED__")return;S({error:e.message,busy:false,statusMsg:""});}
 }
 
-async function retryFromError(){S({error:""});await startMeeting();}
+async function retryFromError(){
+  S({error:""});
+  const h=st.history||[];
+  if(h.length===0){await startMeeting();return;}
+  const next=h.length;
+  if(st.step==="manager"||next>=PHASE_JA.length){
+    S({step:"manager",busy:true,statusMsg:"マネージャーへ再提出中..."});
+    await runManagerAuto(buildHistText(h),"",st.loopCount,h);
+  } else {
+    await runPhase(next,h);
+  }
+}
 async function retryBrushup(){if(!st.mgrState)return;S({error:""});await brushupAuto(buildHistText(st.history),st.mgrState,st.loopCount+1,st.history);}
 function buildHistText(hist){return hist.map((r,i)=>`[Phase ${i+1}: ${PHASE_JA[i]}]\n`+Object.entries(r.answers).map(([id,a])=>`${AGENTS[id].name}: ${a}`).join("\n")).join("\n\n");}
 
