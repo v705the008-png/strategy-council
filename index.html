@@ -344,6 +344,7 @@ function renderProjects(){
         </div>
         ${statusEl}
         <div class="proj-actions" onclick="event.stopPropagation()">
+          ${p.status!=="done"?`<button class="proj-btn" onclick="openProject('${p.id}')">再開</button>`:""}
           <button class="proj-btn del" onclick="removeProject('${p.id}')">削除</button>
         </div>
       </div>`;
@@ -369,6 +370,28 @@ function openProject(id){
     st.busy=false;st.loading=null;st.error="";
   }
   render();
+  // 進行中なら続きから自動再開
+  if(st.step==="meeting"||st.step==="manager"){
+    setTimeout(()=>resumeFromSave(),300);
+  }
+}
+
+async function resumeFromSave(){
+  cancelled=false;
+  const h=st.history||[];
+  const phasesDone=h.length;
+  if(st.step==="manager"){
+    // マネージャー審査フェーズで止まっていた
+    S({busy:true,statusMsg:"マネージャー審査を再開中..."});
+    const histText=buildHistText(h);
+    const loopCount=st.loopCount||0;
+    await runManagerAuto(histText,"",loopCount,h);
+  } else if(phasesDone<PHASE_JA.length){
+    // 会議フェーズで止まっていた
+    const nextPhase=phasesDone;
+    S({busy:true,statusMsg:`Phase ${nextPhase+1}から再開中...`,answers:{},questions:null});
+    await runPhase(nextPhase,h);
+  }
 }
 function newProject(){
   currentProjId="proj_"+Date.now();
@@ -780,15 +803,7 @@ async function generateFinalAuto(history,mgrResult){
 
 async function retryFromError(){
   S({error:""});
-  const h=st.history||[];
-  if(h.length===0){await startMeeting();return;}
-  const next=h.length;
-  if(st.step==="manager"||next>=PHASE_JA.length){
-    S({step:"manager",busy:true,statusMsg:"マネージャーへ再提出中..."});
-    await runManagerAuto(buildHistText(h),"",st.loopCount,h);
-  } else {
-    await runPhase(next,h);
-  }
+  await resumeFromSave();
 }
 async function retryBrushup(){if(!st.mgrState)return;S({error:""});await brushupAuto(buildHistText(st.history),st.mgrState,st.loopCount+1,st.history);}
 function buildHistText(hist){return hist.map((r,i)=>`[Phase ${i+1}: ${PHASE_JA[i]}]\n`+Object.entries(r.answers).map(([id,a])=>`${AGENTS[id].name}: ${a}`).join("\n")).join("\n\n");}
