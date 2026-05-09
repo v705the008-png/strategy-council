@@ -212,10 +212,10 @@ textarea::placeholder,input::placeholder{color:var(--text3)}
 <script>
 // ─── CONFIG ───
 const AGENTS={
-  marketer:{name:"MARKETER",emoji:"",color:"#F0A429"},
-  designer:{name:"DESIGNER",emoji:"",color:"#9B7FFF"},
-  consultant:{name:"CONSULTANT",emoji:"",color:"#2DD4B0"},
-  researcher:{name:"RESEARCHER",emoji:"",color:"#5BA4FF"},
+  marketer:{name:"MARKETER",icon:"marketer",color:"#5B7FFF"},
+  designer:{name:"DESIGNER",icon:"designer",color:"#5B7FFF"},
+  consultant:{name:"CONSULTANT",icon:"consultant",color:"#5B7FFF"},
+  researcher:{name:"RESEARCHER",icon:"researcher",color:"#5B7FFF"},
 };
 const ICONS={
   marketer:   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
@@ -246,7 +246,7 @@ let cancelled=false;
 let currentProjId=null;
 function checkCancelled(){ if(cancelled) throw new Error("__CANCELLED__"); }
 let st={
-  step:"projects",project:"",ファイル:[],
+  step:"projects",project:"",files:[],
   phaseIdx:0,questions:null,ctx:"",answers:{},loading:null,
   history:[],mgrState:null,loopCount:0,
   summary:null,error:"",busy:false,statusMsg:"",
@@ -268,7 +268,7 @@ function saveCurrent(){
   if(!currentProjId)return;
   const projs=getProjects();
   const proj=projs.find(p=>p.id===currentProjId)||{id:currentProjId};
-  proj.state={...st,ファイル:st.ファイル.map(f=>f.type==="text"?f:{...f,data:"[binary]"})};
+  proj.state={...st,files:st.files.map(f=>f.type==="text"?f:{...f,data:"[binary]"})};
   proj.name=st.project?.slice(0,40)||"無題";
   proj.updatedAt=new Date().toISOString();
   proj.status=st.step==="summary"?"done":"running";
@@ -372,7 +372,7 @@ function openProject(id){
 }
 function newProject(){
   currentProjId="proj_"+Date.now();
-  st={step:"input",project:"",ファイル:[],phaseIdx:0,questions:null,ctx:"",answers:{},loading:null,history:[],mgrState:null,loopCount:0,summary:null,error:"",busy:false,statusMsg:""};
+  st={step:"input",project:"",files:[],phaseIdx:0,questions:null,ctx:"",answers:{},loading:null,history:[],mgrState:null,loopCount:0,summary:null,error:"",busy:false,statusMsg:""};
   render();
 }
 function removeProject(id){
@@ -381,7 +381,7 @@ function removeProject(id){
 
 // ── INPUT ──
 function renderInput(){
-  const flist=st.ファイル.map((f,i)=>`<div class="fi-item"><span style="font-size:13px">${f.type==="pdf"?"PDF":f.type==="image"?"IMG":"TXT"}</span><span class="fi-name">${f.name}</span><span class="fi-badge">${f.type.toUpperCase()}</span><button class="fi-rm" onclick="removeFile(${i})">×</button></div>`).join("");
+  const flist=st.files.map((f,i)=>`<div class="fi-item"><span style="font-size:13px">${f.type==="pdf"?"PDF":f.type==="image"?"IMG":"TXT"}</span><span class="fi-name">${f.name}</span><span class="fi-badge">${f.type.toUpperCase()}</span><button class="fi-rm" onclick="removeFile(${i})">×</button></div>`).join("");
   return`<div class="fade">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px">
       <button onclick="S({step:'projects'})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;line-height:1">‹</button>
@@ -400,7 +400,7 @@ function renderInput(){
     ${flist}
     ${st.error?`<div class="err">${st.error}</div>`:""}
     <button class="btn btn-accent" id="startBtn" onclick="startMeeting()" ${st.project.trim()?"":"disabled"}>
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Start MTG ${st.ファイル.length>0?`· ${st.ファイル.length} file${st.ファイル.length>1?"s":""}件添付`:""}
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Start MTG ${st.files.length>0?`· ${st.files.length} file${st.files.length>1?"s":""}件添付`:""}
     </button>
     <button class="btn btn-ghost" onclick="S({step:'projects'})">← 戻る</button>
   </div>`;
@@ -484,11 +484,11 @@ function renderBrushupProgress(){
       const isThinking=entry.status==="thinking";
       return`<div style="border:1px solid ${isDone?AGENTS[id].color+"50":isThinking?AGENTS[id].color+"80":"var(--border)"};border-radius:8px;padding:9px 12px;margin-bottom:6px;background:var(--bg);transition:all .3s">
         <div style="display:flex;align-items:center;gap:7px;margin-bottom:${isDone?"5px":"0"}">
-          <span style="font-size:12px">${AGENTS[id].emoji}</span>
-          <span style="font-size:11px;font-weight:700;color:${AGENTS[id].color}">${AGENTS[id].name}</span>
+          <span style="color:var(--text3);display:flex">${ICONS[AGENTS[id].icon]}</span>
+          <span style="font-size:11px;font-weight:700;color:var(--accent)">${AGENTS[id].name}</span>
           <span style="margin-left:auto;font-size:10px;color:${isDone?"var(--green)":isThinking?"var(--accent)":"var(--text3)"};font-weight:600">${isDone?"✓ 完了":isThinking?"改善中...":"待機"}</span>
         </div>
-        ${isThinking?`<div style="display:flex;gap:4px;padding:3px 0"><div class="dot b1" style="background:${AGENTS[id].color}"></div><div class="dot b2" style="background:${AGENTS[id].color}"></div><div class="dot b3" style="background:${AGENTS[id].color}"></div></div>`:""}
+        ${isThinking?`<div style="display:flex;gap:4px;padding:3px 0"><div class="dot b1" style="background:var(--accent)"></div><div class="dot b2" style="background:var(--accent)"></div><div class="dot b3" style="background:var(--accent)"></div></div>`:""}
         ${isDone&&entry.ans?`<div style="font-size:12px;color:var(--text2);line-height:1.75;margin-top:2px">${entry.ans}</div>`:""}
       </div>`;
     }).join("");
@@ -525,7 +525,7 @@ function renderSummary(){
       <div class="kv-card"><div class="kv-title" style="color:var(--teal)">KPI</div>${kpis}</div>
     </div>
     ${s.nextStep?`<div class="next-box"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L12 6M12 2C12 2 18 4 20 10C22 16 18 20 12 22C6 20 2 16 4 10C6 4 12 2 12 2Z"/><circle cx="12" cy="13" r="2"/></svg><div><div style="font-size:9px;color:var(--blue);margin-bottom:3px;font-weight:700;letter-spacing:.08em">NEXT ACTION</div><div style="font-size:13px;font-weight:600;color:var(--blue)">${s.nextStep}</div></div></div>`:""}
-    ${st.ファイル.length>0?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:12px"> ${st.ファイル.map(f=>f.name).join("・")}</div>`:""}
+    ${st.files.length>0?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:12px"> ${st.files.map(f=>f.name).join("・")}</div>`:""}
     <button class="btn btn-export" onclick="showExportModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>エクスポート</button>
     <button class="btn btn-ghost" onclick="goProjects()">← プロジェクト一覧へ</button>
   </div>`;
@@ -640,22 +640,22 @@ function bindEvents(){
   const t=document.getElementById("ptxt");
   if(t)t.addEventListener("input",e=>{st.project=e.target.value;const b=document.getElementById("startBtn");if(b)b.disabled=!st.project.trim();});
   const dz=document.getElementById("dropZone");
-  if(dz){dz.addEventListener("dragover",e=>{e.preventDefault();dz.classList.add("drag");});dz.addEventListener("dragleave",()=>dz.classList.remove("drag"));dz.addEventListener("drop",async e=>{e.preventDefault();dz.classList.remove("drag");await addFiles(Array.from(e.dataTransfer.ファイル));});}
+  if(dz){dz.addEventListener("dragover",e=>{e.preventDefault();dz.classList.add("drag");});dz.addEventListener("dragleave",()=>dz.classList.remove("drag"));dz.addEventListener("drop",async e=>{e.preventDefault();dz.classList.remove("drag");await addFiles(Array.from(e.dataTransfer.files));});}
   const fi=document.getElementById("fileInput");
-  if(fi)fi.onchange=async e=>{await addFiles(Array.from(e.target.ファイル));fi.value="";};
+  if(fi)fi.onchange=async e=>{await addFiles(Array.from(e.target.files));fi.value="";};
 }
 
 // ── FILES ──
-async function addFiles(raw){const p=await Promise.all(raw.map(pf));st.ファイル=[...st.ファイル,...p];render();}
+async function addFiles(raw){const p=await Promise.all(raw.map(pf));st.files=[...st.files,...p];render();}
 async function pf(f){const ext=f.name.split(".").pop().toLowerCase();if(f.type==="application/pdf"||ext==="pdf"){const d=await b64(f);return{type:"pdf",name:f.name,data:d,mimeType:"application/pdf"};}else if(f.type.startsWith("image/")){const d=await b64(f);return{type:"image",name:f.name,data:d,mimeType:f.type};}else{const d=await toTxt(f);return{type:"text",name:f.name,data:d};}}
 function b64(f){return new Promise((r,j)=>{const rd=new FileReader();rd.onload=()=>r(rd.result.split(",")[1]);rd.onerror=j;rd.readAsDataURL(f);});}
 function toTxt(f){return new Promise((r,j)=>{const rd=new FileReader();rd.onload=()=>r(rd.result);rd.onerror=j;rd.readAsText(f);});}
-function removeFile(i){st.ファイル=st.ファイル.filter((_,idx)=>idx!==i);render();}
+function removeFile(i){st.files=st.files.filter((_,idx)=>idx!==i);render();}
 
 // ── API ──
-async function api(system,msg){
+async function api(system,msg,retryCount=0){
   const content=[];
-  for(const f of st.ファイル){if(f.type==="pdf")content.push({type:"document",source:{type:"base64",media_type:"application/pdf",data:f.data}});else if(f.type==="image")content.push({type:"image",source:{type:"base64",media_type:f.mimeType,data:f.data}});else content.push({type:"text",text:`[Attached: ${f.name}]\n${f.data}`});}
+  for(const f of st.files){if(f.type==="pdf")content.push({type:"document",source:{type:"base64",media_type:"application/pdf",data:f.data}});else if(f.type==="image")content.push({type:"image",source:{type:"base64",media_type:f.mimeType,data:f.data}});else content.push({type:"text",text:`[Attached: ${f.name}]\n${f.data}`});}
   content.push({type:"text",text:msg});
   const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1200,system,messages:[{role:"user",content}]})});
   const data=await res.json();
