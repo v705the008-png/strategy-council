@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Strategy Council</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080C10;--bg2:#0C1118;--bg3:#141C24;
+  --border:#1A2535;--border2:#243040;
+  --text:#E8EDF2;--text2:#8A9BB0;--text3:#4A5568;
+  --amber:#EF9F27;--purple:#7F77DD;--teal:#1D9E75;
+  --blue:#378ADD;--red:#E24B4A;--green:#34D399;
+}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;min-height:100vh}
+header{border-bottom:1px solid var(--border);padding:13px 22px;display:flex;align-items:center;gap:10px;background:var(--bg2);position:sticky;top:0;z-index:100}
+.logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#EF9F27,#7F77DD);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.htitle{font-size:14px;font-weight:700}
+.hsub{font-size:10px;color:var(--text3);letter-spacing:.1em}
+.hbtns{margin-left:auto;display:flex;gap:8px}
+.hbtn{background:none;border:1px solid var(--border2);color:var(--text3);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit}
+.hbtn:hover{border-color:var(--text3);color:var(--text2)}
+main{max-width:780px;margin:0 auto;padding:24px 16px}
+
+/* API KEY */
+.api-screen{max-width:460px;margin:60px auto;text-align:center}
+.api-screen h2{font-size:20px;font-weight:700;margin-bottom:8px}
+.api-screen p{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:22px}
+.input-wrap{position:relative;margin-bottom:10px}
+.input-wrap input{width:100%;padding:11px 42px 11px 13px;background:var(--bg2);border:1px solid var(--border2);border-radius:9px;color:var(--text);font-size:13px;font-family:inherit;outline:none}
+.input-wrap input:focus{border-color:var(--amber)}
+.eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;font-size:15px}
+.api-note{font-size:11px;color:var(--text3);margin-bottom:18px}
+.api-note a{color:var(--blue);text-decoration:none}
+
+/* INPUT */
+textarea{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:11px 13px;font-size:13px;font-family:inherit;outline:none;resize:vertical;transition:border-color .2s}
+textarea:focus{border-color:var(--amber)}
+textarea::placeholder{color:var(--text3)}
+.lbl{font-size:12px;color:var(--text2);display:block;margin-bottom:5px}
+.drop{border:2px dashed var(--border2);border-radius:9px;padding:16px;text-align:center;cursor:pointer;margin:10px 0;transition:all .2s}
+.drop:hover,.drop.drag{border-color:var(--amber);background:#1A130A}
+.fi{display:flex;align-items:center;gap:8px;padding:7px 11px;border:1px solid var(--border);border-radius:8px;margin-bottom:5px;background:var(--bg2)}
+.fn{font-size:12px;color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fbadge{font-size:10px;padding:2px 7px;border-radius:100px;background:var(--bg3);color:var(--text3)}
+.frm{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:0 3px}
+
+/* BUTTONS */
+.btn{width:100%;padding:12px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;letter-spacing:.04em}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn-amber{background:linear-gradient(135deg,#D97706,#B45309);color:#fff}
+.btn-ghost{background:var(--bg2);border:1px solid var(--border);color:var(--text2);margin-top:8px}
+.btn-green{background:linear-gradient(135deg,#059669,#047857);color:#fff}
+.btn-export{background:var(--bg2);border:1px solid var(--teal);color:var(--teal);margin-top:6px}
+
+/* PROGRESS */
+.prog-wrap{margin-bottom:22px}
+.prog-stages{display:flex;align-items:center;gap:0;margin-bottom:8px}
+.prog-stage{flex:1;text-align:center;position:relative}
+.prog-stage:not(:last-child)::after{content:'';position:absolute;top:10px;right:-50%;width:100%;height:2px;background:var(--border);z-index:0}
+.prog-stage.done:not(:last-child)::after{background:var(--amber)}
+.prog-dot{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);background:var(--bg);margin:0 auto 4px;position:relative;z-index:1;display:flex;align-items:center;justify-content:center;font-size:9px;transition:all .3s}
+.prog-stage.done .prog-dot{background:var(--amber);border-color:var(--amber);color:#fff}
+.prog-stage.active .prog-dot{border-color:var(--amber);background:var(--bg);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 #EF9F2740}50%{box-shadow:0 0 0 6px #EF9F2700}}
+.prog-name{font-size:9px;color:var(--text3);letter-spacing:.05em}
+.prog-stage.done .prog-name,.prog-stage.active .prog-name{color:var(--amber)}
+
+/* STATUS BAR */
+.status-bar{display:flex;align-items:center;gap:8px;padding:9px 13px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;margin-bottom:16px;font-size:12px;color:var(--text2)}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--amber);animation:pulse 1.2s infinite;flex-shrink:0}
+.status-dot.done{background:var(--green);animation:none}
+.status-dot.error{background:var(--red);animation:none}
+
+/* AGENT CARDS */
+.agent-card{border:1px solid var(--border);border-radius:11px;padding:13px 15px;margin-bottom:9px;background:var(--bg2);transition:border-color .3s}
+.agent-head{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.agent-name{font-size:12px;font-weight:700}
+.agent-q{font-size:11px;color:var(--text3);background:var(--bg);padding:5px 9px;border-radius:6px;margin-bottom:7px;line-height:1.6}
+.agent-ans{font-size:13px;color:var(--text2);line-height:1.8}
+.dots{display:flex;gap:4px;padding:5px 0}
+.dot{width:5px;height:5px;border-radius:50%}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+.b1{animation:blink 1.1s infinite}
+.b2{animation:blink 1.1s infinite .18s}
+.b3{animation:blink 1.1s infinite .36s}
+
+/* HISTORY */
+.hist-block{opacity:.3;margin-bottom:20px}
+.hist-div{font-size:10px;color:var(--text3);letter-spacing:.14em;margin-bottom:8px}
+
+/* PHASE HEADER */
+.phase-lbl{font-size:10px;color:var(--amber);letter-spacing:.15em;font-weight:700;margin-bottom:2px}
+.phase-ttl{font-size:15px;font-weight:700;margin-bottom:9px}
+.ctx-box{font-size:12px;color:var(--text3);padding:7px 11px 7px 13px;border-left:2px solid var(--amber);border-radius:0 6px 6px 0;margin-bottom:14px;background:var(--bg2)}
+
+/* MANAGER */
+.mgr-panel{border:1px solid var(--border);border-radius:13px;overflow:hidden;margin-top:14px}
+.mgr-hdr{display:flex;align-items:center;gap:8px;padding:11px 15px;background:var(--bg2);border-bottom:1px solid var(--border)}
+.mgr-body{padding:15px}
+.env-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 10px;border-radius:100px;background:#0D1F33;color:var(--blue);border:1px solid #1E3A5F;margin-bottom:13px}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:11px}
+.score-item{background:var(--bg);border-radius:8px;padding:9px 11px;border:1px solid var(--border)}
+.score-name{font-size:10px;color:var(--text3);margin-bottom:4px}
+.sbar-wrap{height:3px;background:var(--border);border-radius:2px;margin-bottom:4px;overflow:hidden}
+.sbar{height:100%;border-radius:2px;transition:width .7s ease}
+.sval{font-size:12px;font-weight:700}
+.total-box{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-radius:9px;margin-bottom:11px;border:1px solid var(--border)}
+.total-num{font-size:24px;font-weight:800}
+.mgr-verdict{font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:9px}
+.mgr-feedback{font-size:11px;color:var(--text3);background:var(--bg);padding:7px 11px;border-radius:7px;line-height:1.7;border-left:2px solid var(--amber)}
+.loop-badge{margin-left:auto;font-size:10px;padding:2px 8px;border-radius:100px;background:#1A1500;color:var(--amber);border:1px solid #3A2E00}
+
+/* SUMMARY */
+.insight-box{background:#1A130A;border:1px solid #3A2600;border-radius:11px;padding:13px 15px;margin-bottom:11px}
+.strat-box{background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:13px 15px;margin-bottom:11px}
+.kv-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px}
+.kv-card{background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:13px}
+.kv-title{font-size:10px;letter-spacing:.14em;margin-bottom:7px}
+.kv-item{font-size:12px;color:var(--text2);padding:5px 0;border-bottom:1px solid var(--border);display:flex;gap:6px}
+.next-box{background:#0A1A28;border:1px solid #1E3A5F;border-radius:11px;padding:11px 15px;display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.approved-box{background:#071A10;border:1px solid #1A4A2A;border-radius:9px;padding:10px 14px;display:flex;align-items:center;gap:9px;margin-bottom:11px}
+
+.spinner{text-align:center;padding:44px 0;font-size:12px;color:var(--text3);animation:blink 1.5s infinite}
+.err{font-size:12px;color:var(--red);background:#1A0505;border-radius:8px;padding:9px 12px;margin-top:10px;border:1px solid #3A1010}
+@keyframes fadeUp{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+.fade{animation:fadeUp .3s ease}
+
+/* RESUME BANNER */
+.resume-banner{background:#0A1A0A;border:1px solid #1A4A2A;border-radius:11px;padding:14px 16px;margin-bottom:20px;display:flex;align-items:center;gap:12px}
+.resume-info{flex:1}
+.resume-title{font-size:13px;font-weight:700;color:var(--green);margin-bottom:2px}
+.resume-sub{font-size:11px;color:var(--text3)}
+.resume-btns{display:flex;gap:7px}
+.rbtn{padding:6px 13px;border-radius:6px;border:1px solid var(--border2);background:none;font-size:11px;font-family:inherit;cursor:pointer}
+.rbtn-yes{border-color:var(--green);color:var(--green)}
+.rbtn-no{color:var(--text3)}
+
+/* EXPORT MODAL */
+.modal-overlay{position:fixed;inset:0;background:#000000A0;z-index:200;display:flex;align-items:center;justify-content:center}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:24px;max-width:420px;width:90%}
+.modal h3{font-size:15px;font-weight:700;margin-bottom:14px}
+.modal-btns{display:flex;flex-direction:column;gap:8px}
+.mbtn{padding:11px;border-radius:8px;border:1px solid var(--border2);background:var(--bg);color:var(--text2);font-size:13px;font-family:inherit;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px;transition:border-color .15s}
+.mbtn:hover{border-color:var(--amber);color:var(--text)}
+.modal-close{width:100%;padding:9px;border:1px solid var(--border);border-radius:8px;background:none;color:var(--text3);font-size:12px;font-family:inherit;cursor:pointer;margin-top:10px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">⚡</div>
+  <div><div class="htitle">Strategy Council</div><div class="hsub">AI MULTI-AGENT + MANAGER</div></div>
+  <div class="hbtns" id="hbtns" style="display:none">
+    <button class="hbtn" onclick="showExportModal()">📤 エクスポート</button>
+    <button class="hbtn" onclick="confirmReset()">リセット</button>
+  </div>
+</header>
+
+<main id="app"></main>
+<input type="file" id="fileInput" multiple accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.txt,.md,.csv,.json" style="display:none">
+<div id="exportModal" style="display:none"></div>
+
+<script>
+// ─── CONSTANTS ───
+const AGENTS={
+  marketer:{name:"マーケター",emoji:"📊",color:"#EF9F27"},
+  designer:{name:"デザイナー",emoji:"🎨",color:"#7F77DD"},
+  consultant:{name:"経営コンサルタント",emoji:"💼",color:"#1D9E75"},
+  researcher:{name:"リサーチャー",emoji:"🔍",color:"#378ADD"},
+};
+const ROLES={
+  marketer:"あなたはシニアマーケターです。市場分析、ターゲット設定、顧客獲得戦略、ブランドポジショニング、KPI設計の専門家です。添付資料がある場合はその内容も踏まえて、データドリブンな視点で200字以内で端的に答えてください。",
+  designer:"あなたはUX/ブランドデザイナーです。ユーザー体験設計、ビジュアルアイデンティティの専門家です。添付資料がある場合はその内容も踏まえて、感情的訴求と使いやすさの視点で200字以内で端的に答えてください。",
+  consultant:"あなたはMcKinsey出身の経営コンサルタントです。事業戦略、競合分析、P&L管理の専門家です。添付資料がある場合はその内容も踏まえて、MECE思考と構造化フレームワークで200字以内で端的に答えてください。",
+  researcher:"あなたはUXリサーチャーです。定性・定量調査、ペルソナ構築の専門家です。添付資料がある場合はその内容も踏まえて、ユーザーの潜在ニーズの視点で200字以内で端的に答えてください。",
+};
+const PHASES=["課題・ゴールの定義","市場・ユーザー分析","戦略立案","実行計画・KPI設計"];
+const SCORE_ITEMS=["市場性","実現性","独自性","戦略整合性","ユーザー共感度"];
+const SAVE_KEY="strategy_council_v3";
+
+// ─── STATE ───
+let apiKey="";
+let st={
+  step:"apikey",project:"",files:[],
+  phaseIdx:0,questions:null,ctx:"",answers:{},loading:null,
+  history:[],
+  mgrState:null,loopCount:0,
+  summary:null,
+  error:"",busy:false,
+  statusMsg:"",
+  savedAt:null,
+};
+
+// ─── SAVE / LOAD ───
+function saveState(){
+  try{
+    const toSave={...st,files:st.files.map(f=>({...f,data:f.type==="text"?f.data:"[binary]"}))};
+    localStorage.setItem(SAVE_KEY,JSON.stringify({state:toSave,savedAt:new Date().toISOString(),apiKey}));
+  }catch(e){console.warn("Save failed",e);}
+}
+function loadSaved(){
+  try{
+    const raw=localStorage.getItem(SAVE_KEY);
+    if(!raw)return null;
+    return JSON.parse(raw);
+  }catch{return null;}
+}
+function clearSaved(){localStorage.removeItem(SAVE_KEY);}
+
+// ─── RENDER ───
+function S(u){
+  Object.assign(st,u);
+  if(st.step!=="apikey"&&st.step!=="input")saveState();
+  render();
+}
+
+function render(){
+  const hbtns=document.getElementById("hbtns");
+  if(hbtns)hbtns.style.display=(st.step==="meeting"||st.step==="manager"||st.step==="summary")?"flex":"none";
+  const app=document.getElementById("app");
+  if(st.step==="apikey")app.innerHTML=renderApiKey();
+  else if(st.step==="input")app.innerHTML=renderInput();
+  else if(st.step==="meeting")app.innerHTML=renderMeeting();
+  else if(st.step==="manager")app.innerHTML=renderManager();
+  else app.innerHTML=renderSummary();
+  bindEvents();
+}
+
+// ── API KEY ──
+function renderApiKey(){
+  const saved=loadSaved();
+  const savedKey=localStorage.getItem("sc_apikey")||"";
+  const resumeBanner=saved&&saved.state.step!=="apikey"&&saved.state.step!=="input"?`
+    <div class="resume-banner fade">
+      <div style="font-size:20px">💾</div>
+      <div class="resume-info">
+        <div class="resume-title">前回の会議を再開できます</div>
+        <div class="resume-sub">${saved.state.project?.slice(0,40)||""}... · ${new Date(saved.savedAt).toLocaleString("ja-JP")}</div>
+      </div>
+      <div class="resume-btns">
+        <button class="rbtn rbtn-yes" onclick="resumeSession('${saved.apiKey||""}')">再開</button>
+        <button class="rbtn rbtn-no" onclick="clearSaved();render()">破棄</button>
+      </div>
+    </div>`:"";
+  const keyDisplay=savedKey?`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:11px 13px;font-size:12px;color:var(--text3);display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><span>🔑 ${savedKey.slice(0,18)}••••••••••••</span><button onclick="forgetApiKey()" style="background:none;border:none;color:var(--red);font-size:11px;cursor:pointer;font-family:inherit">削除</button></div>`:"";
+  return`<div class="api-screen fade">
+    ${resumeBanner}
+    <div style="font-size:34px;margin-bottom:14px">⚡</div>
+    <h2>APIキーを入力</h2>
+    <p>Anthropic APIキーを入力すると<br>AIマルチエージェント会議が始まります。<br>キーはこのブラウザ内にのみ保存されます。</p>
+    ${keyDisplay}
+    <div class="input-wrap">
+      <input type="password" id="apiKeyInput" placeholder="${savedKey?"変更する場合のみ入力":"sk-ant-api03-..."}" value=""/>
+      <button class="eye" onclick="toggleEye()">👁</button>
+    </div>
+    <p class="api-note">取得先: <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a></p>
+    <button class="btn btn-amber" onclick="submitApiKey()">開始する →</button>
+  </div>`;
+}
+
+function forgetApiKey(){
+  if(confirm("保存されたAPIキーを削除しますか？")){
+    localStorage.removeItem("sc_apikey");
+    apiKey="";
+    render();
+  }
+}
+function toggleEye(){const i=document.getElementById("apiKeyInput");if(i)i.type=i.type==="password"?"text":"password";}
+function submitApiKey(){
+  const v=document.getElementById("apiKeyInput")?.value?.trim();
+  const saved=localStorage.getItem("sc_apikey")||"";
+  const key=v||saved;
+  if(!key||!key.startsWith("sk-"))return alert("正しいAPIキーを入力してください（sk-ant-... から始まる形式）");
+  if(v)localStorage.setItem("sc_apikey", v);
+  apiKey=key;
+  S({step:"input"});
+}
+function resumeSession(savedKey){
+  const saved=loadSaved();
+  if(!saved)return;
+  apiKey=savedKey||apiKey;
+  const inp=document.getElementById("apiKeyInput");
+  if(inp&&inp.value.trim().startsWith("sk-"))apiKey=inp.value.trim();
+  if(!apiKey)return alert("APIキーを入力してから再開してください");
+  Object.assign(st,saved.state);
+  st.busy=false;st.loading=null;st.error="";
+  render();
+}
+
+// ── INPUT ──
+function renderInput(){
+  const saved=loadSaved();
+  const resumeBanner=saved&&saved.state.step!=="apikey"&&saved.state.step!=="input"?`
+    <div class="resume-banner fade">
+      <div style="font-size:18px">💾</div>
+      <div class="resume-info">
+        <div class="resume-title">前回の続きがあります</div>
+        <div class="resume-sub">${saved.state.project?.slice(0,40)||""}...</div>
+      </div>
+      <div class="resume-btns">
+        <button class="rbtn rbtn-yes" onclick="resumeSession('')">再開</button>
+        <button class="rbtn rbtn-no" onclick="clearSaved();render()">破棄</button>
+      </div>
+    </div>`:"";
+  const flist=st.files.map((f,i)=>`<div class="fi"><span style="font-size:13px">${f.type==="pdf"?"📄":f.type==="image"?"🖼️":"📝"}</span><span class="fn">${f.name}</span><span class="fbadge">${f.type.toUpperCase()}</span><button class="frm" onclick="removeFile(${i})">×</button></div>`).join("");
+  return`<div class="fade">
+    ${resumeBanner}
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">
+      ${Object.values(AGENTS).map(a=>`<span style="font-size:11px;padding:4px 11px;border-radius:100px;background:var(--bg2);border:1px solid var(--border);color:var(--text2)">${a.emoji} ${a.name}</span>`).join("")}
+      <span style="font-size:11px;padding:4px 11px;border-radius:100px;background:var(--bg2);border:1px solid #3A1515;color:#F87171">🏢 マネージャー</span>
+    </div>
+    <label class="lbl">企画の概要</label>
+    <textarea id="ptxt" rows="6" placeholder="例：30代向けオーガニックスキンケアブランドをD2Cで展開したい。競合は資生堂ナチュラルライン。初年度予算3000万円。">${st.project}</textarea>
+    <div class="drop" id="dropZone" onclick="document.getElementById('fileInput').click()">
+      <div style="font-size:18px">📎</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:3px">資料をドラッグ＆ドロップ、またはクリックして追加</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">PDF・画像・テキスト対応</div>
+    </div>
+    ${flist}
+    ${st.error?`<div class="err">${st.error}</div>`:""}
+    <button class="btn btn-amber" id="startBtn" onclick="startMeeting()" ${st.project.trim()?"":"disabled"}>
+      ⚡ ${st.files.length>0?`資料${st.files.length}件を元に`:""}フルオート会議を開始
+    </button>
+    <button class="btn btn-ghost" onclick="S({step:'apikey'})">← APIキーを変更</button>
+  </div>`;
+}
+
+// ── MEETING ──
+function renderMeeting(){
+  // progress
+  const stageNames=["Phase1","Phase2","Phase3","Phase4","Manager"];
+  const stageIdx=["課題","分析","戦略","実行","🏢"].map((n,i)=>i);
+  const progDots=["課題定義","市場分析","戦略立案","実行計画","Manager審査"].map((name,i)=>{
+    const cur=st.phaseIdx;
+    const cls=i<cur?"done":i===cur?"active":"";
+    return`<div class="prog-stage ${cls}"><div class="prog-dot">${i<cur?"✓":i+1}</div><div class="prog-name">${name}</div></div>`;
+  }).join("");
+
+  // status
+  const statusDot=st.error?`<div class="status-dot error"></div>`:`<div class="status-dot ${st.busy?"":"done"}"></div>`;
+  const statusBox=`<div class="status-bar">${statusDot}<span>${st.error||st.statusMsg||"自動実行中..."}</span></div>`;
+
+  // history
+  const hist=st.history.map((r,ri)=>`<div class="hist-block"><div class="hist-div">── Phase ${ri+1} · ${r.phase} ──</div>${Object.entries(r.answers).map(([id,a])=>`<div class="agent-card" style="border-color:${AGENTS[id].color}22"><div class="agent-head"><span>${AGENTS[id].emoji}</span><span class="agent-name" style="color:${AGENTS[id].color}">${AGENTS[id].name}</span></div><div class="agent-ans">${a}</div></div>`).join("")}</div>`).join("");
+
+  // current
+  let cur="";
+  if(!st.questions&&st.busy){
+    cur=`<div class="spinner">司会AIが質問を生成中...</div>`;
+  }else if(st.questions){
+    const cards=Object.keys(AGENTS).map(id=>{
+      const a=st.answers[id],isL=st.loading===id,q=st.questions[id]||"";
+      return`<div class="agent-card" style="border-color:${a?AGENTS[id].color+"40":"var(--border)"}">
+        <div class="agent-head"><span>${AGENTS[id].emoji}</span><span class="agent-name" style="color:${AGENTS[id].color}">${AGENTS[id].name}</span>
+        ${isL?`<span style="margin-left:auto;font-size:10px;color:var(--text3);animation:blink 1.1s infinite">考え中...</span>`:`<span style="margin-left:auto;font-size:10px;color:${a?"var(--green)":"var(--text3)"}">${a?"✓":""}</span>`}
+        </div>${q?`<div class="agent-q">Q: ${q}</div>`:""}
+        ${a?`<div class="agent-ans">${a}</div>`:isL?`<div class="dots"><div class="dot b1" style="background:${AGENTS[id].color}"></div><div class="dot b2" style="background:${AGENTS[id].color}"></div><div class="dot b3" style="background:${AGENTS[id].color}"></div></div>`:"<div style='font-size:11px;color:var(--text3);padding:4px 0'>待機中...</div>"}
+      </div>`;
+    }).join("");
+    cur=`<div class="fade"><div class="phase-lbl">PHASE ${st.phaseIdx+1}</div><div class="phase-ttl">${PHASES[st.phaseIdx]}</div>${st.ctx?`<div class="ctx-box">🎯 ${st.ctx}</div>`:""}${cards}</div>`;
+  }
+
+  return`<div>
+    <div class="prog-wrap"><div class="prog-stages">${progDots}</div></div>
+    ${statusBox}
+    ${hist}${cur}
+    ${st.error?`<div class="err">${st.error}<br><button onclick="retryFromError()" style="margin-top:8px;padding:6px 14px;border-radius:6px;border:1px solid var(--red);background:none;color:var(--red);font-size:11px;font-family:inherit;cursor:pointer">リトライ</button></div>`:""}
+  </div>`;
+}
+
+// ── MANAGER ──
+function renderManager(){
+  if(st.busy&&!st.mgrState)return`<div><div class="spinner">🏢 マネージャーが仮想空間でシミュレーション中...<br><span style="font-size:11px;margin-top:6px;display:block">ループ ${st.loopCount}/30</span></div></div>`;
+  const m=st.mgrState;
+  if(!m)return`<div class="spinner">準備中...</div>`;
+  const total=Object.values(m.scores||{}).reduce((a,b)=>a+b,0);
+  const approved=total>=95;
+  const scoreColor=approved?"var(--green)":total>=70?"var(--amber)":"var(--red)";
+  const totalBg=approved?"#071A10":total>=70?"#1A1300":"#1A0505";
+  const scoreCards=SCORE_ITEMS.map(k=>{
+    const v=m.scores?.[k]||0;
+    const c=v>=19?"var(--green)":v>=15?"var(--amber)":"var(--red)";
+    return`<div class="score-item"><div class="score-name">${k}</div><div class="sbar-wrap"><div class="sbar" style="width:${v*5}%;background:${c}"></div></div><div class="sval" style="color:${c}">${v}<span style="font-size:10px;color:var(--text3)">/20</span></div></div>`;
+  }).join("");
+  const statusMsg=approved?`<div class="approved-box"><span style="font-size:18px">🎉</span><div><div style="font-size:12px;font-weight:700;color:var(--green)">承認完了 — 最終提案を生成中...</div></div></div>`
+    :st.loopCount>=30?`<div class="err">最大回数（30回）到達。最高スコア案で提出します。</div>`
+    :`<div style="font-size:12px;color:var(--text3);padding:8px 0;animation:blink 1.5s infinite">ブラッシュアップ中... (${st.loopCount}/30回)</div>`;
+  return`<div class="fade">
+    <div class="mgr-panel">
+      <div class="mgr-hdr">
+        <span style="font-size:17px">🏢</span>
+        <span style="font-size:13px;font-weight:700">マネージャー審査</span>
+        <span class="loop-badge">ループ ${st.loopCount}/30</span>
+        ${approved?`<span style="margin-left:8px;font-size:11px;font-weight:700;color:var(--green)">✓ 承認済み</span>`:""}
+      </div>
+      <div class="mgr-body">
+        ${m.env?`<div class="env-badge">🌐 仮想空間：${m.env}</div>`:""}
+        <div class="score-grid">${scoreCards}</div>
+        <div class="total-box" style="background:${totalBg}">
+          <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px">TOTAL SCORE</div>
+          <div class="total-num" style="color:${scoreColor}">${total}<span style="font-size:13px">/100</span></div></div>
+          <div style="font-size:12px;font-weight:700;color:${scoreColor}">${approved?"✓ 95点以上 承認":total>=70?"△ ブラッシュアップ中":"✗ 再検討中"}</div>
+        </div>
+        ${m.verdict?`<div class="mgr-verdict">${m.verdict}</div>`:""}
+        ${m.feedback&&!approved?`<div class="mgr-feedback">📋 改善指示：${m.feedback}</div>`:""}
+        ${statusMsg}
+      </div>
+    </div>
+    ${st.error?`<div class="err">${st.error}<br><button onclick="retryBrushup()" style="margin-top:8px;padding:6px 14px;border-radius:6px;border:1px solid var(--red);background:none;color:var(--red);font-size:11px;font-family:inherit;cursor:pointer">リトライ</button></div>`:""}
+  </div>`;
+}
+
+// ── SUMMARY ──
+function renderSummary(){
+  const s=st.summary||{};
+  const total=Object.values(st.mgrState?.scores||{}).reduce((a,b)=>a+b,0);
+  const actions=(s.actions||[]).map((a,i)=>`<div class="kv-item"><span style="color:var(--amber);font-weight:700;min-width:18px">${i+1}.</span>${a}</div>`).join("");
+  const kpis=(s.kpi||[]).map(k=>`<div class="kv-item"><span style="color:var(--teal)">◆</span>${k}</div>`).join("");
+  return`<div class="fade">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+      <div style="font-size:10px;color:var(--amber);letter-spacing:.15em;font-weight:700">FINAL OUTPUT</div>
+      ${total>0?`<span style="font-size:10px;padding:2px 9px;border-radius:100px;background:#071A10;color:var(--green);border:1px solid #1A4A2A">✓ ${total}点 承認済み</span>`:""}
+    </div>
+    <h2 style="font-size:19px;font-weight:800;margin:4px 0 16px;line-height:1.4">${s.title||"戦略提案"}</h2>
+    <div class="insight-box">
+      <div style="font-size:10px;color:var(--amber);letter-spacing:.15em;margin-bottom:4px">KEY INSIGHT</div>
+      <div style="font-size:14px;font-weight:700;color:var(--amber);line-height:1.6">💡 ${s.keyInsight||""}</div>
+    </div>
+    <div class="strat-box">
+      <div style="font-size:10px;color:var(--text3);letter-spacing:.15em;margin-bottom:5px">STRATEGY</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.9">${s.strategy||""}</div>
+    </div>
+    <div class="kv-grid">
+      <div class="kv-card"><div class="kv-title" style="color:var(--purple)">ACTION PLAN</div>${actions}</div>
+      <div class="kv-card"><div class="kv-title" style="color:var(--teal)">KPI</div>${kpis}</div>
+    </div>
+    ${s.nextStep?`<div class="next-box"><span style="font-size:20px">🚀</span><div><div style="font-size:10px;color:var(--blue);margin-bottom:2px">NEXT ACTION</div><div style="font-size:13px;font-weight:700;color:var(--blue)">${s.nextStep}</div></div></div>`:""}
+    ${st.files.length>0?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:12px">📎 ${st.files.map(f=>f.name).join("・")} を参照</div>`:""}
+    <button class="btn btn-export" onclick="showExportModal()">📤 エクスポートする</button>
+    <button class="btn btn-ghost" onclick="confirmReset()">新しい企画を始める</button>
+  </div>`;
+}
+
+// ── EXPORT ──
+function showExportModal(){
+  const m=document.getElementById("exportModal");
+  m.style.display="flex";
+  m.innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)closeExport()">
+    <div class="modal fade">
+      <h3>📤 エクスポート</h3>
+      <div class="modal-btns">
+        <button class="mbtn" onclick="exportTxt()"><span style="font-size:18px">📄</span><div><div style="font-size:13px;font-weight:500">テキスト (.txt)</div><div style="font-size:11px;color:var(--text3)">全会議ログ＋最終提案</div></div></button>
+        <button class="mbtn" onclick="exportJSON()"><span style="font-size:18px">🗄️</span><div><div style="font-size:13px;font-weight:500">JSON (.json)</div><div style="font-size:11px;color:var(--text3)">構造化データ（再利用可能）</div></div></button>
+        <button class="mbtn" onclick="exportHTML()"><span style="font-size:18px">🌐</span><div><div style="font-size:13px;font-weight:500">HTMLレポート (.html)</div><div style="font-size:11px;color:var(--text3)">ブラウザで綺麗に表示</div></div></button>
+      </div>
+      <button class="modal-close" onclick="closeExport()">閉じる</button>
+    </div>
+  </div>`;
+}
+function closeExport(){document.getElementById("exportModal").style.display="none";}
+
+function buildReport(){
+  const s=st.summary||{};
+  const m=st.mgrState;
+  const total=Object.values(m?.scores||{}).reduce((a,b)=>a+b,0);
+  let txt=`STRATEGY COUNCIL — 最終提案レポート\n`;
+  txt+=`生成日時: ${new Date().toLocaleString("ja-JP")}\n`;
+  txt+=`${"═".repeat(50)}\n\n`;
+  txt+=`【企画概要】\n${st.project}\n\n`;
+  txt+=`${"─".repeat(40)}\n`;
+  txt+=`【会議ログ】\n\n`;
+  st.history.forEach((r,i)=>{
+    txt+=`■ Phase ${i+1}: ${r.phase}\n`;
+    Object.entries(r.answers).forEach(([id,a])=>{txt+=`\n[${AGENTS[id].name}]\n${a}\n`;});
+    txt+="\n";
+  });
+  txt+=`${"─".repeat(40)}\n`;
+  txt+=`【マネージャー審査結果】\n`;
+  txt+=`仮想空間: ${m?.env||"－"}\n`;
+  txt+=`総合スコア: ${total}/100点\n`;
+  if(m?.scores){Object.entries(m.scores).forEach(([k,v])=>{txt+=`  ${k}: ${v}/20\n`;});}
+  txt+=`総評: ${m?.verdict||"－"}\n\n`;
+  txt+=`${"─".repeat(40)}\n`;
+  txt+=`【最終戦略提案】\n\n`;
+  txt+=`タイトル: ${s.title||""}\n\n`;
+  txt+=`KEY INSIGHT:\n${s.keyInsight||""}\n\n`;
+  txt+=`STRATEGY:\n${s.strategy||""}\n\n`;
+  txt+=`ACTION PLAN:\n${(s.actions||[]).map((a,i)=>`${i+1}. ${a}`).join("\n")}\n\n`;
+  txt+=`KPI:\n${(s.kpi||[]).map(k=>`◆ ${k}`).join("\n")}\n\n`;
+  txt+=`NEXT ACTION:\n${s.nextStep||""}\n`;
+  return txt;
+}
+
+function exportTxt(){
+  const blob=new Blob([buildReport()],{type:"text/plain;charset=utf-8"});
+  dl(blob,"strategy-report.txt");closeExport();
+}
+function exportJSON(){
+  const data={project:st.project,generatedAt:new Date().toISOString(),history:st.history,managerResult:st.mgrState,summary:st.summary};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  dl(blob,"strategy-report.json");closeExport();
+}
+function exportHTML(){
+  const s=st.summary||{};
+  const m=st.mgrState;
+  const total=Object.values(m?.scores||{}).reduce((a,b)=>a+b,0);
+  const scoreRows=SCORE_ITEMS.map(k=>{const v=m?.scores?.[k]||0;const c=v>=19?"#34D399":v>=15?"#EF9F27":"#E24B4A";return`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>${k}</span><span style="color:${c};font-weight:700">${v}/20</span></div><div style="height:4px;background:#1A2535;border-radius:2px"><div style="height:100%;width:${v*5}%;background:${c};border-radius:2px"></div></div></div>`;}).join("");
+  const html=`<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>Strategy Report</title><style>body{font-family:'Noto Sans JP',sans-serif;background:#080C10;color:#E8EDF2;max-width:700px;margin:0 auto;padding:32px 20px}h1{font-size:22px;margin-bottom:4px}h2{font-size:15px;color:#EF9F27;border-bottom:1px solid #1A2535;padding-bottom:6px;margin:24px 0 12px}.box{background:#0C1118;border:1px solid #1A2535;border-radius:10px;padding:14px 16px;margin-bottom:12px}.badge{display:inline-block;padding:2px 10px;border-radius:100px;background:#071A10;color:#34D399;border:1px solid #1A4A2A;font-size:12px;margin-bottom:10px}.insight{background:#1A130A;border:1px solid #3A2600;border-radius:10px;padding:13px 15px;font-size:14px;font-weight:700;color:#EF9F27;line-height:1.6}.agent{border-left:3px solid;padding-left:12px;margin-bottom:12px}.sub{font-size:12px;color:#4A5568;margin-top:2px}</style></head><body>
+  <h1>⚡ Strategy Council</h1>
+  <p style="color:#4A5568;font-size:12px;margin-bottom:24px">${new Date().toLocaleString("ja-JP")} 生成</p>
+  <div class="badge">✓ ${total}/100点 承認済み</div>
+  <h2>最終戦略提案</h2>
+  <div class="insight">💡 ${s.keyInsight||""}</div>
+  <div class="box" style="margin-top:12px"><p style="font-size:13px;line-height:1.9;color:#8A9BB0">${s.strategy||""}</p></div>
+  <h2>アクションプラン</h2>
+  <div class="box">${(s.actions||[]).map((a,i)=>`<div style="padding:5px 0;border-bottom:1px solid #1A2535;font-size:13px"><span style="color:#EF9F27;font-weight:700;margin-right:8px">${i+1}.</span>${a}</div>`).join("")}</div>
+  <h2>KPI</h2>
+  <div class="box">${(s.kpi||[]).map(k=>`<div style="padding:5px 0;border-bottom:1px solid #1A2535;font-size:13px"><span style="color:#1D9E75;margin-right:8px">◆</span>${k}</div>`).join("")}</div>
+  <h2>マネージャー審査</h2>
+  <div class="box"><p style="font-size:11px;color:#4A5568;margin-bottom:10px">仮想空間: ${m?.env||"－"}</p>${scoreRows}<div style="font-size:13px;color:#8A9BB0;margin-top:10px">${m?.verdict||""}</div></div>
+  <h2>会議ログ</h2>
+  ${st.history.map((r,i)=>`<h3 style="font-size:13px;color:#8A9BB0;margin:14px 0 8px">Phase ${i+1}: ${r.phase}</h3>${Object.entries(r.answers).map(([id,a])=>`<div class="agent" style="border-color:${AGENTS[id].color}"><div style="font-size:11px;font-weight:700;color:${AGENTS[id].color};margin-bottom:3px">${AGENTS[id].emoji} ${AGENTS[id].name}</div><div style="font-size:12px;color:#8A9BB0;line-height:1.7">${a}</div></div>`).join("")}`).join("")}
+  </body></html>`;
+  const blob=new Blob([html],{type:"text/html;charset=utf-8"});
+  dl(blob,"strategy-report.html");closeExport();
+}
+function dl(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();}
+
+// ── EVENTS ──
+function bindEvents(){
+  const t=document.getElementById("ptxt");
+  if(t)t.addEventListener("input",e=>{st.project=e.target.value;const b=document.getElementById("startBtn");if(b)b.disabled=!st.project.trim();});
+  const dz=document.getElementById("dropZone");
+  if(dz){
+    dz.addEventListener("dragover",e=>{e.preventDefault();dz.classList.add("drag");});
+    dz.addEventListener("dragleave",()=>dz.classList.remove("drag"));
+    dz.addEventListener("drop",async e=>{e.preventDefault();dz.classList.remove("drag");await addFiles(Array.from(e.dataTransfer.files));});
+  }
+  const fi=document.getElementById("fileInput");
+  if(fi)fi.onchange=async e=>{await addFiles(Array.from(e.target.files));fi.value="";};
+}
+
+// ── FILES ──
+async function addFiles(raw){const p=await Promise.all(raw.map(pf));st.files=[...st.files,...p];render();}
+async function pf(f){
+  const ext=f.name.split(".").pop().toLowerCase();
+  if(f.type==="application/pdf"||ext==="pdf"){const d=await b64(f);return{type:"pdf",name:f.name,data:d,mimeType:"application/pdf"};}
+  else if(f.type.startsWith("image/")){const d=await b64(f);return{type:"image",name:f.name,data:d,mimeType:f.type};}
+  else{const d=await toTxt(f);return{type:"text",name:f.name,data:d};}
+}
+function b64(f){return new Promise((r,j)=>{const rd=new FileReader();rd.onload=()=>r(rd.result.split(",")[1]);rd.onerror=j;rd.readAsDataURL(f);});}
+function toTxt(f){return new Promise((r,j)=>{const rd=new FileReader();rd.onload=()=>r(rd.result);rd.onerror=j;rd.readAsText(f);});}
+function removeFile(i){st.files=st.files.filter((_,idx)=>idx!==i);render();}
+
+// ── API ──
+async function api(system,msg){
+  const content=[];
+  for(const f of st.files){
+    if(f.type==="pdf")content.push({type:"document",source:{type:"base64",media_type:"application/pdf",data:f.data}});
+    else if(f.type==="image")content.push({type:"image",source:{type:"base64",media_type:f.mimeType,data:f.data}});
+    else content.push({type:"text",text:`【添付: ${f.name}】\n${f.data}`});
+  }
+  content.push({type:"text",text:msg});
+  const res=await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1200,system,messages:[{role:"user",content}]})
+  });
+  const data=await res.json();
+  if(data.error)throw new Error(data.error.message);
+  return data.content[0].text;
+}
+function pj(t){try{return JSON.parse(t.replace(/```json\n?|```/g,"").trim());}catch{return null;}}
+
+// ── PROMPTS ──
+const FAC=`あなたはマーケティング戦略会議の司会AIです。参加エージェント：マーケター、デザイナー、経営コンサルタント、ユーザーリサーチャー。添付資料がある場合はその内容を踏まえて進行してください。JSONのみ出力：{"phase":"フェーズ名","questions":{"marketer":"質問","designer":"質問","consultant":"質問","researcher":"質問"},"context":"このフェーズで明らかにしたいこと50字以内"}`;
+const MGR=`あなたはシニアマーケティングマネージャーです。エージェントチームが策定したマーケティング戦略を、企画内容に最適な仮想空間（Instagram、Web、店舗、SNS広告など）でシミュレーションテストし、以下5項目を各20点満点で採点してください。採点基準：市場性（市場規模・需要の確かさ）、実現性（予算・リソースの実現可能性）、独自性（競合との差別化度）、戦略整合性（各施策の一貫性）、ユーザー共感度（ターゲットへの刺さり度）。JSONのみ出力：{"env":"テストした仮想空間名","scores":{"市場性":数値,"実現性":数値,"独自性":数値,"戦略整合性":数値,"ユーザー共感度":数値},"verdict":"総評100字以内","feedback":"95点未満の場合の具体的改善指示100字（95点以上は空文字）","revisedStrategy":"改善した戦略の要点200字（95点未満の場合、95点以上は空文字）"}`;
+const SUM=`マーケティング戦略会議の統括AIとして、マネージャーに承認された最終戦略をまとめてください。JSONのみ：{"title":"戦略タイトル","keyInsight":"最重要インサイト50字","strategy":"統合戦略200字","actions":["アクション1","アクション2","アクション3"],"kpi":["KPI1","KPI2","KPI3"],"nextStep":"今すぐやること50字"}`;
+
+// ── FULL AUTO FLOW ──
+let lastHistText="";
+let lastRevised="";
+
+async function startMeeting(){
+  if(!st.project.trim())return;
+  S({step:"meeting",busy:true,error:"",statusMsg:"会議を開始します...",phaseIdx:0,history:[],answers:{},questions:null,ctx:""});
+  await runPhase(0,[]);
+}
+
+async function runPhase(phaseIdx,history){
+  S({phaseIdx,answers:{},questions:null,ctx:"",statusMsg:`Phase ${phaseIdx+1}「${PHASES[phaseIdx]}」の質問を生成中...`});
+  const histText=buildHistText(history);
+  try{
+    const msg=history.length===0
+      ?`企画概要：${st.project}\n現在のフェーズ：第1フェーズ（${PHASES[0]}）`
+      :`企画概要：${st.project}\n\n過去の議論：\n${histText}\n\n現在のフェーズ：第${phaseIdx+1}フェーズ（${PHASES[phaseIdx]}）`;
+    const raw=await api(FAC,msg);
+    const p=pj(raw)||{};
+    S({questions:p.questions||{},ctx:p.context||"",busy:false,statusMsg:`Phase ${phaseIdx+1} — エージェントが回答中...`});
+    const answers=await runAgentsAuto(p.questions||{},phaseIdx);
+    const newHistory=[...history,{phase:PHASES[phaseIdx],ctx:p.context||"",questions:p.questions||{},answers}];
+    S({history:newHistory,answers:{}});
+    if(phaseIdx+1<PHASES.length){
+      await runPhase(phaseIdx+1,newHistory);
+    }else{
+      lastHistText=buildHistText(newHistory);
+      lastRevised="";
+      S({step:"manager",loopCount:0,mgrState:null,busy:true,statusMsg:"マネージャーへ提出..."});
+      await runManagerAuto(lastHistText,"",0,newHistory);
+    }
+  }catch(e){S({error:e.message,busy:false,statusMsg:""});}
+}
+
+async function runAgentsAuto(qs,phaseIdx){
+  const answers={};
+  for(const id of Object.keys(AGENTS)){
+    S({loading:id,statusMsg:`${AGENTS[id].name} が回答中...`});
+    try{
+      const q=qs[id]||"このフェーズについて専門的見解を述べてください。";
+      const ans=await api(ROLES[id],`企画：${st.project}\n質問：${q}`);
+      answers[id]=ans;
+      st.answers={...st.answers,[id]:ans};
+      S({loading:id});
+    }catch(e){S({error:e.message,loading:null});throw e;}
+  }
+  S({loading:null});
+  return answers;
+}
+
+async function runManagerAuto(histText,prevRevised,loopCount,history){
+  S({loopCount,mgrState:null,busy:true,statusMsg:`マネージャーがシミュレーション中... (${loopCount+1}回目)`});
+  const combined=prevRevised?`${histText}\n\n【改善案】\n${prevRevised}`:histText;
+  try{
+    const raw=await api(MGR,`企画：${st.project}\n\n戦略案：\n${combined}\nブラッシュアップ回数：${loopCount}`);
+    const m=pj(raw)||{};
+    const total=Object.values(m.scores||{}).reduce((a,b)=>a+b,0);
+    S({mgrState:m,loopCount,busy:false});
+    saveState();
+
+    if(total>=95||loopCount>=30){
+      // approved or max reached
+      setTimeout(()=>generateFinalSummaryAuto(history,m),800);
+    }else{
+      // brushup
+      await brushupAuto(histText,m,loopCount+1,history);
+    }
+  }catch(e){S({error:e.message,busy:false,statusMsg:""});}
+}
+
+async function brushupAuto(histText,prevMgr,newCount,history){
+  S({busy:true,statusMsg:`ブラッシュアップ中... (${newCount}/30回)`});
+  const feedback=prevMgr?.feedback||"";
+  const revised={};
+  for(const id of Object.keys(AGENTS)){
+    S({loading:id,statusMsg:`${AGENTS[id].name} が改善案を検討中...`});
+    try{
+      const ans=await api(ROLES[id]+"\n改善フィードバックを受けて戦略をブラッシュアップしてください。",
+        `企画：${st.project}\nマネージャーからの改善指示：${feedback}\n前回の議論：${histText}\n200字以内で改善案を述べてください。`);
+      revised[id]=ans;S({loading:id});
+    }catch(e){S({error:e.message,loading:null,busy:false});throw e;}
+  }
+  S({loading:null});
+  const revisedText=Object.entries(revised).map(([id,a])=>`${AGENTS[id].name}（改善案）：${a}`).join("\n");
+  const newRevised=(prevMgr?.revisedStrategy||"")+"\n"+revisedText;
+  await runManagerAuto(histText,newRevised,newCount,history);
+}
+
+async function generateFinalSummaryAuto(history,mgrResult){
+  S({busy:true,statusMsg:"最終提案を生成中..."});
+  const histText=buildHistText(history);
+  const total=Object.values(mgrResult?.scores||{}).reduce((a,b)=>a+b,0);
+  const mgrNote=`\nマネージャー承認スコア：${total}点\n総評：${mgrResult?.verdict||""}`;
+  try{
+    const raw=await api(SUM,`企画：${st.project}\n\n会議ログ：\n${histText}${mgrNote}`);
+    S({summary:pj(raw)||{title:"戦略提案",strategy:raw},step:"summary",busy:false,statusMsg:""});
+    saveState();
+  }catch(e){S({error:e.message,busy:false,statusMsg:""});}
+}
+
+// retry helpers
+async function retryFromError(){
+  S({error:""});
+  await startMeeting();
+}
+async function retryBrushup(){
+  if(!st.mgrState)return;
+  S({error:""});
+  await brushupAuto(lastHistText,st.mgrState,st.loopCount+1,st.history);
+}
+
+function buildHistText(hist){
+  return hist.map((r,i)=>`【フェーズ${i+1}：${r.phase}】\n`+Object.entries(r.answers).map(([id,a])=>`${AGENTS[id].name}：${a}`).join("\n")).join("\n\n");
+}
+
+function confirmReset(){
+  if(confirm("会議データをリセットしますか？"))resetAll();
+}
+function resetAll(){
+  clearSaved();
+  st={step:"input",project:st.project,files:[],phaseIdx:0,questions:null,ctx:"",answers:{},loading:null,history:[],mgrState:null,loopCount:0,summary:null,error:"",busy:false,statusMsg:""};
+  render();
+}
+
+// Auto-load saved API key
+(function(){
+  const saved = localStorage.getItem("sc_apikey");
+  if(saved && saved.startsWith("sk-")){
+    apiKey = saved;
+    st.step = "input";
+  }
+  // Also check for saved session
+  const session = loadSaved();
+  if(session && session.apiKey && session.apiKey.startsWith("sk-")){
+    apiKey = session.apiKey;
+  }
+})();
+render();
+</script>
+</body>
+</html>
