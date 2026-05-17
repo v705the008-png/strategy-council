@@ -17,6 +17,13 @@
   --card-hover:#131620;
 }
 body{background:var(--bg);color:var(--text);font-family:'Inter','Noto Sans JP',sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text3)}
+textarea::-webkit-scrollbar{width:4px}
+textarea::-webkit-scrollbar-track{background:var(--bg3)}
+textarea::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 
 /* HEADER */
 header{border-bottom:1px solid var(--border);padding:0 28px;height:52px;display:flex;align-items:center;gap:12px;background:var(--bg2);position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
@@ -197,6 +204,7 @@ textarea::placeholder,input::placeholder{color:var(--text3)}
     <button class="hbtn icon-btn" onclick="goProjects()" title="ホームへ戻る">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     </button>
+    <button class="hbtn" onclick="goEdit()" title="企画概要を編集">編集</button>
     <button class="hbtn" onclick="showExportModal()">エクスポート</button>
     <button class="hbtn danger" onclick="confirmReset()">リセット</button>
   </div>
@@ -206,7 +214,8 @@ textarea::placeholder,input::placeholder{color:var(--text3)}
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> ローカルファイルから開いています。APIが動作しません。<strong>Vercel（<a href="https://strategy-council.vercel.app" target="_blank" style="color:#5B7FFF">strategy-council.vercel.app</a>）</strong>からアクセスしてください。
 </div>
 <main id="app"></main>
-<input type="file" id="fileInput" multiple accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.txt,.md,.csv,.json" style="display:none">
+
+<input type="file" id="fileInput" multiple accept=".pdf,.txt,.md,.csv,.json" style="display:none">
 <div id="exportModal" style="display:none"></div>
 
 <script>
@@ -229,10 +238,30 @@ const ICONS={
   globe:      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
 };
 const ROLES={
-  marketer:"あなたはシニアマーケターです。市場分析、ターゲット設定、顧客獲得戦略、ブランドポジショニング、KPI設計の専門家です。添付資料がある場合はその内容も踏まえて、データドリブンな視点で100字以内で端的に答えてください。",
-  designer:"あなたはUX/ブランドデザイナーです。ユーザー体験設計、ビジュアルアイデンティティの専門家です。添付資料がある場合はその内容も踏まえて、感情的訴求と使いやすさの視点で100字以内で端的に答えてください。",
-  consultant:"あなたはMcKinsey出身の経営コンサルタントです。事業戦略、競合分析、P&L管理の専門家です。添付資料がある場合はその内容も踏まえて、MECE思考と構造化フレームワークで100字以内で端的に答えてください。",
-  researcher:"あなたはUXリサーチャーです。定性・定量調査、ペルソナ構築の専門家です。添付資料がある場合はその内容も踏まえて、ユーザーの潜在ニーズの視点で100字以内で端的に答えてください。",
+  marketer:`あなたはシニアマーケターです。与えられた論点に対して、あなたの専門知識から【分析・見解・具体的な提言】を述べてください。
+ルール：
+・質問は一切しない。情報が不足していても、与えられた情報から最善の分析と提言を行う
+・確定数値がある場合は必ずそれを使い、ない場合は「不明」と明記した上で分析する
+・「〜ではないでしょうか」「〜を確認してください」などの曖昧表現は使わない
+・200字以内で断言口調で具体的に述べる`,
+  designer:`あなたはUX/ブランドデザイナーです。与えられた論点に対して、あなたの専門知識から【分析・見解・具体的な提言】を述べてください。
+ルール：
+・質問は一切しない。情報が不足していても、与えられた情報から最善の分析と提言を行う
+・確定数値がある場合は必ずそれを使い、ない場合は「不明」と明記した上で分析する
+・「〜ではないでしょうか」「〜を確認してください」などの曖昧表現は使わない
+・200字以内で断言口調で具体的に述べる`,
+  consultant:`あなたはMcKinsey出身の経営コンサルタントです。与えられた論点に対して、あなたの専門知識から【分析・見解・具体的な提言】を述べてください。
+ルール：
+・質問は一切しない。情報が不足していても、与えられた情報から最善の分析と提言を行う
+・確定数値がある場合は必ずそれを使い、ない場合は「不明」と明記した上で分析する
+・「〜ではないでしょうか」「〜を確認してください」などの曖昧表現は使わない
+・200字以内で断言口調で具体的に述べる`,
+  researcher:`あなたはUXリサーチャーです。与えられた論点に対して、あなたの専門知識から【分析・見解・具体的な提言】を述べてください。
+ルール：
+・質問は一切しない。情報が不足していても、与えられた情報から最善の分析と提言を行う
+・確定数値がある場合は必ずそれを使い、ない場合は「不明」と明記した上で分析する
+・「〜ではないでしょうか」「〜を確認してください」などの曖昧表現は使わない
+・200字以内で断言口調で具体的に述べる`,
 };
 const PHASES=["課題定義","市場分析","戦略立案","実行計画"];
 const PHASE_JA=["課題・ゴール定義","市場・ユーザー分析","戦略立案","実行計画・KPI"];
@@ -283,13 +312,20 @@ function S(u){
   if(!Array.isArray(st.files))st.files=[];
   if(!Array.isArray(st.history))st.history=[];
   if(st.step!=="projects"&&st.step!=="apikey"&&st.step!=="input")saveCurrent();
+  // statusMsgだけの更新なら部分更新（フラッシュ防止）
+  if(Object.keys(u).length===1&&u.statusMsg!==undefined){
+    const el=document.getElementById("statusMsg");
+    if(el){el.textContent=u.statusMsg;return;}
+  }
   render();
 }
 
 function render(){
   const hr=document.getElementById("hright");
-  hr.style.display=(st.step==="meeting"||st.step==="manager"||st.step==="summary")?"flex":"none";
+  hr.style.display=(st.step==="meeting"||st.step==="manager"||st.step==="summary"||st.step==="input")?"flex":"none";
   const app=document.getElementById("app");
+  // スクロール位置を保持
+  const scrollY=window.scrollY;
   if(st.step==="apikey")app.innerHTML=renderApiKey();
   else if(st.step==="projects")app.innerHTML=renderProjects();
   else if(st.step==="input")app.innerHTML=renderInput();
@@ -297,6 +333,8 @@ function render(){
   else if(st.step==="manager")app.innerHTML=renderManager();
   else app.innerHTML=renderSummary();
   bindEvents();
+  // スクロール位置を復元（カウントダウン中の跳ね防止）
+  if(st.busy&&st.statusMsg)window.scrollTo(0,scrollY);
 }
 
 // ── API KEY ──
@@ -347,8 +385,8 @@ function renderProjects(){
         </div>
         ${statusEl}
         <div class="proj-actions" onclick="event.stopPropagation()">
-          ${p.status!=="done"?`<button class="proj-btn" onclick="openProject('${p.id}')">再開</button>`:""}
-          <button class="proj-btn del" onclick="removeProject('${p.id}')">削除</button>
+          ${p.status!=="done"?`<button class="proj-btn" onclick="event.stopPropagation();openProject('${p.id}')">再開</button>`:""}
+          <button class="proj-btn del" onclick="event.stopPropagation();removeProject('${p.id}')">削除</button>
         </div>
       </div>`;
     }).join("");
@@ -365,61 +403,74 @@ function renderProjects(){
   </div>`;
 }
 function openProject(id){
-  const proj=getProjects().find(p=>p.id===id);
-  if(!proj)return;
+  const projs=getProjects();
+  const proj=projs.find(p=>p.id===id);
+  if(!proj){alert("プロジェクトが見つかりません");return;}
   currentProjId=id;
-  if(proj.state){
+  if(proj.state&&proj.state.step){
+    // stateが存在して有効なstepがある場合のみ復元
     Object.assign(st,proj.state);
     st.busy=false;st.loading=null;st.error="";
-    // 配列フィールドを確実に初期化
     if(!Array.isArray(st.brushupLog))st.brushupLog=[];
     if(!Array.isArray(st.files))st.files=[];
     if(!Array.isArray(st.history))st.history=[];
+    if(!st.step||st.step==="projects")st.step="input";
+  } else {
+    // stateがない場合はinput画面で開く
+    st.step="input";
+    st.project=proj.name||"";
+    st.files=[];
+    st.history=[];
+    st.brushupLog=[];
   }
   render();
-  // 進行中なら続きから自動再開
-  if(st.step==="meeting"||st.step==="manager"){
-    setTimeout(()=>resumeFromSave(),300);
-  }
 }
 
 async function resumeFromSave(){
   cancelled=false;
-  // バイナリファイルが[binary]になっている場合は警告
+  if(!apiKey||!apiKey.startsWith("sk-")){
+    S({error:"APIキーが見つかりません。ページを再読み込みしてください。"});
+    return;
+  }
+  // バイナリファイルが[binary]になっている場合は除去
   const binaryFiles=st.files.filter(f=>f.data==="[binary]");
   if(binaryFiles.length>0){
-    // [binary]ファイルをリストから除去して続行（テキストのみで再開）
     st.files=st.files.filter(f=>f.data!=="[binary]");
     S({needsReattach:binaryFiles.map(f=>f.name)});
-    // ファイルなしで続行
   }
   const h=st.history||[];
   const phasesDone=h.length;
   if(st.step==="manager"){
-    // マネージャー審査フェーズで止まっていた
-    S({busy:true,statusMsg:"マネージャー審査を再開中..."});
+    S({busy:true,statusMsg:"マネージャー審査を再開中...",error:""});
     const histText=buildHistText(h);
     const loopCount=st.loopCount||0;
     await runManagerAuto(histText,"",loopCount,h);
   } else if(phasesDone<PHASE_JA.length){
-    // 会議フェーズで止まっていた
     const nextPhase=phasesDone;
-    S({busy:true,statusMsg:`Phase ${nextPhase+1}から再開中...`,answers:{},questions:null});
+    S({busy:true,statusMsg:`Phase ${nextPhase+1}から再開中...`,answers:{},questions:null,error:""});
     await runPhase(nextPhase,h);
+  } else {
+    S({error:"再開できる状態ではありません。新規プロジェクトを作成してください。"});
   }
 }
 function newProject(){
   currentProjId="proj_"+Date.now();
-  st={step:"input",project:"",files:[],phaseIdx:0,questions:null,ctx:"",answers:{},loading:null,history:[],mgrState:null,loopCount:0,summary:null,error:"",busy:false,statusMsg:""};
+  st={step:"input",project:"",files:[],facts:"",phaseIdx:0,questions:null,ctx:"",answers:{},loading:null,history:[],mgrState:null,loopCount:0,summary:null,error:"",busy:false,statusMsg:""};
   render();
 }
 function removeProject(id){
-  if(confirm("このプロジェクトを削除しますか？")){deleteProject(id);render();}
+  cancelled=true;
+  setTimeout(()=>{
+    cancelled=false;
+    deleteProject(id);
+    if(currentProjId===id){currentProjId=null;st={...st,step:"projects"};}
+    render();
+  },100);
 }
 
 // ── INPUT ──
 function renderInput(){
-  const flist=st.files.map((f,i)=>`<div class="fi-item"><span style="font-size:13px">${f.type==="pdf"?"PDF":f.type==="image"?"IMG":"TXT"}</span><span class="fi-name">${f.name}</span><span class="fi-badge">${f.type.toUpperCase()}</span><button class="fi-rm" onclick="removeFile(${i})">×</button></div>`).join("");
+  const flist=st.files&&st.files.length>0?st.files.map((f,i)=>`<div class="fi-item"><span style="font-size:11px;color:var(--text3);font-weight:600">${f.type==="pdf"?"PDF":"TXT"}</span><span class="fi-name">${f.name}</span><button class="fi-rm" onclick="removeFile(${i})">×</button></div>`).join(""):"";
   return`<div class="fade">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px">
       <button onclick="S({step:'projects'})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;line-height:1">‹</button>
@@ -430,16 +481,23 @@ function renderInput(){
       <span class="abadge" style="border-color:var(--border2);color:var(--text2);display:inline-flex;align-items:center;gap:5px">${ICONS.manager} MANAGER</span>
     </div>
     <label class="lbl">企画の概要</label>
-    <textarea id="ptxt" rows="6" placeholder="例：30代向けオーガニックスキンケアブランドをD2Cで展開したい。競合は資生堂ナチュラルライン。初年度予算3000万円。">${st.project}</textarea>
+    <textarea id="ptxt" rows="5" placeholder="例：30代向けオーガニックスキンケアブランドをD2Cで展開したい。競合は資生堂ナチュラルライン。初年度予算3000万円。">${st.project}</textarea>
+    <label class="lbl" style="margin-top:12px">確定している事実・数値（任意）</label>
+    <textarea id="factstxt" rows="4" placeholder="例：&#10;・月間問い合わせ数：約30件&#10;・成約率：10%&#10;・客単価：15万円&#10;・主な流入：紹介80%、SNS20%&#10;※エージェントはここに書いた数値を推論せず事実として使います">${st.facts||""}</textarea>
+    <label class="lbl" style="margin-top:12px">参考資料（任意）</label>
     <div class="drop" id="dropZone" onclick="document.getElementById('fileInput').click()">
-      <div style="margin-bottom:6px;color:var(--text3)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></div>
-      <div style="font-size:12px;color:var(--text2)">資料を添付 — PDF・画像・テキスト対応</div>
+      <div style="margin-bottom:5px;color:var(--text3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></div>
+      <div style="font-size:12px;color:var(--text2)">PDF・テキストをドロップ（画像不可）</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:2px">テキストに変換して送信されます</div>
     </div>
     ${flist}
+    <label class="lbl" style="margin-top:8px">または直接テキストで入力</label>
+    <textarea id="materialtxt" rows="3" placeholder="資料の内容や補足情報をここに直接入力することもできます">${st.materials||""}</textarea>
     ${st.error?`<div class="err">${st.error}</div>`:""}
     <button class="btn btn-accent" id="startBtn" onclick="startMeeting()" ${st.project.trim()?"":"disabled"}>
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Start MTG ${st.files.length>0?`· ${st.files.length} file${st.files.length>1?"s":""}件添付`:""}
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Start MTG
     </button>
+    ${st.history&&st.history.length>0?`<button class="btn btn-ghost" style="margin-top:6px" onclick="backToMeeting()">← 会議画面に戻る</button>`:""}
     <button class="btn btn-ghost" onclick="S({step:'projects'})">← 戻る</button>
   </div>`;
 }
@@ -451,17 +509,17 @@ function renderMeeting(){
     return`<div class="prog-stage ${cls}"><div class="prog-dot">${i<st.phaseIdx?"✓":i+1}</div><div class="prog-name">${name}</div></div>`;
   }).join("");
   const sdot=st.error?`<div class="sdot err"></div>`:`<div class="sdot ${st.busy?"running":"ok"}"></div>`;
-  const statusBox=`<div class="status-bar">${sdot}<span style="font-size:12px">${st.error||st.statusMsg||"自動実行中..."}</span></div>`;
-  const reattachBanner=st.needsReattach?.length>0?`
-    <div style="background:#1A1300;border:1px solid #3A2E00;border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <span style="font-size:12px;color:var(--amber)">資料を再添付してください：${st.needsReattach.join("・")}</span>
-      <button onclick="document.getElementById('reattachInput').click()" style="padding:5px 12px;border-radius:6px;border:1px solid var(--amber);background:none;color:var(--amber);font-size:11px;font-family:inherit;cursor:pointer;white-space:nowrap">ファイルを選択</button>
-    </div>
-    <input type="file" id="reattachInput" multiple accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.txt,.md,.csv,.json" style="display:none" onchange="reattachFiles(this)"/>
-  `:"";
+  const statusBox=`<div class="status-bar">${sdot}<span id="statusMsg" style="font-size:12px">${st.error||st.statusMsg||"自動実行中..."}</span></div>`;
+  const reattachBanner="";
   const hist=st.history.map((r,ri)=>`<div class="hist-block"><div class="hist-div">── ${PHASES[ri]} · ${PHASE_JA[ri]} ──</div>${Object.entries(r.answers).map(([id,a])=>`<div class="agent-card" style="border-color:var(--border2)"><div class="agent-head"><span style="color:var(--text3);display:flex">${ICONS[AGENTS[id].icon]}</span><span class="agent-name" style="color:var(--accent)">${AGENTS[id].name}</span></div><div class="agent-ans">${a}</div></div>`).join("")}</div>`).join("");
   let cur="";
-  if(!st.questions&&st.busy){cur=`<div class="spinner">質問を生成中...</div>`;}
+  if(!st.questions&&!st.busy){
+    // 止まっている状態 - 再開ボタンを表示
+    cur=`<div style="text-align:center;padding:32px 0">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:16px">会議が一時停止しています</div>
+      <button class="btn btn-accent" style="max-width:240px" onclick="retryFromError()">▶ 続きから再開する</button>
+    </div>`;
+  } else if(!st.questions&&st.busy){cur=`<div class="spinner">質問を生成中...</div>`;}
   else if(st.questions){
     const cards=Object.keys(AGENTS).map(id=>{
       const a=st.answers[id],isL=st.loading===id,q=st.questions[id]||"";
@@ -480,6 +538,10 @@ function renderMeeting(){
 // ── MANAGER ──
 function renderManager(){
   // First time (no mgrState yet): show spinner
+  if(!st.mgrState&&!st.busy)return`<div style="text-align:center;padding:32px 0">
+    <div style="font-size:13px;color:var(--text2);margin-bottom:16px">マネージャー審査が一時停止しています</div>
+    <button class="btn btn-accent" style="max-width:240px" onclick="retryFromError()">▶ 続きから再開する</button>
+  </div>`;
   if(!st.mgrState)return`<div class="spinner">マネージャーが仮想空間でシミュレーション中...<br><span style="font-size:11px;display:block;margin-top:6px">ループ ${st.loopCount}/30</span></div>`;
   const m=st.mgrState;if(!m)return`<div class="spinner">読み込み中...</div>`;
   const total=Object.values(m.scores||{}).reduce((a,b)=>a+b,0);
@@ -576,7 +638,38 @@ function renderSummary(){
   </div>`;
 }
 
-function goProjects(){cancelled=true;setTimeout(()=>{cancelled=false;},200);saveCurrent();S({step:"projects"});}
+function backToMeeting(){
+  // 直前の会議画面に戻る
+  const prevStep=st.history&&st.history.length>=PHASE_JA.length?"manager":"meeting";
+  st.step=prevStep;
+  st.busy=false;
+  st.error="";
+  render();
+}
+
+function goEdit(){
+  // 進行中の内容を保持したままinput画面へ
+  cancelled=true;
+  saveCurrent();
+  setTimeout(()=>{
+    cancelled=false;
+    // stepだけinputに戻す（project/facts/filesは保持）
+    st.step="input";
+    st.busy=false;
+    st.loading=null;
+    st.error="";
+    render();
+  },150);
+}
+
+function goProjects(){
+  cancelled=true;
+  saveCurrent();
+  setTimeout(()=>{
+    cancelled=false;
+    S({step:"projects"});
+  },200);
+}
 
 // ── EXPORT ──
 function showExportModal(){
@@ -681,18 +774,64 @@ function exportHTML(){
 function dl(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();}
 
 // ── EVENTS ──
+// イベントデリゲーション（プロジェクト一覧用）
+
+
 function bindEvents(){
   const t=document.getElementById("ptxt");
   if(t)t.addEventListener("input",e=>{st.project=e.target.value;const b=document.getElementById("startBtn");if(b)b.disabled=!st.project.trim();});
+  const ft=document.getElementById("factstxt");
+  if(ft)ft.addEventListener("input",e=>{st.facts=e.target.value;});
+  const mt=document.getElementById("materialtxt");
+  if(mt)mt.addEventListener("input",e=>{st.materials=e.target.value;});
   const dz=document.getElementById("dropZone");
-  if(dz){dz.addEventListener("dragover",e=>{e.preventDefault();dz.classList.add("drag");});dz.addEventListener("dragleave",()=>dz.classList.remove("drag"));dz.addEventListener("drop",async e=>{e.preventDefault();dz.classList.remove("drag");await addFiles(Array.from(e.dataTransfer.files));});}
+  if(dz){
+    dz.addEventListener("dragover",e=>{e.preventDefault();dz.classList.add("drag");});
+    dz.addEventListener("dragleave",()=>dz.classList.remove("drag"));
+    dz.addEventListener("drop",async e=>{e.preventDefault();dz.classList.remove("drag");await addFiles(Array.from(e.dataTransfer.files));});
+  }
   const fi=document.getElementById("fileInput");
   if(fi)fi.onchange=async e=>{await addFiles(Array.from(e.target.files));fi.value="";};
+
 }
 
 // ── FILES ──
-async function addFiles(raw){const p=await Promise.all(raw.map(pf));st.files=[...st.files,...p];render();}
-async function pf(f){const ext=f.name.split(".").pop().toLowerCase();if(f.type==="application/pdf"||ext==="pdf"){const d=await b64(f);return{type:"pdf",name:f.name,data:d,mimeType:"application/pdf"};}else if(f.type.startsWith("image/")){const d=await b64(f);return{type:"image",name:f.name,data:d,mimeType:f.type};}else{const d=await toTxt(f);return{type:"text",name:f.name,data:d};}}
+async function addFiles(raw){const p=(await Promise.all(raw.map(pf))).filter(Boolean);st.files=[...st.files,...p];render();}
+async function pf(f){
+  const ext=f.name.split(".").pop().toLowerCase();
+  if(f.type==="application/pdf"||ext==="pdf"){
+    // PDFはページ内テキストを抽出してtext型として保存
+    try{
+      const arrayBuf=await f.arrayBuffer();
+      const txt=await extractPdfText(arrayBuf);
+      return{type:"text",name:f.name,data:txt.slice(0,3000)};
+    }catch(e){
+      // 抽出失敗時はファイル名のみ記録
+      return{type:"text",name:f.name,data:`[${f.name}のテキスト抽出に失敗しました]`};
+    }
+  }else if(f.type.startsWith("image/")){
+    alert("画像ファイルはトークン消費が大きいため対応していません。テキストエリアに内容を貼り付けてください。");
+    return null;
+  }else{
+    const d=await toTxt(f);
+    return{type:"text",name:f.name,data:d.slice(0,3000)};
+  }
+}
+
+async function extractPdfText(arrayBuf){
+  // ブラウザでPDFテキスト抽出（pdfjs-distを使用）
+  const pdfjsLib=await import("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.mjs");
+  pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.mjs";
+  const pdf=await pdfjsLib.getDocument({data:arrayBuf}).promise;
+  let text="";
+  for(let i=1;i<=Math.min(pdf.numPages,10);i++){
+    const page=await pdf.getPage(i);
+    const content=await page.getTextContent();
+    pages.push(content.items.map(function(item){return item.str;}).join(" "));
+
+  }
+  return text||"[テキストを抽出できませんでした]";
+}
 function b64(f){return new Promise((r,j)=>{const rd=new FileReader();rd.onload=()=>r(rd.result.split(",")[1]);rd.onerror=j;rd.readAsDataURL(f);});}
 function toTxt(f){return new Promise((r,j)=>{const rd=new FileReader();rd.onload=()=>r(rd.result);rd.onerror=j;rd.readAsText(f);});}
 function removeFile(i){st.files=st.files.filter((_,idx)=>idx!==i);render();}
@@ -700,17 +839,25 @@ function removeFile(i){st.files=st.files.filter((_,idx)=>idx!==i);render();}
 // ── API ──
 async function api(system,msg,retryCount=0){
   const content=[];
-  for(const f of st.files){if(f.type==="pdf")content.push({type:"document",source:{type:"base64",media_type:"application/pdf",data:f.data}});else if(f.type==="image")content.push({type:"image",source:{type:"base64",media_type:f.mimeType,data:f.data}});else content.push({type:"text",text:`[Attached: ${f.name}]\n${f.data}`});}
+  for(const f of (st.files||[])){
+    if(f.data&&f.data!=="[binary]"){
+      content.push({type:"text",text:"[資料: "+f.name+"]\n"+f.data.slice(0,2000)});
+    }
+  }
   content.push({type:"text",text:msg});
-  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:800,system,messages:[{role:"user",content}]})});
+  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:600,system,messages:[{role:"user",content}]})});
   const data=await res.json();
   if(data.error){
     if(res.status===429||data.error.message?.includes("rate limit")||data.error.message?.includes("token")){
-      if(retryCount>=5)throw new Error("レート制限：5回リトライしました。しばらく待ってから再試行してください。");
-      for(let i=70;i>0;i--){
-        checkCancelled();
-        S({statusMsg:`レート制限中 — ${i}秒後に自動リトライ (${retryCount+1}/5回目)`});
+      if(retryCount>=3)throw new Error("レート制限：3回リトライしましたが解消されません。数分待ってからリトライしてください。");
+      for(let i=120;i>0;i--){
+        if(cancelled)throw new Error("__CANCELLED__");
+        // statusMsgのみ部分更新（DOM全体を再描画しない）
+        st.statusMsg=`レート制限中 — ${i}秒後に自動リトライ (${retryCount+1}/3回目)`;
+        const el=document.getElementById("statusMsg");
+        if(el)el.textContent=st.statusMsg;
         await new Promise(r=>setTimeout(r,1000));
+        if(cancelled)throw new Error("__CANCELLED__");
       }
       return api(system,msg,retryCount+1);
     }
@@ -722,9 +869,12 @@ async function api(system,msg,retryCount=0){
 function pj(t){try{return JSON.parse(t.replace(/```json\n?|```/g,"").trim());}catch{return null;}}
 
 // ── PROMPTS ──
-const FAC=`あなたはマーケティング戦略会議の司会AIです。参加エージェント：マーケター、デザイナー、経営コンサルタント、ユーザーリサーチャー。添付資料がある場合はその内容を踏まえて進行してください。JSONのみ出力：{"phase":"フェーズ名","questions":{"marketer":"質問","designer":"質問","consultant":"質問","researcher":"質問"},"context":"このフェーズで明らかにしたいこと50字以内"}`;
-const MGR=`あなたはシニアマーケティングマネージャーです。エージェントチームが策定したマーケティング戦略を、企画内容に最適な仮想空間（Instagram、Web、店舗、SNS広告など）でシミュレーションテストし、以下5項目を各20点満点で採点してください。採点基準：市場性（市場規模・需要の確かさ）、実現性（予算・リソースの実現可能性）、独自性（競合との差別化度）、戦略整合性（各施策の一貫性）、ユーザー共感度（ターゲットへの刺さり度）。JSONのみ出力：{"env":"テストした仮想空間名","scores":{"市場性":数値,"実現性":数値,"独自性":数値,"戦略整合性":数値,"ユーザー共感度":数値},"verdict":"総評50字以内","feedback":"改善指示50字（95点以上は空文字）","revisedStrategy":"改善戦略100字（95点未満のみ）"}`;
-const SUM=`マーケティング戦略会議の統括AIとして、マネージャーに承認された最終戦略をまとめてください。JSONのみ：{"title":"戦略タイトル","keyInsight":"最重要インサイト50字","strategy":"統合戦略200字","actions":["アクション1","アクション2","アクション3"],"kpi":["KPI1","KPI2","KPI3"],"nextStep":"今すぐやること50字"}`;
+const FAC=`あなたはマーケティング戦略会議の司会AIです。各エージェントに「論点・分析テーマ」を与えてください。
+重要：questionsフィールドは「質問文」ではなく「このフェーズでそのエージェントが分析・提言すべき論点」を書いてください。
+例：「この企画のターゲット層に対する最適な獲得チャネルを分析し、優先順位をつけて提言せよ」
+JSONのみ出力（他テキスト不要）：{"phase":"フェーズ名","questions":{"marketer":"論点","designer":"論点","consultant":"論点","researcher":"論点"},"context":"このフェーズの目的40字以内"}`;
+const MGR=`あなたはシニアマーケティングマネージャーです。エージェントチームが議論・提言した戦略を総合的に評価し、企画内容に最適な仮想空間（Instagram、Web、店舗等）でシミュレーションしてください。採点基準（各20点）：市場性・実現性・独自性・戦略整合性・ユーザー共感度。不足情報は推測で補い、必ず採点と提言を行ってください。質問はしないこと。JSONのみ出力：{"env":"仮想空間名","scores":{"市場性":数値,"実現性":数値,"独自性":数値,"戦略整合性":数値,"ユーザー共感度":数値},"verdict":"総評100字","feedback":"95点未満の具体的改善指示100字（95点以上は空文字）","revisedStrategy":"改善戦略150字（95点未満のみ）"}`;
+const SUM=`マーケティング戦略会議の統括AIとして、マネージャーに承認された最終戦略をまとめてください。JSONのみ出力：{"title":"戦略タイトル","keyInsight":"最重要インサイト50字","strategy":"統合戦略200字","actions":["アクション1","アクション2","アクション3"],"kpi":["KPI1","KPI2","KPI3"],"nextStep":"今すぐやること50字"}`;
 
 // ── FULL AUTO FLOW ──
 async function startMeeting(){
@@ -738,22 +888,72 @@ async function runPhase(phaseIdx,history){
   const histText=buildHistText(history);
   try{
     checkCancelled();
-    const msg=history.length===0?`企画概要：${st.project}\n現在のフェーズ：第1フェーズ（${PHASE_JA[0]}）`:`企画概要：${st.project}\n\n過去の議論：\n${histText}\n\n現在のフェーズ：第${phaseIdx+1}フェーズ（${PHASE_JA[phaseIdx]}）`;
+    const factsSection=st.facts?.trim()?`
+【確定数値（推論禁止）】${st.facts.slice(0,200)}`:"";
+    const matsSection=st.materials?.trim()?`
+【参考資料】${st.materials.slice(0,300)}`:"";
+    const msg=history.length===0
+      ?`企画:${st.project.slice(0,200)}${factsSection}${matsSection}
+フェーズ1(${PHASE_JA[0]})`
+      :`企画:${st.project.slice(0,200)}${factsSection}
+議論:${histText}
+フェーズ${phaseIdx+1}(${PHASE_JA[phaseIdx]})`;
     const raw=await api(FAC,msg);const p=pj(raw)||{};
     S({questions:p.questions||{},ctx:p.context||"",busy:false,statusMsg:`Phase ${phaseIdx+1}「${PHASE_JA[phaseIdx]}」 エージェントが回答中...`});
     const answers=await runAgentsAuto(p.questions||{},phaseIdx);
     const newHistory=[...history,{phase:PHASE_JA[phaseIdx],questions:p.questions||{},answers}];
     S({history:newHistory,answers:{}});
-    if(phaseIdx+1<PHASE_JA.length)await runPhase(phaseIdx+1,newHistory);
-    else{S({step:"manager",loopCount:0,mgrState:null,busy:true,statusMsg:"マネージャーへ提出中..."});await runManagerAuto(buildHistText(newHistory),"",0,newHistory);}
+    if(phaseIdx+1<PHASE_JA.length){
+      // フェーズ間30秒待機
+      for(let w=30;w>0;w--){
+        if(cancelled)throw new Error("__CANCELLED__");
+        st.statusMsg=`次のフェーズまで ${w}秒待機中...`;
+        const el=document.getElementById("statusMsg");
+        if(el)el.textContent=st.statusMsg;
+        await new Promise(r=>setTimeout(r,1000));
+      }
+      await runPhase(phaseIdx+1,newHistory);
+    } else{
+      // マネージャーへの提出前に45秒待機
+      for(let w=45;w>0;w--){
+        if(cancelled)throw new Error("__CANCELLED__");
+        st.statusMsg=`マネージャーへ提出まで ${w}秒待機中...`;
+        const el=document.getElementById("statusMsg");
+        if(el)el.textContent=st.statusMsg;
+        await new Promise(r=>setTimeout(r,1000));
+      }
+      S({step:"manager",loopCount:0,mgrState:null,busy:true,statusMsg:"マネージャーへ提出中..."});
+      await runManagerAuto(buildHistText(newHistory),"",0,newHistory);
+    }
   }catch(e){if(e.message==="__CANCELLED__")return;S({error:e.message,busy:false,statusMsg:""});}
 }
 async function runAgentsAuto(qs,phaseIdx){
   const answers={};
-  for(const id of Object.keys(AGENTS)){
-    S({loading:id,statusMsg:`${PHASES[phaseIdx]} — ${AGENTS[id].name} が回答中...`});
-    try{checkCancelled();const ans=await api(ROLES[id],`企画：${st.project}\n質問：${qs[id]||"このフェーズについて専門的見解を述べてください。"}`);answers[id]=ans;st.answers={...st.answers,[id]:ans};S({loading:id});}
-    catch(e){S({error:e.message,loading:null});throw e;}
+  const agentKeys=Object.keys(AGENTS);
+  for(let i=0;i<agentKeys.length;i++){
+    const id=agentKeys[i];
+    S({loading:id,statusMsg:`${PHASES[phaseIdx]} — ${AGENTS[id].name} が回答中... (${i+1}/${agentKeys.length})`});
+    try{
+      checkCancelled();
+      const factsNote=st.facts?.trim()?`
+【必須前提・確定数値（推論で変えるな）】${st.facts.slice(0,200)}`:"";
+      const ans=await api(ROLES[id],`企画：${st.project}${factsNote}
+質問：${qs[id]||"このフェーズについて専門的見解を述べてください。"}`);
+      answers[id]=ans;
+      st.answers={...st.answers,[id]:ans};
+      S({loading:id});
+      // 次のエージェントまで20秒待機（レート制限対策）
+      if(i<agentKeys.length-1){
+        for(let w=20;w>0;w--){
+          if(cancelled)throw new Error("__CANCELLED__");
+          st.statusMsg=`次のエージェントまで ${w}秒待機中...`;
+          const el=document.getElementById("statusMsg");
+          if(el)el.textContent=st.statusMsg;
+          await new Promise(r=>setTimeout(r,1000));
+        }
+      }
+    }
+    catch(e){if(e.message==="__CANCELLED__")throw e;S({error:e.message,loading:null});throw e;}
   }
   S({loading:null});return answers;
 }
@@ -763,7 +963,7 @@ async function runManagerAuto(histText,prevRevised,loopCount,history){
   const combined=prevRevised?`${histText}\n\n[Revised]\n${prevRevised}`:histText;
   try{
     checkCancelled();
-    const raw=await api(MGR,`企画：${st.project}\n\n戦略案：\n${combined}\nブラッシュアップ回数：${loopCount}`);
+    const factsForMgr=st.facts?.trim()?`\n【確定事実】${st.facts.slice(0,150)}`:"";    const raw=await api(MGR,`企画：${st.project}${factsForMgr}\n\n戦略案：\n${combined}\nブラッシュアップ回数：${loopCount}`);
     const m=pj(raw)||{};const total=Object.values(m.scores||{}).reduce((a,b)=>a+b,0);
     S({mgrState:m,loopCount,busy:false});saveCurrent();
     if(total>=95||loopCount>=30)setTimeout(()=>generateFinalAuto(history,m),600);
@@ -799,8 +999,8 @@ async function brushupAuto(histText,prevMgr,newCount,history){
     try{
       checkCancelled();
       const ans=await api(
-        ROLES[id]+"\n改善フィードバックを受けて戦略をブラッシュアップしてください。",
-        `企画：${st.project}\nManager改善指示：${feedback}\n前回の議論：${histText}\n100字以内で改善案を述べてください。`
+        ROLES[id],
+        `改善指示：${feedback}\n企画：${st.project.slice(0,100)}\n結論のみ50字で`
       );
       revised[id]=ans;
       // done state - fully immutable update
@@ -842,12 +1042,31 @@ async function reattachFiles(input){
 }
 async function retryFromError(){
   S({error:""});
-  await resumeFromSave();
+  try{
+    await resumeFromSave();
+  }catch(e){
+    if(e.message!=="__CANCELLED__"){
+      S({error:e.message,busy:false});
+    }
+  }
 }
 async function retryBrushup(){if(!st.mgrState)return;S({error:""});await brushupAuto(buildHistText(st.history),st.mgrState,st.loopCount+1,st.history);}
-function buildHistText(hist){return hist.map((r,i)=>`[Phase ${i+1}: ${PHASE_JA[i]}]\n`+Object.entries(r.answers).map(([id,a])=>`${AGENTS[id].name}: ${a}`).join("\n")).join("\n\n");}
+function buildHistText(hist){
+  return hist.map((r,i)=>`[Phase${i+1}:${PHASE_JA[i]}]`+Object.entries(r.answers).map(([id,a])=>`${AGENTS[id].name}:${a.slice(0,150)}`).join("|")).join("\n");
+}
 
-function confirmReset(){if(confirm("このプロジェクトをリセットしますか？")){cancelled=true;setTimeout(()=>{cancelled=false;resetCurrent();},100);}}
+function confirmReset(){
+  cancelled=true;
+  setTimeout(()=>{
+    cancelled=false;
+    if(st.step==="summary"){
+      // サマリー画面ならプロジェクト一覧へ
+      S({step:"projects"});
+    } else {
+      resetCurrent();
+    }
+  },150);
+}
 function resetCurrent(){st={...st,step:"input",phaseIdx:0,questions:null,ctx:"",answers:{},loading:null,history:[],mgrState:null,loopCount:0,summary:null,error:"",busy:false,statusMsg:"",brushupProgress:null,brushupLog:[],needsReattach:null};render();}
 
 // ── INIT ──
