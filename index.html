@@ -5,530 +5,192 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Strategy Council</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&family=Noto+Sans+JP:wght@400;500;700&display=swap');
-
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#FAFBFC;--bg2:#FFFFFF;--bg3:#F2F5F8;--bg4:#E8EDF2;
-  --border:#E4EAF0;--border2:#CDD6E0;
-  --text:#0D1B2A;--text2:#4A5E72;--text3:#8EA0B2;
-  --c1:#23956a;--c1l:#E8F5EF;--c1d:#1a7a56;
-  --c2:#2195ca;--c2l:#E8F4FB;--c2d:#1778a8;
-  --c3:#e89f44;--c3l:#FEF5E8;
-  --c4:#e45549;--c4l:#FEF0EF;
-  --c5:#8dcba7;--c6:#6fc6ea;--c7:#f5b6c8;
-  --shadow-sm:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
-  --shadow-md:0 4px 16px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04);
-  --shadow-lg:0 12px 40px rgba(0,0,0,.10),0 4px 12px rgba(0,0,0,.05);
-  --r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:24px;
+  --bg:#08090C;--bg2:#0E1017;--bg3:#151820;--bg4:#1C2030;
+  --border:#1E2438;--border2:#2A3050;
+  --text:#E8ECF5;--text2:#7B8BB2;--text3:#3D4A6A;
+  --accent:#5B7FFF;--accent2:#3D5FE0;
+  --amber:#F0A429;--purple:#9B7FFF;--teal:#2DD4B0;
+  --blue:#5BA4FF;--green:#34D48A;--red:#FF5B6B;
+  --card-hover:#131620;
 }
-
-body{
-  background:var(--bg);
-  color:var(--text);
-  font-family:'DM Sans','Noto Sans JP',sans-serif;
-  min-height:100vh;
-  -webkit-font-smoothing:antialiased;
-  line-height:1.6;
-}
-
-/* SCROLLBAR */
-::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-track{background:var(--bg3)}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-textarea::-webkit-scrollbar{width:3px}
+body{background:var(--bg);color:var(--text);font-family:'Inter','Noto Sans JP',sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text3)}
+textarea::-webkit-scrollbar{width:4px}
+textarea::-webkit-scrollbar-track{background:var(--bg3)}
 textarea::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 
 /* HEADER */
-header{
-  border-bottom:1px solid var(--border);
-  padding:0 32px;
-  height:56px;
-  display:flex;
-  align-items:center;
-  gap:14px;
-  background:rgba(255,255,255,.92);
-  position:sticky;
-  top:0;
-  z-index:100;
-  backdrop-filter:blur(20px);
-  -webkit-backdrop-filter:blur(20px);
-}
-.logo{
-  width:32px;height:32px;
-  border-radius:10px;
-  background:linear-gradient(135deg,var(--c1),var(--c2));
-  display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;
-  box-shadow:0 2px 8px rgba(35,149,106,.3);
-}
-.htitle{font-size:14px;font-weight:700;letter-spacing:-.01em;color:var(--text)}
-.hsub{font-size:10px;color:var(--text3);letter-spacing:.1em;font-weight:500}
+header{border-bottom:1px solid var(--border);padding:0 28px;height:52px;display:flex;align-items:center;gap:12px;background:var(--bg2);position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
+.logo{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,#5B7FFF,#9B7FFF);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.htitle{font-size:13px;font-weight:700;letter-spacing:.02em}
+.hsub{font-size:10px;color:var(--text3);letter-spacing:.12em;font-family:'Inter',sans-serif}
 .hright{margin-left:auto;display:flex;align-items:center;gap:8px}
-.hbtn{
-  background:none;
-  border:1px solid var(--border);
-  color:var(--text2);
-  padding:6px 14px;
-  border-radius:var(--r-sm);
-  cursor:pointer;
-  font-size:12px;
-  font-family:inherit;
-  font-weight:500;
-  transition:all .15s;
-  letter-spacing:.01em;
-}
-.hbtn:hover{border-color:var(--c1);color:var(--c1);background:var(--c1l)}
-.hbtn.icon-btn{padding:6px 10px;display:flex;align-items:center;justify-content:center}
-.hbtn.icon-btn:hover{border-color:var(--c1);color:var(--c1);background:var(--c1l)}
-.hbtn.danger:hover{border-color:var(--c4);color:var(--c4);background:var(--c4l)}
+.hbtn{background:none;border:1px solid var(--border2);color:var(--text2);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;transition:all .15s}
+.hbtn:hover{border-color:var(--text2);color:var(--text)}
+.hbtn.icon-btn{padding:5px 9px;display:flex;align-items:center;justify-content:center}
+.hbtn.icon-btn:hover{border-color:var(--accent);color:var(--accent)}
+.hbtn.danger:hover{border-color:var(--red);color:var(--red)}
 
-main{max-width:780px;margin:0 auto;padding:32px 20px}
+main{max-width:760px;margin:0 auto;padding:28px 18px}
 
 /* BUTTONS */
-.btn{
-  width:100%;
-  padding:13px 20px;
-  border:none;
-  border-radius:var(--r-md);
-  font-size:14px;
-  font-weight:600;
-  cursor:pointer;
-  font-family:inherit;
-  transition:all .2s cubic-bezier(.4,0,.2,1);
-  letter-spacing:-.01em;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-}
-.btn:disabled{opacity:.35;cursor:not-allowed;transform:none!important}
-.btn-accent{
-  background:linear-gradient(135deg,var(--c1),var(--c1d));
-  color:#fff;
-  box-shadow:0 2px 12px rgba(35,149,106,.3);
-}
-.btn-accent:hover:not(:disabled){
-  box-shadow:0 4px 20px rgba(35,149,106,.4);
-  transform:translateY(-1px);
-}
-.btn-ghost{
-  background:var(--bg3);
-  border:1px solid var(--border);
-  color:var(--text2);
-  margin-top:8px;
-}
-.btn-ghost:hover{border-color:var(--border2);color:var(--text);background:var(--bg2)}
-.btn-export{
-  background:var(--bg2);
-  border:1.5px solid var(--c1);
-  color:var(--c1);
-  margin-top:6px;
-  font-weight:600;
-}
-.btn-export:hover{background:var(--c1l);box-shadow:0 2px 10px rgba(35,149,106,.15)}
+.btn{width:100%;padding:12px 16px;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s;letter-spacing:.03em;display:flex;align-items:center;justify-content:center;gap:7px}
+.btn:disabled{opacity:.3;cursor:not-allowed}
+.btn-accent{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.btn-accent:hover:not(:disabled){filter:brightness(1.1);transform:translateY(-1px)}
+.btn-ghost{background:var(--bg3);border:1px solid var(--border);color:var(--text2);margin-top:8px}
+.btn-ghost:hover{border-color:var(--border2);color:var(--text)}
+.btn-export{background:var(--bg3);border:1px solid var(--teal);color:var(--teal);margin-top:6px}
+.btn-export:hover{background:#0A1F1A}
 
 /* INPUTS */
-textarea,input[type=text],input[type=password]{
-  width:100%;
-  background:var(--bg2);
-  border:1.5px solid var(--border);
-  border-radius:var(--r-md);
-  color:var(--text);
-  padding:12px 14px;
-  font-size:14px;
-  font-family:inherit;
-  outline:none;
-  transition:all .2s;
-  box-shadow:var(--shadow-sm);
-}
-textarea{resize:vertical;line-height:1.7}
-textarea:focus,input:focus{
-  border-color:var(--c1);
-  box-shadow:0 0 0 3px rgba(35,149,106,.12),var(--shadow-sm);
-}
+textarea,input[type=text],input[type=password]{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:11px 13px;font-size:13px;font-family:inherit;outline:none;transition:border-color .2s}
+textarea{resize:vertical}
+textarea:focus,input:focus{border-color:var(--accent)}
 textarea::placeholder,input::placeholder{color:var(--text3)}
-.lbl{
-  font-size:11px;
-  font-weight:700;
-  color:var(--text3);
-  letter-spacing:.08em;
-  display:block;
-  margin-bottom:6px;
-  text-transform:uppercase;
-}
+.lbl{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.08em;display:block;margin-bottom:6px;text-transform:uppercase}
 .input-wrap{position:relative}
-.input-wrap input{padding-right:44px}
-.eye{
-  position:absolute;right:12px;top:50%;
-  transform:translateY(-50%);
-  background:none;border:none;
-  color:var(--text3);cursor:pointer;font-size:14px;
-  transition:color .15s;
-}
-.eye:hover{color:var(--text2)}
+.input-wrap input{padding-right:40px}
+.eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px}
 
-/* DROP ZONE */
-.drop{
-  border:2px dashed var(--border2);
-  border-radius:var(--r-md);
-  padding:20px;
-  text-align:center;
-  cursor:pointer;
-  margin:10px 0;
-  transition:all .2s;
-  background:var(--bg3);
-}
-.drop:hover,.drop.drag{
-  border-color:var(--c1);
-  background:var(--c1l);
-}
-.fi-item{
-  display:flex;align-items:center;gap:8px;
-  padding:8px 12px;
-  border:1px solid var(--border);
-  border-radius:var(--r-sm);
-  margin-bottom:5px;
-  background:var(--bg2);
-  box-shadow:var(--shadow-sm);
-}
+/* DROP */
+.drop{border:1.5px dashed var(--border2);border-radius:9px;padding:16px;text-align:center;cursor:pointer;margin:10px 0;transition:all .2s}
+.drop:hover,.drop.drag{border-color:var(--accent);background:#0A0E1A}
+.fi-item{display:flex;align-items:center;gap:8px;padding:7px 11px;border:1px solid var(--border);border-radius:8px;margin-bottom:5px;background:var(--bg3)}
 .fi-name{font-size:12px;color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fi-badge{font-size:9px;padding:2px 7px;border-radius:100px;background:var(--c1l);color:var(--c1);font-weight:700;letter-spacing:.06em}
-.fi-rm{background:none;border:none;color:var(--text3);cursor:pointer;font-size:15px;padding:0 3px;transition:color .15s}
-.fi-rm:hover{color:var(--c4)}
+.fi-badge{font-size:9px;padding:2px 7px;border-radius:100px;background:var(--bg4);color:var(--text3);font-weight:600;letter-spacing:.06em}
+.fi-rm{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:0 3px}
 
 /* CARDS */
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;margin-bottom:10px;box-shadow:var(--shadow-sm)}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:10px;transition:all .2s}
 
 /* PROJECT LIST */
-.proj-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
-.proj-header h2{font-size:22px;font-weight:700;letter-spacing:-.03em;color:var(--text)}
-.proj-card{
-  background:var(--bg2);
-  border:1px solid var(--border);
-  border-radius:var(--r-lg);
-  padding:16px 20px;
-  margin-bottom:8px;
-  cursor:pointer;
-  transition:all .2s cubic-bezier(.4,0,.2,1);
-  display:flex;align-items:center;gap:16px;
-  box-shadow:var(--shadow-sm);
-}
-.proj-card:hover{
-  border-color:var(--c1);
-  background:var(--bg2);
-  box-shadow:var(--shadow-md);
-  transform:translateY(-2px);
-}
-.proj-icon{
-  width:42px;height:42px;
-  border-radius:var(--r-sm);
-  display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;
-}
+.proj-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.proj-header h2{font-size:18px;font-weight:700}
+.proj-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:15px 18px;margin-bottom:8px;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:14px}
+.proj-card:hover{border-color:var(--border2);background:var(--card-hover);transform:translateX(2px)}
+.proj-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
 .proj-info{flex:1;min-width:0}
-.proj-name{font-size:14px;font-weight:600;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:-.01em}
-.proj-meta{font-size:11px;color:var(--text3);font-weight:400}
-.proj-status{font-size:10px;padding:4px 10px;border-radius:100px;font-weight:700;letter-spacing:.05em;flex-shrink:0}
-.status-running{background:var(--c2l);color:var(--c2);border:1px solid rgba(33,149,202,.2)}
-.status-done{background:var(--c1l);color:var(--c1);border:1px solid rgba(35,149,106,.2)}
+.proj-name{font-size:13px;font-weight:600;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.proj-meta{font-size:11px;color:var(--text3)}
+.proj-status{font-size:10px;padding:3px 9px;border-radius:100px;font-weight:600;letter-spacing:.06em;flex-shrink:0}
+.status-running{background:#0A1225;color:var(--accent);border:1px solid #1A2A50}
+.status-done{background:#071A0F;color:var(--green);border:1px solid #0F3020}
 .proj-actions{display:flex;gap:6px;flex-shrink:0}
-.proj-btn{
-  padding:5px 12px;
-  border-radius:var(--r-sm);
-  font-size:11px;font-weight:600;
-  font-family:inherit;cursor:pointer;
-  border:1px solid var(--border);
-  background:none;color:var(--text2);
-  transition:all .15s;
-}
-.proj-btn:hover{color:var(--text);border-color:var(--border2);background:var(--bg3)}
-.proj-btn.del:hover{color:var(--c4);border-color:var(--c4);background:var(--c4l)}
-.new-proj-btn{
-  width:100%;
-  padding:14px;
-  border:2px dashed var(--border2);
-  border-radius:var(--r-lg);
-  background:none;
-  color:var(--text3);
-  font-size:13px;font-family:inherit;
-  cursor:pointer;
-  transition:all .2s;
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  margin-top:8px;font-weight:500;
-}
-.new-proj-btn:hover{border-color:var(--c1);color:var(--c1);background:var(--c1l)}
+.proj-btn{padding:5px 11px;border-radius:6px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;border:1px solid var(--border2);background:none;color:var(--text2);transition:all .15s}
+.proj-btn:hover{color:var(--text);border-color:var(--text2)}
+.proj-btn.del:hover{color:var(--red);border-color:var(--red)}
+.new-proj-btn{width:100%;padding:13px;border:1.5px dashed var(--border2);border-radius:12px;background:none;color:var(--text3);font-size:13px;font-family:inherit;cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px}
+.new-proj-btn:hover{border-color:var(--accent);color:var(--accent);background:#0A0E1A}
 
 /* AGENT BADGES */
-.badges{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
-.abadge{
-  font-size:11px;padding:5px 12px;
-  border-radius:100px;
-  background:var(--bg3);
-  border:1px solid var(--border);
-  color:var(--text2);font-weight:500;
-  display:inline-flex;align-items:center;gap:5px;
-}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}
+.abadge{font-size:11px;padding:4px 11px;border-radius:100px;background:var(--bg3);border:1px solid var(--border2);color:var(--text2);font-weight:500}
 
 /* PROGRESS */
-.prog-wrap{margin-bottom:24px}
-.prog-stages{display:flex;align-items:flex-start;gap:0;position:relative}
+.prog-wrap{margin-bottom:20px}
+.prog-stages{display:flex;align-items:flex-start;gap:0}
 .prog-stage{flex:1;text-align:center;position:relative}
-.prog-stage:not(:last-child)::after{
-  content:'';position:absolute;
-  top:10px;left:55%;width:90%;height:2px;
-  background:var(--border);z-index:0;
-  border-radius:1px;
-}
-.prog-stage.done:not(:last-child)::after{background:var(--c1)}
-.prog-dot{
-  width:22px;height:22px;border-radius:50%;
-  border:2px solid var(--border);
-  background:var(--bg2);
-  margin:0 auto 6px;
-  position:relative;z-index:1;
-  display:flex;align-items:center;justify-content:center;
-  font-size:8px;font-weight:700;
-  transition:all .3s;
-  color:var(--text3);
-  box-shadow:var(--shadow-sm);
-}
-.prog-stage.done .prog-dot{background:var(--c1);border-color:var(--c1);color:#fff;box-shadow:0 2px 8px rgba(35,149,106,.3)}
-.prog-stage.active .prog-dot{border-color:var(--c1);color:var(--c1);animation:glow 1.5s infinite;background:var(--c1l)}
-@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(35,149,106,.3)}50%{box-shadow:0 0 0 6px rgba(35,149,106,0)}}
-.prog-name{font-size:9px;color:var(--text3);letter-spacing:.02em;line-height:1.3;font-weight:500}
-.prog-stage.done .prog-name,.prog-stage.active .prog-name{color:var(--c1);font-weight:600}
+.prog-stage:not(:last-child)::after{content:'';position:absolute;top:9px;left:60%;width:80%;height:1.5px;background:var(--border);z-index:0}
+.prog-stage.done:not(:last-child)::after{background:var(--accent)}
+.prog-dot{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--border2);background:var(--bg);margin:0 auto 5px;position:relative;z-index:1;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;transition:all .3s;color:var(--text3)}
+.prog-stage.done .prog-dot{background:var(--accent);border-color:var(--accent);color:#fff}
+.prog-stage.active .prog-dot{border-color:var(--accent);color:var(--accent);animation:glow 1.5s infinite}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 #5B7FFF40}50%{box-shadow:0 0 0 5px #5B7FFF00}}
+.prog-name{font-size:9px;color:var(--text3);letter-spacing:.04em;line-height:1.3}
+.prog-stage.done .prog-name,.prog-stage.active .prog-name{color:var(--accent)}
 
-/* STATUS BAR */
-.status-bar{
-  display:flex;align-items:center;gap:10px;
-  padding:10px 16px;
-  background:#FFFFFF;
-  border:1.5px solid var(--border);
-  border-radius:var(--r-md);
-  margin-bottom:20px;
-  font-size:12px;color:var(--text);
-  font-weight:500;
-  box-shadow:var(--shadow-sm);
-}
-.sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.sdot.running{background:var(--c1);animation:glow 1.2s infinite}
-.sdot.ok{background:var(--c1)}
-.sdot.err{background:var(--c4)}
+/* STATUS */
+.status-bar{display:flex;align-items:center;gap:9px;padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;margin-bottom:16px;font-size:12px;color:var(--text2)}
+.sdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.sdot.running{background:var(--accent);animation:glow 1.2s infinite}
+.sdot.ok{background:var(--green)}
+.sdot.err{background:var(--red)}
 
 /* AGENT CARDS */
-.agent-card{
-  border:1.5px solid var(--border);
-  border-radius:var(--r-md);
-  padding:16px;
-  margin-bottom:10px;
-  background:var(--bg2);
-  transition:all .2s;
-  box-shadow:var(--shadow-sm);
-}
-.agent-card:hover{box-shadow:var(--shadow-md)}
-.agent-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.agent-name{font-size:11px;font-weight:700;letter-spacing:.05em}
-.agent-q{
-  font-size:11px;color:var(--text3);
-  background:var(--bg3);
-  padding:8px 12px;
-  border-radius:var(--r-sm);
-  margin-bottom:10px;
-  line-height:1.6;
-  border-left:2px solid var(--border2);
-}
-.agent-ans{font-size:13px;color:var(--text2);line-height:1.85;font-weight:400}
-.dots{display:flex;gap:5px;padding:6px 0}
-.dot{width:5px;height:5px;border-radius:50%}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
-.b1{animation:blink 1.2s infinite}
-.b2{animation:blink 1.2s infinite .2s}
-.b3{animation:blink 1.2s infinite .4s}
+.agent-card{border:1px solid var(--border);border-radius:11px;padding:13px 15px;margin-bottom:9px;background:var(--bg2);transition:border-color .3s}
+.agent-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.agent-name{font-size:11px;font-weight:700;letter-spacing:.04em}
+.agent-q{font-size:11px;color:var(--text3);background:var(--bg);padding:5px 10px;border-radius:6px;margin-bottom:8px;line-height:1.6}
+.agent-ans{font-size:13px;color:var(--text2);line-height:1.85}
+.dots{display:flex;gap:4px;padding:5px 0}
+.dot{width:4px;height:4px;border-radius:50%}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.1}}
+.b1{animation:blink 1.1s infinite}
+.b2{animation:blink 1.1s infinite .2s}
+.b3{animation:blink 1.1s infinite .4s}
 
-/* HISTORY / ACCORDION */
-.hist-block{opacity:.35;margin-bottom:16px}
-.hist-div{font-size:10px;color:var(--text3);letter-spacing:.12em;margin-bottom:8px;font-weight:700}
-.accordion{border:1.5px solid var(--border);border-radius:var(--r-md);overflow:hidden;margin-bottom:8px;box-shadow:var(--shadow-sm)}
-.accordion-header{
-  display:flex;align-items:center;gap:10px;
-  padding:12px 16px;cursor:pointer;
-  background:var(--bg2);
-  transition:background .15s;user-select:none;
-}
-.accordion-header:hover{background:var(--c1l)}
-.accordion-phase{font-size:9px;font-weight:800;color:var(--c1);letter-spacing:.12em;min-width:64px;text-transform:uppercase}
-.accordion-title{font-size:13px;font-weight:600;color:var(--text);flex:1;letter-spacing:-.01em}
-.accordion-summary{font-size:11px;color:var(--text3);flex:2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.accordion-chevron{color:var(--text3);transition:transform .25s;flex-shrink:0}
-.accordion-chevron.open{transform:rotate(180deg)}
-.accordion-body{border-top:1px solid var(--border);padding:16px;background:#FAFCFE;display:none}
-.accordion-body.open{display:block;animation:fadeUp .2s ease}
-.accordion-agent{padding:10px 0;border-bottom:1px solid var(--border)}
-.accordion-agent:last-child{border-bottom:none}
-.accordion-agent-head{display:flex;align-items:center;gap:7px;margin-bottom:6px}
-.accordion-agent-name{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
-.accordion-agent-ans{font-size:12px;color:var(--text2);line-height:1.8}
+/* HISTORY */
+.hist-block{opacity:.28;margin-bottom:20px}
+.hist-div{font-size:10px;color:var(--text3);letter-spacing:.14em;margin-bottom:8px;font-weight:600}
 
 /* PHASE */
-.phase-lbl{font-size:10px;color:var(--c1);letter-spacing:.15em;font-weight:800;margin-bottom:4px;text-transform:uppercase}
-.phase-ttl{font-size:17px;font-weight:700;margin-bottom:12px;letter-spacing:-.02em}
-.ctx-box{
-  font-size:12px;color:var(--c1d);
-  padding:10px 14px 10px 16px;
-  border-left:3px solid var(--c1);
-  border-radius:0 var(--r-sm) var(--r-sm) 0;
-  margin-bottom:16px;
-  background:var(--c1l);
-  font-weight:500;
-}
+.phase-lbl{font-size:10px;color:var(--accent);letter-spacing:.15em;font-weight:700;margin-bottom:2px}
+.phase-ttl{font-size:15px;font-weight:700;margin-bottom:10px}
+.ctx-box{font-size:12px;color:var(--text3);padding:7px 12px 7px 14px;border-left:2px solid var(--accent);border-radius:0 6px 6px 0;margin-bottom:14px;background:var(--bg3)}
 
 /* MANAGER */
-.mgr-panel{border:1.5px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-top:16px;box-shadow:var(--shadow-md)}
-.mgr-hdr{
-  display:flex;align-items:center;gap:10px;
-  padding:14px 20px;
-  background:linear-gradient(135deg,var(--c1l),var(--c2l));
-  border-bottom:1px solid var(--border);
-}
-.mgr-body{padding:20px}
-.env-badge{
-  display:inline-flex;align-items:center;gap:5px;
-  font-size:11px;padding:4px 12px;border-radius:100px;
-  background:var(--c2l);color:var(--c2);
-  border:1px solid rgba(33,149,202,.2);
-  margin-bottom:16px;font-weight:600;
-}
-.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
-.score-item{
-  background:var(--bg3);
-  border-radius:var(--r-sm);
-  padding:10px 12px;
-  border:1px solid var(--border);
-}
-.score-name{font-size:10px;color:var(--text3);margin-bottom:6px;font-weight:700;letter-spacing:.04em}
-.sbar-wrap{height:4px;background:var(--border);border-radius:2px;margin-bottom:5px;overflow:hidden}
+.mgr-panel{border:1px solid var(--border);border-radius:13px;overflow:hidden;margin-top:14px}
+.mgr-hdr{display:flex;align-items:center;gap:8px;padding:11px 16px;background:var(--bg3);border-bottom:1px solid var(--border)}
+.mgr-body{padding:16px}
+.env-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 10px;border-radius:100px;background:#0A1525;color:var(--blue);border:1px solid #1A3050;margin-bottom:13px;font-weight:500}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:11px}
+.score-item{background:var(--bg);border-radius:8px;padding:9px 12px;border:1px solid var(--border)}
+.score-name{font-size:10px;color:var(--text3);margin-bottom:5px;font-weight:600;letter-spacing:.04em}
+.sbar-wrap{height:3px;background:var(--border);border-radius:2px;margin-bottom:5px;overflow:hidden}
 .sbar{height:100%;border-radius:2px;transition:width .8s cubic-bezier(.4,0,.2,1)}
-.sval{font-size:14px;font-weight:700}
-.total-box{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:14px 18px;border-radius:var(--r-md);
-  margin-bottom:14px;border:1.5px solid var(--border);
-  box-shadow:var(--shadow-sm);
-}
-.total-num{font-size:28px;font-weight:800;letter-spacing:-.04em}
-.mgr-verdict{font-size:13px;color:var(--text2);line-height:1.85;margin-bottom:12px}
-.mgr-feedback{
-  font-size:12px;color:var(--text2);
-  background:var(--c3l);
-  padding:10px 14px;border-radius:var(--r-sm);
-  line-height:1.7;border-left:3px solid var(--c3);
-}
-.loop-badge{
-  margin-left:auto;font-size:10px;
-  padding:3px 10px;border-radius:100px;
-  background:rgba(232,159,68,.15);color:var(--c3);
-  border:1px solid rgba(232,159,68,.3);font-weight:700;
-}
+.sval{font-size:13px;font-weight:700}
+.total-box{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:9px;margin-bottom:12px;border:1px solid var(--border)}
+.total-num{font-size:26px;font-weight:800;letter-spacing:-.02em}
+.mgr-verdict{font-size:13px;color:var(--text2);line-height:1.85;margin-bottom:10px}
+.mgr-feedback{font-size:12px;color:var(--text3);background:var(--bg);padding:8px 12px;border-radius:7px;line-height:1.7;border-left:2px solid var(--amber)}
+.loop-badge{margin-left:auto;font-size:10px;padding:2px 9px;border-radius:100px;background:#121000;color:var(--amber);border:1px solid #2A2500;font-weight:600}
 
 /* SUMMARY */
-.insight-box{
-  background:linear-gradient(135deg,#F0FAF5,#EBF8F2);
-  border:1.5px solid rgba(35,149,106,.2);
-  border-radius:var(--r-lg);
-  padding:20px;margin-bottom:16px;
-  box-shadow:0 2px 10px rgba(35,149,106,.08);
-}
-.strat-box{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r-lg);padding:18px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
-.kv-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
-.kv-card{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r-md);padding:16px;box-shadow:var(--shadow-sm)}
-.kv-title{font-size:9px;letter-spacing:.15em;margin-bottom:10px;font-weight:800;text-transform:uppercase}
-.kv-item{font-size:12px;color:var(--text2);padding:7px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;line-height:1.5}
-.next-box{
-  background:linear-gradient(135deg,var(--c2l),#F0F9FF);
-  border:1.5px solid rgba(33,149,202,.2);
-  border-radius:var(--r-md);padding:14px 18px;
-  display:flex;align-items:center;gap:12px;
-  margin-bottom:16px;
-  box-shadow:0 2px 8px rgba(33,149,202,.08);
-}
-.approved-tag{
-  display:inline-flex;align-items:center;gap:5px;
-  font-size:10px;padding:4px 12px;border-radius:100px;
-  background:var(--c1l);color:var(--c1);
-  border:1.5px solid rgba(35,149,106,.25);font-weight:700;
-}
+.insight-box{background:linear-gradient(135deg,#100D00,#0A0D1A);border:1px solid #2A2000;border-radius:11px;padding:14px 16px;margin-bottom:12px}
+.strat-box{background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:14px 16px;margin-bottom:12px}
+.kv-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:12px}
+.kv-card{background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:13px}
+.kv-title{font-size:9px;letter-spacing:.14em;margin-bottom:8px;font-weight:700;text-transform:uppercase}
+.kv-item{font-size:12px;color:var(--text2);padding:6px 0;border-bottom:1px solid var(--border);display:flex;gap:7px;line-height:1.5}
+.next-box{background:#080D1A;border:1px solid #1A2545;border-radius:11px;padding:12px 16px;display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.approved-tag{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:3px 9px;border-radius:100px;background:#071A0F;color:var(--green);border:1px solid #0F3020;font-weight:700}
 
 /* MISC */
-.spinner{text-align:center;padding:48px 0;font-size:13px;color:var(--text3);animation:blink 1.5s infinite;font-weight:500}
-.err{font-size:12px;color:var(--c4);background:var(--c4l);border-radius:var(--r-sm);padding:10px 14px;margin-top:10px;border:1px solid rgba(228,85,73,.2);font-weight:500}
-.retry-btn{margin-top:8px;padding:6px 16px;border-radius:var(--r-sm);border:1.5px solid var(--c4);background:none;color:var(--c4);font-size:11px;font-family:inherit;cursor:pointer;font-weight:600;transition:all .15s}
-.retry-btn:hover{background:var(--c4l)}
-@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.spinner{text-align:center;padding:44px 0;font-size:12px;color:var(--text3);animation:blink 1.5s infinite}
+.err{font-size:12px;color:var(--red);background:#120508;border-radius:8px;padding:9px 13px;margin-top:10px;border:1px solid #2A0A10}
+.retry-btn{margin-top:8px;padding:5px 13px;border-radius:6px;border:1px solid var(--red);background:none;color:var(--red);font-size:11px;font-family:inherit;cursor:pointer}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .fade{animation:fadeUp .3s ease}
-@keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
 
 /* RESUME BANNER */
-.resume-banner{
-  background:var(--c1l);
-  border:1.5px solid rgba(35,149,106,.25);
-  border-radius:var(--r-md);
-  padding:14px 18px;margin-bottom:20px;
-  display:flex;align-items:center;gap:14px;
-  box-shadow:0 2px 8px rgba(35,149,106,.08);
-}
-.rbtn{padding:6px 14px;border-radius:var(--r-sm);border:1.5px solid var(--border);background:none;font-size:11px;font-family:inherit;cursor:pointer;font-weight:600;transition:all .15s}
-.rbtn-yes{border-color:var(--c1);color:var(--c1);background:var(--bg2)}
-.rbtn-yes:hover{background:var(--c1);color:#fff}
+.resume-banner{background:#070D07;border:1px solid #0F2A0F;border-radius:10px;padding:12px 15px;margin-bottom:18px;display:flex;align-items:center;gap:12px}
+.rbtn{padding:5px 12px;border-radius:6px;border:1px solid var(--border2);background:none;font-size:11px;font-family:inherit;cursor:pointer;font-weight:600}
+.rbtn-yes{border-color:var(--green);color:var(--green)}
 .rbtn-no{color:var(--text3)}
 
 /* EXPORT MODAL */
-.modal-overlay{position:fixed;inset:0;background:rgba(13,27,42,.4);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
-.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-xl);padding:24px;max-width:400px;width:92%;box-shadow:var(--shadow-lg);animation:fadeUp .2s ease}
-.modal h3{font-size:15px;font-weight:700;margin-bottom:16px;letter-spacing:-.02em}
-.mbtn{
-  width:100%;padding:12px 16px;
-  border-radius:var(--r-md);
-  border:1.5px solid var(--border);
-  background:var(--bg3);color:var(--text2);
-  font-size:13px;font-family:inherit;cursor:pointer;
-  text-align:left;display:flex;align-items:center;gap:12px;
-  transition:all .15s;margin-bottom:8px;font-weight:500;
-}
-.mbtn:hover{border-color:var(--c1);color:var(--c1);background:var(--c1l)}
-.modal-close{width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--r-sm);background:none;color:var(--text3);font-size:12px;font-family:inherit;cursor:pointer;margin-top:4px;font-weight:500;transition:all .15s}
-.modal-close:hover{background:var(--bg3)}
+.modal-overlay{position:fixed;inset:0;background:#00000090;z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:22px;max-width:400px;width:90%}
+.modal h3{font-size:14px;font-weight:700;margin-bottom:14px}
+.mbtn{width:100%;padding:11px 14px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);font-size:13px;font-family:inherit;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px;transition:all .15s;margin-bottom:7px}
+.mbtn:hover{border-color:var(--accent);color:var(--text)}
+.modal-close{width:100%;padding:9px;border:1px solid var(--border);border-radius:8px;background:none;color:var(--text3);font-size:12px;font-family:inherit;cursor:pointer;margin-top:4px}
 
 /* API KEY SCREEN */
-.api-screen{max-width:440px;margin:72px auto;text-align:center}
-.api-screen h2{font-size:22px;font-weight:800;margin-bottom:10px;letter-spacing:-.03em}
-.api-screen p{font-size:14px;color:var(--text2);line-height:1.75;margin-bottom:24px}
-.saved-key-box{
-  background:var(--bg3);border:1.5px solid var(--border);
-  border-radius:var(--r-md);padding:12px 16px;
-  font-size:12px;color:var(--text2);
-  display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:12px;font-weight:500;
-}
-.forget-btn{background:none;border:none;color:var(--c4);font-size:11px;cursor:pointer;font-family:inherit;font-weight:700;transition:opacity .15s}
-.forget-btn:hover{opacity:.7}
-.api-note{font-size:11px;color:var(--text3);margin-bottom:20px;font-weight:400}
-.api-note a{color:var(--c2);text-decoration:none;font-weight:600}
-.api-note a:hover{text-decoration:underline}
-
-/* SECTION (export report) */
-.section{background:#fff;border-radius:var(--r-lg);padding:28px;margin-bottom:20px;box-shadow:var(--shadow-md)}
-.lbl{font-size:10px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px}
-.ttl{font-size:18px;font-weight:800;margin-bottom:16px;line-height:1.4;letter-spacing:-.02em}
-
-/* LOCAL WARNING */
-#localWarning{
-  padding:10px 24px;font-size:12px;
-  background:linear-gradient(135deg,#FEF5E8,#FFF8EE);
-  border-bottom:1px solid rgba(232,159,68,.3);
-  color:var(--c3);text-align:center;font-weight:500;
-}
-#localWarning a{color:var(--c2);font-weight:700}
+.api-screen{max-width:420px;margin:64px auto;text-align:center}
+.api-screen h2{font-size:20px;font-weight:700;margin-bottom:8px}
+.api-screen p{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:22px}
+.saved-key-box{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--text3);display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.forget-btn{background:none;border:none;color:var(--red);font-size:11px;cursor:pointer;font-family:inherit;font-weight:600}
+.api-note{font-size:11px;color:var(--text3);margin-bottom:18px}
+.api-note a{color:var(--accent);text-decoration:none}
 </style>
 </head>
 <body>
@@ -576,31 +238,10 @@ const ICONS={
   globe:      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
 };
 const ROLES={
-  marketer:`あなたは中小企業の売上改善を専門とするシニアマーケターです。【現状の課題→具体的施策→期待成果】の順で提言してください。
-厳守事項：
-①質問禁止。情報不足は合理的に補完して即提言する
-②「まず〜から始め」「第1フェーズは〜」など段階的ステップで述べる
-③施策は「何を・誰に・どうやって・いつまでに」を明記する
-④抽象論禁止。「認知度向上」ではなく「Instagram週3投稿で3ヶ月後フォロワー1000人獲得」のように具体化
-⑤200字以内で断言口調`,
-  designer:`あなたは売上につながるUX/ブランドデザインを専門とするデザイナーです。【現状の問題点→改善施策→期待効果】の順で提言してください。
-厳守事項：
-①質問禁止。即提言する
-②「LPのファーストビューを〜に変更しCVR3%向上」など施策と数値をセットで述べる
-③現状から1ステップ上のリアルな改善を提案する（理想論禁止）
-④200字以内で断言口調`,
-  consultant:`あなたはMcKinsey出身で中小企業のP&L改善を専門とするコンサルタントです。【現状の財務課題→優先施策→ROI試算】の順で提言してください。
-厳守事項：
-①質問禁止。即分析・提言する
-②「月次で〜万円のコスト削減」「3ヶ月でROI〜倍」など具体的財務インパクトを試算する
-③現場が明日から実行できるレベルの施策を提案する（絵に描いた餅禁止）
-④200字以内で断言口調`,
-  researcher:`あなたはユーザー行動分析とインサイト抽出を専門とするUXリサーチャーです。【ユーザーの現状行動→潜在ニーズ→具体的対応策】の順で提言してください。
-厳守事項：
-①質問禁止。即分析・提言する
-②「〜層は〜という課題を持ち、〜を求めている」など具体的ペルソナで述べる
-③仮説で構わないが根拠を添える。「一般的に〜の傾向から推測すると」など
-④200字以内で断言口調`,
+  marketer:"あなたはシニアマーケターです。市場分析、ターゲット設定、顧客獲得戦略、ブランドポジショニング、KPI設計の専門家です。確定数値がある場合は必ずそれを前提に使い、推論で数値を作らないでください。200字以内で具体的に答えてください。",
+  designer:"あなたはUX/ブランドデザイナーです。ユーザー体験設計、ビジュアルアイデンティティの専門家です。確定数値がある場合は必ずそれを前提に使い、推論で数値を作らないでください。200字以内で具体的に答えてください。",
+  consultant:"あなたはMcKinsey出身の経営コンサルタントです。事業戦略、競合分析、P&L管理の専門家です。確定数値がある場合は必ずそれを前提に使い、推論で数値を作らないでください。200字以内で具体的に答えてください。",
+  researcher:"あなたはUXリサーチャーです。定性・定量調査、ペルソナ構築の専門家です。確定数値がある場合は必ずそれを前提に使い、推論で数値を作らないでください。200字以内で具体的に答えてください。",
 };
 const PHASES=["課題定義","市場分析","戦略立案","実行計画"];
 const PHASE_JA=["課題・ゴール定義","市場・ユーザー分析","戦略立案","実行計画・KPI"];
@@ -650,10 +291,6 @@ function S(u){
   if(!Array.isArray(st.brushupLog))st.brushupLog=[];
   if(!Array.isArray(st.files))st.files=[];
   if(!Array.isArray(st.history))st.history=[];
-  if(!st.materials)st.materials="";
-  if(!st.facts)st.facts="";
-  if(!st.extraQuestions)st.extraQuestions=[];
-  if(!st.extraAnswers)st.extraAnswers={};
   if(st.step!=="projects"&&st.step!=="apikey"&&st.step!=="input")saveCurrent();
   // statusMsgだけの更新なら部分更新（フラッシュ防止）
   if(Object.keys(u).length===1&&u.statusMsg!==undefined){
@@ -684,11 +321,9 @@ function render(){
 function renderApiKey(){
   const saved=localStorage.getItem(APIKEY_KEY)||"";
   return`<div class="api-screen fade">
-    <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,#23956a,#2195ca);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;box-shadow:0 4px 20px rgba(35,149,106,.3)">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-    </div>
-    <h2>Strategy Council</h2>
-    <p>Anthropic APIキーを入力して<br>AIマルチエージェント会議を始めましょう。</p>
+    <div style="font-size:32px;margin-bottom:14px">⚡</div>
+    <h2>APIキー設定</h2>
+    <p>Anthropic APIキーを入力してください。<br>キーはこのブラウザ内にのみ保存されます。</p>
     ${saved?`<div class="saved-key-box"><span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> ${saved.slice(0,20)}••••</span><button class="forget-btn" onclick="forgetKey()">削除</button></div>`:""}
     <div class="input-wrap" style="margin-bottom:10px">
       <input type="password" id="apiKeyInput" placeholder="${saved?"変更する場合のみ入力":"sk-ant-api03-..."}"/>
@@ -722,10 +357,8 @@ function renderProjects(){
         ?`<span class="proj-status status-done">✓ DONE${p.score?` · ${p.score}pt`:""}</span>`
         :`<span class="proj-status status-running">● 進行中</span>`;
       const icon=p.status==="done"?ICONS.done:ICONS.running;
-      const iconBg=p.status==="done"?"linear-gradient(135deg,#E8F5EF,#D4EDE2)":"linear-gradient(135deg,#EBF6FF,#D8EEFA)";
-      const iconColor=p.status==="done"?"#23956a":"#2195ca";
       return`<div class="proj-card" onclick="openProject('${p.id}')">
-        <div class="proj-icon" style="background:${iconBg};color:${iconColor}">${icon}</div>
+        <div class="proj-icon" style="background:${p.status==="done"?"#071A0F":"#0A0E1A"}">${icon}</div>
         <div class="proj-info">
           <div class="proj-name">${p.name||"無題"}</div>
           <div class="proj-meta">更新: ${dateStr}</div>
@@ -740,16 +373,13 @@ function renderProjects(){
   return`<div class="fade">
     <div class="proj-header">
       <div>
-        <div style="font-size:10px;color:var(--text3);letter-spacing:.12em;margin-bottom:4px;font-weight:700;text-transform:uppercase">My Projects</div>
-        <h2 style="font-size:24px;font-weight:800;letter-spacing:-.04em">マイプロジェクト</h2>
+        <div style="font-size:11px;color:var(--text3);letter-spacing:.1em;margin-bottom:3px">PROJECTS</div>
+        <h2>マイプロジェクト</h2>
       </div>
       <button class="hbtn" onclick="S({step:'apikey'})">APIキー設定</button>
     </div>
     ${list}
-    <button class="new-proj-btn" onclick="newProject()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      新規プロジェクトを作成
-    </button>
+    <button class="new-proj-btn" onclick="newProject()">＋ 新規プロジェクト</button>
   </div>`;
 }
 function openProject(id){
@@ -824,13 +454,13 @@ function renderInput(){
   return`<div class="fade">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px">
       <button onclick="S({step:'projects'})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;line-height:1">‹</button>
-      <div style="font-size:14px;font-weight:700;color:var(--text);letter-spacing:-.01em">新規プロジェクト</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text2)">新規プロジェクト</div>
     </div>
     <div class="badges">
       ${Object.values(AGENTS).map(a=>`<span class="abadge" style="display:inline-flex;align-items:center;gap:5px"><span style="color:var(--text3)">${ICONS[a.icon]}</span>${a.name}</span>`).join("")}
-      <span class="abadge" style="border-color:rgba(33,149,202,.3);color:var(--c2);background:var(--c2l);display:inline-flex;align-items:center;gap:5px">${ICONS.manager} MANAGER</span>
+      <span class="abadge" style="border-color:var(--border2);color:var(--text2);display:inline-flex;align-items:center;gap:5px">${ICONS.manager} MANAGER</span>
     </div>
-    <label class="lbl" style="font-size:11px;font-weight:800;color:var(--text3)">企画の概要</label>
+    <label class="lbl">企画の概要</label>
     <textarea id="ptxt" rows="5" placeholder="例：30代向けオーガニックスキンケアブランドをD2Cで展開したい。競合は資生堂ナチュラルライン。初年度予算3000万円。">${st.project}</textarea>
     <label class="lbl" style="margin-top:12px">確定している事実・数値（任意）</label>
     <textarea id="factstxt" rows="4" placeholder="例：&#10;・月間問い合わせ数：約30件&#10;・成約率：10%&#10;・客単価：15万円&#10;・主な流入：紹介80%、SNS20%&#10;※エージェントはここに書いた数値を推論せず事実として使います">${st.facts||""}</textarea>
@@ -845,7 +475,7 @@ function renderInput(){
     <textarea id="materialtxt" rows="3" placeholder="資料の内容や補足情報をここに直接入力することもできます">${st.materials||""}</textarea>
     ${st.error?`<div class="err">${st.error}</div>`:""}
     <button class="btn btn-accent" id="startBtn" onclick="startMeeting()" ${st.project.trim()?"":"disabled"}>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Start Meeting
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Start MTG
     </button>
     ${st.history&&st.history.length>0?`<button class="btn btn-ghost" style="margin-top:6px" onclick="backToMeeting()">← 会議画面に戻る</button>`:""}
     <button class="btn btn-ghost" onclick="S({step:'projects'})">← 戻る</button>
@@ -861,29 +491,7 @@ function renderMeeting(){
   const sdot=st.error?`<div class="sdot err"></div>`:`<div class="sdot ${st.busy?"running":"ok"}"></div>`;
   const statusBox=`<div class="status-bar">${sdot}<span id="statusMsg" style="font-size:12px">${st.error||st.statusMsg||"自動実行中..."}</span></div>`;
   const reattachBanner="";
-  const hist=st.history.map((r,ri)=>{
-    // アコーディオンのサマリー（各エージェントの回答を短縮して表示）
-    const summaryText=Object.values(r.answers).map(a=>a.slice(0,20)).join(" / ");
-    const agentCards=Object.entries(r.answers).map(([id,a])=>`
-      <div class="accordion-agent">
-        <div class="accordion-agent-head">
-          <span style="color:var(--text3);display:flex;align-items:center">${ICONS[AGENTS[id].icon]||""}</span>
-          <span class="accordion-agent-name" style="color:#23956a">${AGENTS[id].name}</span>
-        </div>
-        <div class="accordion-agent-ans">${a}</div>
-      </div>`).join("");
-    return`<div class="accordion">
-      <div class="accordion-header" onclick="toggleAccordion(${ri})">
-        <span class="accordion-phase">${PHASES[ri]}</span>
-        <span class="accordion-title">${PHASE_JA[ri]}</span>
-        <span class="accordion-summary">${summaryText}...</span>
-        <svg id="acc-chevron-${ri}" class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-      </div>
-      <div id="acc-body-${ri}" class="accordion-body">
-        ${agentCards}
-      </div>
-    </div>`;
-  }).join("");
+  const hist=st.history.map((r,ri)=>`<div class="hist-block"><div class="hist-div">── ${PHASES[ri]} · ${PHASE_JA[ri]} ──</div>${Object.entries(r.answers).map(([id,a])=>`<div class="agent-card" style="border-color:var(--border2)"><div class="agent-head"><span style="color:var(--text3);display:flex">${ICONS[AGENTS[id].icon]}</span><span class="agent-name" style="color:var(--accent)">${AGENTS[id].name}</span></div><div class="agent-ans">${a}</div></div>`).join("")}</div>`).join("");
   let cur="";
   if(!st.questions&&!st.busy){
     // 止まっている状態 - 再開ボタンを表示
@@ -916,42 +524,48 @@ function renderManager(){
   </div>`;
   if(!st.mgrState)return`<div class="spinner">マネージャーが仮想空間でシミュレーション中...<br><span style="font-size:11px;display:block;margin-top:6px">ループ ${st.loopCount}/30</span></div>`;
   const m=st.mgrState;if(!m)return`<div class="spinner">読み込み中...</div>`;
-  // 各スコアを0-20にクランプ
-if(m.scores){Object.keys(m.scores).forEach(k=>{m.scores[k]=Math.min(20,Math.max(0,parseInt(m.scores[k])||0));});}
-const total=Object.values(m.scores||{}).reduce((a,b)=>a+b,0);
+  const total=Object.values(m.scores||{}).reduce((a,b)=>a+b,0);
   const approved=total>=95;
   const sc=approved?"var(--green)":total>=70?"var(--amber)":"var(--red)";
   const sbg=approved?"#071A0F":total>=70?"#1A1300":"#1A0508";
   const scoreCards=SCORE_ITEMS.map(k=>{
-    const v=m.scores?.[k]||0;const c=v>=19?"var(--green)":v>=15?"var(--amber)":"var(--red)";
-    return`<div class="score-item"><div class="score-name">${k}</div><div class="sbar-wrap"><div class="sbar" style="width:${v*5}%;background:${c}"></div></div><div class="sval" style="color:${c}">${v}<span style="font-size:10px;color:var(--text3)">/20</span></div></div>`;
+    const v=Math.min(20,Math.max(0,parseInt(m.scores?.[k])||0));
+    const c=v>=16?"#23956a":v>=12?"#b87000":"#c0392b";
+    const bg=v>=16?"#E8F5EF":v>=12?"#FEF5E8":"#FEF0EF";
+    const pct=v/20*100;
+    return`<div class="score-item" style="background:${bg}">
+      <div style="font-size:11px;font-weight:600;color:#4A6070;margin-bottom:6px">${k}</div>
+      <div style="height:6px;background:#E8EEF2;border-radius:3px;margin-bottom:6px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${c};border-radius:3px"></div>
+      </div>
+      <div style="font-size:15px;font-weight:800;color:${c}">${v}<span style="font-size:10px;color:#8AA0B0;font-weight:400">/20</span></div>
+    </div>`;
   }).join("");
   const statusMsg=approved?`<div style="font-size:12px;color:var(--green);padding:6px 0;animation:blink 1.5s infinite">✓ Approved — 最終レポートを生成中...</div>`
-    :st.loopCount>=40?`<div class="err" style="background:#FEF0EF;color:#c0392b;border-color:rgba(228,85,73,.2)">最大回数（40回）に到達しました。</div>`
-    :st.loopCount>=30&&!st.extraMode&&!st.busy?`<div style="border:1.5px solid #2195ca;border-radius:12px;padding:18px;margin-top:12px;background:linear-gradient(135deg,#EBF6FF,#F0F8FF)">
-        <div style="font-size:14px;font-weight:700;color:#2195ca;margin-bottom:6px">🔍 追加ブラッシュアップで精度を上げる</div>
-        <div style="font-size:12px;color:#4A5E72;margin-bottom:14px">エージェントがいくつか質問します。回答することでより現実的・具体的な分析が可能になります（最大+10回）</div>
-        <button class="btn btn-accent" style="max-width:240px;margin:0" onclick="startExtraMode()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          さらに10回ブラッシュアップする
-        </button>
+    :st.loopCount>=40?`<div class="err" style="background:#FEF0EF;color:#c0392b">最大回数（40回）に到達しました。</div>`
+    :st.loopCount>=30&&!st.extraMode&&!st.busy?`<div style="border:1.5px solid #2195ca;border-radius:12px;padding:18px;margin-top:12px;background:#EBF6FF">
+        <div style="font-size:13px;font-weight:700;color:#2195ca;margin-bottom:6px">🔍 追加ブラッシュアップで精度を上げる</div>
+        <div style="font-size:12px;color:#4A5E72;margin-bottom:12px">エージェントがいくつか質問します。回答することでより具体的な分析が可能になります（最大+10回）</div>
+        <button class="btn btn-accent" style="max-width:240px;margin:0" onclick="startExtraMode()">さらに10回ブラッシュアップする</button>
       </div>`
     :`<div style="font-size:12px;color:var(--text3);padding:6px 0;animation:blink 1.5s infinite">ブラッシュアップ中... (${st.loopCount}/30)</div>`;
   return`<div class="fade">
     <div class="mgr-panel">
       <div class="mgr-hdr">
         ${ICONS.manager}
-        <span style="font-size:13px;font-weight:700;letter-spacing:-.01em">マネージャー審査</span>
+        <span style="font-size:12px;font-weight:700;letter-spacing:.04em">マネージャー審査</span>
         <span class="loop-badge">ループ ${st.loopCount}/30</span>
         ${approved?`<span style="margin-left:8px;font-size:10px;font-weight:700;color:var(--green)">✓ 承認済み</span>`:""}
       </div>
       <div class="mgr-body">
         ${m.env?`<div class="env-badge" style="display:inline-flex;align-items:center;gap:5px">${ICONS.globe} ${m.env}</div>`:""}
         <div class="score-grid">${scoreCards}</div>
-        <div class="total-box" style="background:${sbg}">
-          <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px;letter-spacing:.08em">TOTAL SCORE</div>
-          <div class="total-num" style="color:${sc}">${total}<span style="font-size:13px;font-weight:400">/100</span></div></div>
-          <div style="font-size:11px;font-weight:700;color:${sc}">${approved?"✓ 95点以上 承認":total>=70?"△ ブラッシュアップ中":"✗ 再検討中"}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-radius:12px;margin-bottom:14px;border:2px solid ${sc};background:${sbg}">
+          <div>
+            <div style="font-size:10px;color:#8AA0B0;margin-bottom:4px;letter-spacing:.1em;font-weight:700">TOTAL SCORE</div>
+            <div style="font-size:32px;font-weight:800;color:${sc};line-height:1">${total}<span style="font-size:14px;font-weight:400;color:#8AA0B0">/100</span></div>
+          </div>
+          <div style="font-size:12px;font-weight:700;color:${sc};padding:7px 16px;border-radius:100px;background:rgba(255,255,255,.9);border:2px solid ${sc}">${approved?"✓ 承認済み":total>=70?"△ 改善中":"✗ 要改善"}</div>
         </div>
         ${m.verdict?`<div class="mgr-verdict">${m.verdict}</div>`:""}
         ${m.feedback&&!approved?`<div class="mgr-feedback">${m.feedback}</div>`:""}
@@ -959,180 +573,103 @@ const total=Object.values(m.scores||{}).reduce((a,b)=>a+b,0);
         ${(()=>{return (st.brushupLog&&Array.isArray(st.brushupLog)&&st.brushupLog.length>0)?renderBrushupProgress():"";})()}
       </div>
     </div>
-    ${st.extraMode&&st.extraQuestions.length>0?renderExtraQuestions():""}
     ${st.error?`<div class="err">${st.error}<br><button class="retry-btn" onclick="retryBrushup()">リトライ</button></div>`:""}
-  </div>`;
-}
-
-function updateExtraAnswer(idx,val){
-  if(!st.extraAnswers)st.extraAnswers={};
-  st.extraAnswers={...st.extraAnswers,[idx]:val};
-}
-
-function renderExtraQuestions(){
-  const qs=st.extraQuestions||[];
-  if(qs.length===0)return"";
-  const qForms=qs.map((q,i)=>{
-    const ans=st.extraAnswers?.[i]||"";
-    return "<div style=\"margin-bottom:14px\"><div style=\"font-size:12px;font-weight:600;color:#1A2A38;margin-bottom:6px\">"+(i+1)+". "+q+"</div><textarea rows=\"2\" style=\"width:100%;border:1.5px solid #E4EAF0;border-radius:8px;padding:8px 12px;font-size:12px;font-family:inherit;resize:none;outline:none\" oninput=\"updateExtraAnswer("+i+",this.value)\" placeholder=\"回答を入力してください...\">"+ans+"</textarea></div>";
-  }).join("");
-  return`<div style="margin-top:16px;border:1.5px solid #2195ca;border-radius:12px;padding:18px;background:#EBF6FF">
-    <div style="font-size:12px;font-weight:700;color:#2195ca;margin-bottom:4px">エージェントからの質問</div>
-    <div style="font-size:11px;color:#4A5E72;margin-bottom:14px">回答することでより精度の高い分析が可能になります</div>
-    ${qForms}
-    <button class="btn btn-accent" style="margin-top:4px" onclick="submitExtraAnswers()">回答して再分析する</button>
   </div>`;
 }
 
 function renderBrushupProgress(){
   if(!st.brushupLog||!Array.isArray(st.brushupLog)||st.brushupLog.length===0)return"";
-  const rounds=st.brushupLog.map(round=>{
-    const cards=Object.keys(AGENTS).map(id=>{
-      const entry=round.agents[id];
-      if(!entry)return"";
-      const isDone=entry.status==="done";
-      const isThinking=entry.status==="thinking";
-      return`<div style="border:1px solid ${isDone?AGENTS[id].color+"50":isThinking?AGENTS[id].color+"80":"var(--border)"};border-radius:8px;padding:9px 12px;margin-bottom:6px;background:var(--bg);transition:all .3s">
-        <div style="display:flex;align-items:center;gap:7px;margin-bottom:${isDone?"5px":"0"}">
-          <span style="color:var(--text3);display:flex">${ICONS[AGENTS[id].icon]}</span>
-          <span style="font-size:11px;font-weight:700;color:var(--accent)">${AGENTS[id].name}</span>
-          <span style="margin-left:auto;font-size:10px;color:${isDone?"var(--green)":isThinking?"var(--accent)":"var(--text3)"};font-weight:600">${isDone?"✓ 完了":isThinking?"改善中...":"待機"}</span>
-        </div>
-        ${isThinking?`<div style="display:flex;gap:4px;padding:3px 0"><div class="dot b1" style="background:var(--accent)"></div><div class="dot b2" style="background:var(--accent)"></div><div class="dot b3" style="background:var(--accent)"></div></div>`:""}
-        ${isDone&&entry.ans?`<div style="font-size:12px;color:var(--text2);line-height:1.75;margin-top:2px">${entry.ans}</div>`:""}
-      </div>`;
+  const rounds=st.brushupLog.map(function(round,ri){
+    const isLast=ri===st.brushupLog.length-1;
+    const allDone=Object.values(round.agents||{}).every(function(e){return e&&e.status==="done";});
+    const hc=allDone?"#23956a":"#2195ca";
+    const hbg=allDone?"#F0FAF5":"#EBF6FF";
+    const fb=(round.feedback||"品質改善中").slice(0,40);
+    const cards=Object.keys(AGENTS).map(function(id){
+      const entry=round.agents[id];if(!entry)return"";
+      const done=entry.status==="done";const thinking=entry.status==="thinking";
+      const dc=done?"#23956a":thinking?"#2195ca":"#8AA0B0";
+      const cbg=done?"#F0FAF5":thinking?"#EBF6FF":"#F8FAFB";
+      const cb=done?"rgba(35,149,106,.25)":thinking?"rgba(33,149,202,.25)":"#E4EAF0";
+      return'<div style="border:1px solid '+cb+';border-radius:8px;padding:10px 12px;margin-bottom:6px;background:'+cbg+'">'+
+        '<div style="display:flex;align-items:center;gap:7px;margin-bottom:'+(done&&entry.ans?"6px":"0")+'">'+
+        '<span style="color:'+dc+';display:flex">'+(ICONS[AGENTS[id].icon]||"")+'</span>'+
+        '<span style="font-size:11px;font-weight:700;color:#1A2A38">'+AGENTS[id].name+'</span>'+
+        '<span style="margin-left:auto;font-size:10px;color:'+dc+';font-weight:600">'+(done?"✓ 完了":thinking?"改善中...":"待機")+'</span>'+
+        '</div>'+
+        (thinking?'<div style="display:flex;gap:4px;padding:4px 0"><div class="dot b1" style="background:#2195ca"></div><div class="dot b2" style="background:#2195ca"></div><div class="dot b3" style="background:#2195ca"></div></div>':"")+
+        (done&&entry.ans?'<div style="font-size:12px;color:#4A6070;line-height:1.75">'+entry.ans+'</div>':"")+
+      '</div>';
     }).join("");
-    return`<div style="margin-bottom:16px">
-      <div style="font-size:10px;color:var(--amber);letter-spacing:.1em;font-weight:700;margin-bottom:8px">ROUND ${round.round} — ${round.feedback||"品質改善中"}</div>
-      ${cards}
-    </div>`;
+    const chev='style="color:#8AA0B0;transition:transform .2s;transform:'+(isLast?"rotate(180deg)":"rotate(0)")+'"';
+    return'<div style="border:1.5px solid '+(allDone?"rgba(35,149,106,.2)":"rgba(33,149,202,.2)")+';border-radius:12px;overflow:hidden;margin-bottom:8px">'+
+      '<div onclick="toggleRound('+round.round+')" style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;background:'+hbg+';user-select:none">'+
+      '<span style="width:22px;height:22px;border-radius:50%;background:'+hc+';color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+round.round+'</span>'+
+      '<span style="font-size:11px;font-weight:700;color:'+hc+'">Round '+round.round+'</span>'+
+      '<span style="font-size:11px;color:#8AA0B0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+fb+'</span>'+
+      '<span style="font-size:10px;color:'+hc+';font-weight:600">'+(allDone?"完了":"進行中")+'</span>'+
+      '<svg id="round-chevron-'+round.round+'" '+chev+' width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>'+
+      '</div>'+
+      '<div id="round-body-'+round.round+'" style="display:'+(isLast?"block":"none")+';padding:12px;background:#fff;border-top:1px solid #E4EAF0">'+cards+'</div>'+
+    '</div>';
   }).join("");
-  return`<div style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px">${rounds}</div>`;
+  return'<div style="margin-top:16px;border-top:1px solid #E4EAF0;padding-top:16px">'+rounds+'</div>';
 }
 
-// ── SUMMARY ──
 function renderSummary(){
   const s=st.summary||{};
   const total=Object.values(st.mgrState?.scores||{}).reduce((a,b)=>a+b,0);
-  const sc=total>=95?"#23956a":total>=70?"#b87000":"#c0392b";
-  const sbg=total>=95?"#E8F5EF":total>=70?"#FEF5E8":"#FEF0EF";
-
-  // アクションプラン（Phase別カード）
-  const phaseColors=["#23956a","#2195ca","#e89f44"];
-  const phaseIcons=["🚀","📈","🏆"];
-  const actionCards=(s.actions||[]).map((a,i)=>{
-    const c=phaseColors[i]||"#8dcba7";
-    const icon=phaseIcons[i]||"◆";
-    const label=["Phase 1","Phase 2","Phase 3"][i]||"Action "+(i+1);
-    return`<div style="flex:1;min-width:200px;background:#fff;border-radius:14px;padding:18px;border:2px solid ${c};position:relative;overflow:hidden">
-      <div style="position:absolute;top:0;left:0;right:0;height:4px;background:${c}"></div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-        <span style="font-size:18px">${icon}</span>
-        <span style="font-size:10px;font-weight:800;color:${c};letter-spacing:.1em;text-transform:uppercase">${label}</span>
-      </div>
-      <div style="font-size:12px;color:#1A2A38;line-height:1.75">${a}</div>
-    </div>`;
-  }).join(`<div style="display:flex;align-items:center;color:#C8D8E4;font-size:22px;flex-shrink:0;padding:0 4px">→</div>`);
-
-  // KPIカード
-  const kpiIcons=["📊","💰","🔄"];
-  const kpiCards=(s.kpi||[]).map((k,i)=>{
-    const parts=k.split("：");
-    const label=parts[0]||k;
-    const value=parts[1]||"";
-    return`<div style="flex:1;background:linear-gradient(135deg,#F0FAF5,#E8F5EF);border-radius:12px;padding:16px;text-align:center;border:1.5px solid rgba(35,149,106,.2)">
-      <div style="font-size:22px;margin-bottom:6px">${kpiIcons[i]||"◆"}</div>
-      <div style="font-size:11px;font-weight:700;color:#23956a;margin-bottom:4px">${label}</div>
-      ${value?`<div style="font-size:12px;color:#4A6070;line-height:1.5">${value}</div>`:""}
-    </div>`;
-  }).join("");
-
-  // スコアゲージ（マネージャー審査）
-  const scoreItems=["市場性","実現性","独自性","戦略整合性","ユーザー共感度"];
-  const scoreGauges=scoreItems.map(k=>{
-    const v=st.mgrState?.scores?.[k]||0;
-    const c=v>=16?"#23956a":v>=12?"#b87000":"#c0392b";
-    const pct=v/20*100;
-    return`<div style="margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-        <span style="font-size:12px;font-weight:600;color:#1A2A38">${k}</span>
-        <span style="font-size:13px;font-weight:700;color:${c}">${v}<span style="font-size:10px;color:#8AA0B0">/20</span></span>
-      </div>
-      <div style="height:6px;background:#E8EEF2;border-radius:3px;overflow:hidden">
-        <div style="height:100%;width:${pct}%;background:${c};border-radius:3px"></div>
-      </div>
-    </div>`;
-  }).join("");
-
+  const actions=(s.actions||[]).map((a,i)=>`<div class="kv-item"><span style="color:var(--amber);font-weight:700;min-width:18px">${i+1}.</span>${a}</div>`).join("");
+  const kpis=(s.kpi||[]).map(k=>`<div class="kv-item"><span style="color:var(--teal)">◆</span>${k}</div>`).join("");
   return`<div class="fade">
-    <!-- ヘッダー -->
-    <div style="background:linear-gradient(135deg,#23956a,#2195ca);border-radius:var(--r-xl);padding:28px;margin-bottom:20px;color:#fff;box-shadow:0 4px 24px rgba(35,149,106,.2)">
-      <div style="font-size:10px;letter-spacing:.2em;opacity:.75;margin-bottom:8px;font-weight:600">FINAL REPORT</div>
-      <div style="font-size:22px;font-weight:800;line-height:1.3;margin-bottom:14px;letter-spacing:-.02em">${s.title||"マーケティング戦略レポート"}</div>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <span style="background:rgba(255,255,255,.2);padding:5px 14px;border-radius:100px;font-size:12px;font-weight:700;backdrop-filter:blur(8px)">✓ ${total}/100点 承認済み</span>
-        <span style="opacity:.65;font-size:11px">${new Date().toLocaleDateString("ja-JP")}</span>
-      </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <span style="font-size:10px;color:var(--accent);letter-spacing:.15em;font-weight:700">最終レポート</span>
+      ${total>0?`<span class="approved-tag">✓ ${total}点 承認済み</span>`:""}
     </div>
-
-    <!-- KEY INSIGHT -->
-    <div style="background:linear-gradient(135deg,#F0FAF5,#EBF8F2);border:1.5px solid rgba(35,149,106,.2);border-radius:var(--r-lg);padding:20px;margin-bottom:16px;border-left:4px solid #23956a;box-shadow:0 2px 10px rgba(35,149,106,.08)">
-      <div style="font-size:10px;font-weight:800;color:#23956a;letter-spacing:.15em;margin-bottom:8px;text-transform:uppercase">Key Insight</div>
-      <div style="font-size:17px;font-weight:700;color:#1A2A38;line-height:1.55;margin-bottom:12px">${s.keyInsight||""}</div>
-      <div style="font-size:13px;color:#4A6070;line-height:1.9">${s.strategy||""}</div>
+    <h2 style="font-size:19px;font-weight:800;margin:4px 0 18px;line-height:1.4;letter-spacing:-.01em">${s.title||"Strategy Report"}</h2>
+    <div class="insight-box">
+      <div style="font-size:9px;color:var(--amber);letter-spacing:.15em;margin-bottom:5px;font-weight:700">キーインサイト</div>
+      <div style="font-size:14px;font-weight:700;color:var(--amber);line-height:1.65">${s.keyInsight||""}</div>
     </div>
-
-    <!-- ACTION PLAN -->
-    <div style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r-lg);padding:20px;margin-bottom:16px;box-shadow:var(--shadow-sm)">
-      <div style="font-size:10px;font-weight:800;color:#2195ca;letter-spacing:.15em;margin-bottom:6px;text-transform:uppercase">Action Plan</div>
-      <div style="font-size:16px;font-weight:700;margin-bottom:16px;letter-spacing:-.02em">実行ロードマップ</div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">${actionCards}</div>
+    <div class="strat-box">
+      <div style="font-size:9px;color:var(--text3);letter-spacing:.15em;margin-bottom:6px;font-weight:700">戦略</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.95">${s.strategy||""}</div>
     </div>
-
-    <!-- KPI -->
-    <div style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r-lg);padding:20px;margin-bottom:16px;box-shadow:var(--shadow-sm)">
-      <div style="font-size:10px;font-weight:800;color:#e89f44;letter-spacing:.15em;margin-bottom:6px;text-transform:uppercase">KPI</div>
-      <div style="font-size:16px;font-weight:700;margin-bottom:16px;letter-spacing:-.02em">成果指標</div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">${kpiCards}</div>
+    <div class="kv-grid">
+      <div class="kv-card"><div class="kv-title" style="color:var(--purple)">アクションプラン</div>${actions}</div>
+      <div class="kv-card"><div class="kv-title" style="color:var(--teal)">KPI</div>${kpis}</div>
     </div>
-
-    <!-- NEXT ACTION -->
-    ${s.nextStep?`<div style="background:linear-gradient(135deg,#EBF6FF,#F0F8FF);border:1.5px solid rgba(33,149,202,.2);border-radius:var(--r-md);padding:16px 20px;display:flex;align-items:center;gap:14px;margin-bottom:16px">
-      <div style="width:36px;height:36px;border-radius:50%;background:#2195ca;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-      </div>
-      <div>
-        <div style="font-size:10px;font-weight:800;color:#2195ca;margin-bottom:3px;letter-spacing:.1em;text-transform:uppercase">Next Action</div>
-        <div style="font-size:14px;font-weight:700;color:#1A2A38">${s.nextStep}</div>
-      </div>
-    </div>`:""}
-
-    <!-- MANAGER REVIEW -->
-    <div style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r-lg);padding:20px;margin-bottom:20px;box-shadow:var(--shadow-sm)">
-      <div style="font-size:10px;font-weight:800;color:#e89f44;letter-spacing:.15em;margin-bottom:6px;text-transform:uppercase">Manager Review</div>
-      <div style="font-size:16px;font-weight:700;margin-bottom:16px;letter-spacing:-.02em">マネージャー審査結果</div>
-      <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start">
-        <div style="flex:1;min-width:200px">${scoreGauges}</div>
-        <div style="width:130px;text-align:center;flex-shrink:0">
-          <div style="width:110px;height:110px;border-radius:50%;background:conic-gradient(${sc} ${total}%,#E8EEF2 0);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;box-shadow:0 2px 12px rgba(0,0,0,.08)">
-            <div style="width:82px;height:82px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center">
-              <div style="font-size:24px;font-weight:800;color:${sc};line-height:1">${total}</div>
-              <div style="font-size:10px;color:#8AA0B0">/100</div>
-            </div>
-          </div>
-          <div style="font-size:10px;font-weight:700;color:${sc};background:${sbg};padding:4px 10px;border-radius:100px;display:inline-block">${total>=95?"✓ 承認済み":total>=70?"△ 改善中":"✗ 要改善"}</div>
-        </div>
-      </div>
-      ${st.mgrState?.verdict?`<div style="margin-top:14px;padding:12px 14px;background:#F8FAFB;border-radius:var(--r-sm);font-size:12px;color:#4A6070;line-height:1.75;border-left:3px solid var(--border2)">${st.mgrState.verdict}</div>`:""}
-    </div>
-
-    <button class="btn btn-export" onclick="showExportModal()">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      レポートをエクスポート
-    </button>
+    ${s.nextStep?`<div class="next-box"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L12 6M12 2C12 2 18 4 20 10C22 16 18 20 12 22C6 20 2 16 4 10C6 4 12 2 12 2Z"/><circle cx="12" cy="13" r="2"/></svg><div><div style="font-size:9px;color:var(--blue);margin-bottom:3px;font-weight:700;letter-spacing:.08em">NEXT ACTION</div><div style="font-size:13px;font-weight:600;color:var(--blue)">${s.nextStep}</div></div></div>`:""}
+    ${st.files.length>0?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:12px"> ${st.files.map(f=>f.name).join("・")}</div>`:""}
+    <button class="btn btn-export" onclick="showExportModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>エクスポート</button>
     <button class="btn btn-ghost" onclick="goProjects()">← プロジェクト一覧へ</button>
   </div>`;
 }
+
+function backToMeeting(){
+  // 直前の会議画面に戻る
+  const prevStep=st.history&&st.history.length>=PHASE_JA.length?"manager":"meeting";
+  st.step=prevStep;
+  st.busy=false;
+  st.error="";
+  render();
+}
+
+function goEdit(){
+  // 進行中の内容を保持したままinput画面へ
+  cancelled=true;
+  saveCurrent();
+  setTimeout(()=>{
+    cancelled=false;
+    // stepだけinputに戻す（project/facts/filesは保持）
+    st.step="input";
+    st.busy=false;
+    st.loading=null;
+    st.error="";
+    render();
+  },150);
+}
+
 function goProjects(){
   cancelled=true;
   saveCurrent();
@@ -1228,90 +765,20 @@ function exportPDF(){
 function exportTxt(){dl(new Blob([buildReport()],{type:"text/plain;charset=utf-8"}),"strategy-report.txt");closeExport();}
 function exportJSON(){dl(new Blob([JSON.stringify({project:st.project,generatedAt:new Date().toISOString(),history:st.history,managerResult:st.mgrState,summary:st.summary},null,2)],{type:"application/json"}),"strategy-report.json");closeExport();}
 function exportHTML(){
-  const s=st.summary||{};
-  const m=st.mgrState;
-  const total=Object.values(m?.scores||{}).reduce((a,b)=>a+b,0);
-  const scoreItems=["市場性","実現性","独自性","戦略整合性","ユーザー共感度"];
-
-  const scoreGauges=scoreItems.map((k)=>{
-    const v=m?.scores?.[k]||0;
-    const pct=v/20*100;
-    const c=v>=16?"#23956a":v>=12?"#e89f44":"#e45549";
-    return`<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><span style="font-size:12px;font-weight:600;color:#1A2A38">${k}</span><span style="font-size:13px;font-weight:700;color:${c}">${v}<span style="font-size:10px;font-weight:400;color:#8AA0B0">/20</span></span></div><div style="height:6px;background:#E8EEF2;border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${c};border-radius:3px"></div></div></div>`;
-  }).join("");
-
-  const actionCards=(s.actions||[]).map((a,i)=>{
-    const colors=["#23956a","#2195ca","#e89f44"];
-    const c=colors[i]||"#8dcba7";
-    return`<div style="flex:1;min-width:180px;background:#fff;border-radius:10px;padding:16px;border:2px solid ${c}"><div style="width:26px;height:26px;border-radius:50%;background:${c};color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-bottom:10px">${i+1}</div><div style="font-size:12px;color:#1A2A38;line-height:1.7">${a}</div></div>`;
-  }).join(`<div style="display:flex;align-items:center;color:#C8D8E4;font-size:18px;flex-shrink:0;padding:0 4px">→</div>`);
-
-  const kpiCards=(s.kpi||[]).map((k,i)=>{
-    const icons=["📈","🎯","⚡"];
-    return`<div style="flex:1;background:#F0FAF5;border-radius:10px;padding:14px;text-align:center;border:1px solid #8dcba7"><div style="font-size:20px;margin-bottom:6px">${icons[i]||"◆"}</div><div style="font-size:12px;color:#23956a;font-weight:600;line-height:1.5">${k}</div></div>`;
-  }).join("");
-
-  const phaseLog=st.history.map((r,i)=>{
-    const phaseColors=["#23956a","#2195ca","#e89f44","#8dcba7"];
-    const pc=phaseColors[i]||"#8dcba7";
-    const agentRows=Object.entries(r.answers).map(([id,a])=>`<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #E8EEF2"><div style="min-width:90px;font-size:10px;font-weight:700;color:${pc};padding-top:2px">${AGENTS[id].name}</div><div style="font-size:12px;color:#4A6070;line-height:1.7;flex:1">${a}</div></div>`).join("");
-    return`<div style="margin-bottom:16px;border-radius:12px;overflow:hidden;border:1px solid #E0E8EE"><div style="background:${pc};padding:10px 16px;display:flex;align-items:center;gap:10px"><div style="width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.3);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">${i+1}</div><div style="color:#fff;font-size:12px;font-weight:700">${PHASE_JA[i]}</div></div><div style="padding:0 16px;background:#fff">${agentRows}</div></div>`;
-  }).join("");
-
-  const reportHTML=`<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Strategy Report</title><style>@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&family=Inter:wght@400;600;700;800&display=swap');*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Inter','Noto Sans JP',sans-serif;background:#F8FAFB;color:#1A2A38;-webkit-font-smoothing:antialiased}.page{max-width:800px;margin:0 auto;padding:40px 24px}.section{background:#fff;border-radius:16px;padding:28px;margin-bottom:20px;box-shadow:0 2px 12px rgba(0,0,0,.06)}.lbl{font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px}.ttl{font-size:18px;font-weight:800;margin-bottom:16px;line-height:1.4}@media print{body{background:#fff}.page{padding:20px}@page{margin:15mm}}</style></head><body><div class="page">
-  <div style="background:linear-gradient(135deg,#23956a,#2195ca);border-radius:16px;padding:32px;margin-bottom:20px;color:#fff">
-    <div style="font-size:10px;letter-spacing:.2em;opacity:.8;margin-bottom:8px">STRATEGY COUNCIL — FINAL REPORT</div>
-    <div style="font-size:24px;font-weight:800;line-height:1.3;margin-bottom:12px">${s.title||"マーケティング戦略レポート"}</div>
-    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
-      <span style="background:rgba(255,255,255,.2);padding:4px 12px;border-radius:100px;font-size:11px;font-weight:600">✓ ${total}/100点 承認済み</span>
-      <span style="opacity:.7;font-size:11px">${new Date().toLocaleDateString("ja-JP")} 生成</span>
-    </div>
-  </div>
-  <div class="section" style="border-left:4px solid #23956a">
-    <div class="lbl" style="color:#23956a">Key Insight</div>
-    <div style="font-size:20px;font-weight:800;color:#23956a;line-height:1.5;margin-bottom:12px">${s.keyInsight||""}</div>
-    <div style="font-size:13px;color:#4A6070;line-height:1.9">${s.strategy||""}</div>
-  </div>
-  <div class="section">
-    <div class="lbl" style="color:#2195ca">Action Plan</div>
-    <div class="ttl">実行施策</div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap">${actionCards}</div>
-  </div>
-  <div class="section">
-    <div class="lbl" style="color:#e89f44">KPI</div>
-    <div class="ttl">成果指標</div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap">${kpiCards}</div>
-  </div>
-  ${s.nextStep?`<div class="section" style="background:linear-gradient(135deg,#EBF6FF,#F0FAF5);border:1px solid #8dcba7"><div class="lbl" style="color:#2195ca">Next Action</div><div style="font-size:16px;font-weight:700;color:#1A2A38">${s.nextStep}</div></div>`:""}
-  <div class="section">
-    <div class="lbl" style="color:#e89f44">Manager Review</div>
-    <div class="ttl">マネージャー審査結果</div>
-    <div style="display:flex;gap:20px;flex-wrap:wrap">
-      <div style="flex:1;min-width:200px">${scoreGauges}</div>
-      <div style="width:130px;text-align:center;flex-shrink:0">
-        <div style="width:110px;height:110px;border-radius:50%;background:conic-gradient(#23956a ${total}%,#E8EEF2 0);display:flex;align-items:center;justify-content:center;margin:0 auto 10px">
-          <div style="width:82px;height:82px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center">
-            <div style="font-size:22px;font-weight:800;color:#23956a">${total}</div>
-            <div style="font-size:10px;color:#8AA0B0">/100</div>
-          </div>
-        </div>
-        <div style="font-size:11px;font-weight:700;color:#23956a">✓ 承認済み</div>
-      </div>
-    </div>
-    ${m?.verdict?`<div style="margin-top:14px;padding:12px;background:#F8FAFB;border-radius:8px;font-size:12px;color:#4A6070;line-height:1.7">${m.verdict}</div>`:""}
-  </div>
-  <div class="section">
-    <div class="lbl" style="color:#8AA0B0">Meeting Log</div>
-    <div class="ttl">会議ログ</div>
-    ${phaseLog}
-  </div>
-  <div style="text-align:center;font-size:11px;color:#8AA0B0;padding:20px 0">Strategy Council — AI Multi-Agent Marketing Strategy</div>
-</div></body></html>`;
-
-  dl(new Blob([reportHTML],{type:"text/html;charset=utf-8"}),"strategy-report.html");
-  closeExport();
+  const s=st.summary||{};const m=st.mgrState;const total=Object.values(m?.scores||{}).reduce((a,b)=>a+b,0);
+  const sr=SCORE_ITEMS.map(k=>{const v=m?.scores?.[k]||0;const c=v>=19?"#34D48A":v>=15?"#F0A429":"#FF5B6B";return`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>${k}</span><span style="color:${c};font-weight:700">${v}/20</span></div><div style="height:3px;background:#1E2438;border-radius:2px"><div style="height:100%;width:${v*5}%;background:${c};border-radius:2px"></div></div></div>`;}).join("");
+  const html=`<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>Strategy Report</title><style>body{font-family:'Inter','Noto Sans JP',sans-serif;background:#08090C;color:#E8ECF5;max-width:680px;margin:0 auto;padding:32px 20px;-webkit-font-smoothing:antialiased}h1{font-size:20px;margin-bottom:3px;font-weight:800}h2{font-size:12px;color:#5B7FFF;letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid #1E2438;padding-bottom:6px;margin:24px 0 12px}.box{background:#0E1017;border:1px solid #1E2438;border-radius:10px;padding:14px 16px;margin-bottom:11px}.insight{background:linear-gradient(135deg,#100D00,#0A0D1A);border:1px solid #2A2000;border-radius:10px;padding:13px 15px;font-size:14px;font-weight:700;color:#F0A429;line-height:1.65}.agent{border-left:2px solid;padding-left:12px;margin-bottom:12px}</style></head><body>
+  <h1>⚡ Strategy Council</h1><p style="color:#3D4A6A;font-size:12px;margin-bottom:6px">${new Date().toLocaleString("ja-JP")}</p>
+  <p style="font-size:11px;display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:100px;background:#071A0F;color:#34D48A;border:1px solid #0F3020;margin-bottom:20px">✓ ${total}/100点 承認済み</p>
+  <h2>Final Strategy</h2><div class="insight">${s.keyInsight||""}</div>
+  <div class="box" style="margin-top:10px"><p style="font-size:13px;line-height:1.95;color:#7B8BB2">${s.strategy||""}</p></div>
+  <h2>アクションプラン</h2><div class="box">${(s.actions||[]).map((a,i)=>`<div style="padding:5px 0;border-bottom:1px solid #1E2438;font-size:13px"><span style="color:#F0A429;font-weight:700;margin-right:8px">${i+1}.</span>${a}</div>`).join("")}</div>
+  <h2>KPI</h2><div class="box">${(s.kpi||[]).map(k=>`<div style="padding:5px 0;border-bottom:1px solid #1E2438;font-size:13px"><span style="color:#2DD4B0;margin-right:8px">◆</span>${k}</div>`).join("")}</div>
+  <h2>Manager Review</h2><div class="box"><p style="font-size:11px;color:#3D4A6A;margin-bottom:10px">Space: ${m?.env||"—"}</p>${sr}<p style="font-size:13px;color:#7B8BB2;margin-top:10px">${m?.verdict||""}</p></div>
+  <h2>Meeting Log</h2>${st.history.map((r,i)=>`<p style="font-size:11px;color:#3D4A6A;letter-spacing:.1em;margin:14px 0 8px">── ${PHASES[i]} · ${PHASE_JA[i]} ──</p>${Object.entries(r.answers).map(([id,a])=>`<div class="agent" style="border-color:${AGENTS[id].color}60"><div style="font-size:10px;font-weight:700;color:${AGENTS[id].color};margin-bottom:3px">${AGENTS[id].emoji} ${AGENTS[id].name}</div><div style="font-size:12px;color:#7B8BB2;line-height:1.8">${a}</div></div>`).join("")}`).join("")}
+  </body></html>`;
+  dl(new Blob([html],{type:"text/html;charset=utf-8"}),"strategy-report.html");closeExport();
 }
-
 function dl(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();}
 
 // ── EVENTS ──
@@ -1407,12 +874,21 @@ async function api(system,msg,retryCount=0){
   if(!res.ok&&res.status===0)throw new Error("ネットワークエラー：Vercelから開いてください。");
   return data.content[0].text;
 }
-function pj(t){try{return JSON.parse(t.replace(/```json\n?|```/g,"").trim());}catch{return null;}}
+function pj(t){
+  if(!t)return null;
+  // まずそのままパース
+  try{return JSON.parse(t);}catch(e0){}
+  // マークダウン除去
+  try{return JSON.parse(t.replace(/```json\n?|```/g,"").trim());}catch(e1){}
+  // {から}を抽出
+  try{const s=t.indexOf("{");const e=t.lastIndexOf("}");if(s>=0&&e>s)return JSON.parse(t.slice(s,e+1));}catch(e2){}
+  return null;
+}
 
 // ── PROMPTS ──
-const FAC=`マーケティング戦略会議の司会。各エージェントに【現状から次の1ステップ】を分析・提言させる指示を与えよ。questionsは「現状の〜を踏まえ、〜を具体的手法・期間・数値目標込みで提言せよ」形式にすること。理想論でなく現場実行可能な提言を引き出すこと。JSONのみ：{"phase":"フェーズ名","questions":{"marketer":"指示","designer":"指示","consultant":"指示","researcher":"指示"},"context":"目的30字"}`;
-const MGR=`あなたは厳格な評価基準を持つシニアマーケティングマネージャーです。戦略案を仮想空間でシミュレーションし5項目を各20点満点で採点してください。【採点の厳格基準】市場性：需要の確かさ・市場規模の現実性（抽象的提案=0〜8点、具体的根拠あり=9〜15点、市場データ・事例あり=16〜20点）。実現性：現場で実行できるか（理想論=0〜8点、段階的計画あり=9〜15点、即実行可能=16〜20点）。独自性：競合との差別化（一般論=0〜8点、差別化要素あり=9〜15点、明確なUSPあり=16〜20点）。戦略整合性：施策の一貫性（バラバラ=0〜8点、ある程度整合=9〜15点、完全整合=16〜20点）。ユーザー共感度：ターゲットへの刺さり度（漠然=0〜8点、ペルソナ明確=9〜15点、インサイト深い=16〜20点）。【重要】各スコアは0〜20の整数のみ。JSONのみ出力：{"env":"仮想空間名","scores":{"市場性":整数,"実現性":整数,"独自性":整数,"戦略整合性":整数,"ユーザー共感度":整数},"verdict":"採点理由と課題100字","feedback":"95点未満の具体的改善指示（何が足りないか）100字","revisedStrategy":"改善した戦略150字"}`;
-const SUM=`マーケティング戦略の統括AI。エージェントの議論から【現状→Phase1（1ヶ月）→Phase2（3ヶ月）→Phase3（6ヶ月）】の段階的ロードマップを含む実行戦略をまとめよ。抽象論禁止、全て具体的施策・数値・期間で記述。JSONのみ出力：{"title":"戦略タイトル","keyInsight":"核心インサイト（現状の根本課題と打ち手）50字","strategy":"Phase別ロードマップ含む統合戦略200字","actions":["Phase1(1ヶ月):具体施策","Phase2(3ヶ月):具体施策","Phase3(6ヶ月):具体施策"],"kpi":["指標1:現状値→目標値・期間","指標2:現状値→目標値・期間","指標3:現状値→目標値・期間"],"nextStep":"明日できる最初の1アクション50字"}`;
+const FAC=`マーケティング戦略会議の司会AI。参加エージェント：マーケター、デザイナー、経営コンサルタント、ユーザーリサーチャー。JSONのみ出力：{"phase":"フェーズ名","questions":{"marketer":"質問","designer":"質問","consultant":"質問","researcher":"質問"},"context":"このフェーズで明らかにしたいこと40字以内"}`;
+const MGR="あなたは厳格なマーケティングマネージャーです。【最重要】前後にマークダウン記号を絶対につけず、有効なJSONのみを出力してください。戦略案を仮想空間でシミュレーションし5項目を各20点満点で採点（各スコアは0〜20の整数のみ）。採点基準：市場性（根拠なし8点以下/根拠あり9-15点/市場データあり16-20点）、実現性（理想論8点以下/段階的計画9-15点/即実行可能16-20点）、独自性（一般論8点以下/差別化要素9-15点/明確USP16-20点）、戦略整合性（バラバラ8点以下/ある程度整合9-15点/完全整合16-20点）、ユーザー共感度（漠然8点以下/ペルソナ明確9-15点/インサイト深い16-20点）。出力形式：{\"env\":\"仮想空間名\",\"scores\":{\"市場性\":整数,\"実現性\":整数,\"独自性\":整数,\"戦略整合性\":整数,\"ユーザー共感度\":整数},\"verdict\":\"採点理由100字\",\"feedback\":\"95点未満の改善指示100字（95点以上は空文字）\",\"revisedStrategy\":\"改善戦略150字（95点未満のみ）\"}";
+const SUM="あなたはマーケティング戦略の統括AIです。【最重要】前後にマークダウン記号（```json等）を絶対につけず、有効なJSONのみを1行で出力してください。段階的ロードマップを含む実行戦略をまとめてください。出力形式：{\"title\":\"戦略タイトル\",\"keyInsight\":\"核心インサイト50字（数値含む）\",\"strategy\":\"Phase1/2/3含む統合戦略200字\",\"actions\":[\"Phase1(1ヶ月):具体施策\",\"Phase2(3ヶ月):具体施策\",\"Phase3(6ヶ月):具体施策\"],\"kpi\":[\"指標1:現状→目標値\",\"指標2:現状→目標値\",\"指標3:現状→目標値\"],\"nextStep\":\"明日できる最初の1アクション50字\"}";
 
 // ── FULL AUTO FLOW ──
 async function startMeeting(){
@@ -1496,50 +972,16 @@ async function runAgentsAuto(qs,phaseIdx){
   S({loading:null});return answers;
 }
 async function runManagerAuto(histText,prevRevised,loopCount,history){
-  S({loopCount,busy:true,statusMsg:"マネージャーがシミュレーション中... (第"+(loopCount+1)+"回目)"});
-  const combined=prevRevised?histText+"\n\n[Revised]\n"+prevRevised:histText;
+  // Keep previous mgrState so the score panel stays visible during loading
+  S({loopCount,busy:true,statusMsg:`マネージャーがシミュレーション中... (第${loopCount+1}回目)`});
+  const combined=prevRevised?`${histText}\n\n[Revised]\n${prevRevised}`:histText;
   try{
     checkCancelled();
-    const raw=await api(MGR,"企画："+st.project+"\n\n戦略案：\n"+combined+"\nブラッシュアップ回数："+loopCount);
-    // JSONを複数方法でパース
-    let m=pj(raw);
-    if(!m||!m.scores){
-      try{
-        const start=raw.indexOf("{");
-        const end=raw.lastIndexOf("}");
-        if(start>=0&&end>start)m=JSON.parse(raw.slice(start,end+1));
-      }catch(e2){}
-    }
-    // 正規表現でスコアを抽出
-    if(!m||!m.scores){
-      const keys=["市場性","実現性","独自性","戦略整合性","ユーザー共感度"];
-      const scores={};
-      keys.forEach(function(k){
-        const re=new RegExp('"'+k+'"\\s*:\\s*(\\d+)');
-        const match=raw.match(re);
-        scores[k]=match?parseInt(match[1]):0;
-      });
-      const vm=raw.match(/"verdict"\s*:\s*"([^"]+)"/);
-      const fm=raw.match(/"feedback"\s*:\s*"([^"]+)"/);
-      const rm=raw.match(/"revisedStrategy"\s*:\s*"([^"]+)"/);
-      const em=raw.match(/"env"\s*:\s*"([^"]+)"/);
-      m={env:em?em[1]:"仮想空間",scores:scores,verdict:vm?vm[1]:"",feedback:fm?fm[1]:"",revisedStrategy:rm?rm[1]:""};
-    }
-    if(!m)m={};
-    // 各スコアを0-20にクランプ
-    if(m.scores){Object.keys(m.scores).forEach(function(k){m.scores[k]=Math.min(20,Math.max(0,parseInt(m.scores[k])||0));});}
-    const total=Object.values(m.scores||{}).reduce(function(a,b){return a+b;},0);
-    S({mgrState:m,loopCount:loopCount,busy:false});
-    saveCurrent();
-    if(total>=95){
-      setTimeout(function(){generateFinalAuto(history,m);},600);
-    } else if(loopCount>=40){
-      setTimeout(function(){generateFinalAuto(history,m);},600);
-    } else if(loopCount>=30){
-      S({busy:false,statusMsg:"30回到達。追加ブラッシュアップが可能です。"});
-    } else {
-      await brushupAuto(histText,m,loopCount+1,history);
-    }
+    const factsForMgr=st.facts?.trim()?`\n【確定事実】${st.facts.slice(0,150)}`:"";    const raw=await api(MGR,`企画：${st.project}${factsForMgr}\n\n戦略案：\n${combined}\nブラッシュアップ回数：${loopCount}`);
+    const m=pj(raw)||{};const total=Object.values(m.scores||{}).reduce((a,b)=>a+b,0);
+    S({mgrState:m,loopCount,busy:false});saveCurrent();
+    if(total>=95||loopCount>=30)setTimeout(()=>generateFinalAuto(history,m),600);
+    else await brushupAuto(histText,m,loopCount+1,history);
   }catch(e){
     if(e.message==="__CANCELLED__")return;
     S({error:e.message,busy:false,statusMsg:""});
@@ -1589,55 +1031,38 @@ async function generateFinalAuto(history,mgrResult){
   S({busy:true,statusMsg:"最終レポートを生成中..."});
   const total=Object.values(mgrResult?.scores||{}).reduce((a,b)=>a+b,0);
   try{
-    const sumMsg="企画："+st.project+"\n\n会議ログ：\n"+buildHistText(history)+"\nManagerスコア："+total+"点\n総評："+(mgrResult?.verdict||"");
-    const raw=await api(SUM,sumMsg);
-    // 複数方法でJSONパース
-    let s=null;
-    try{s=JSON.parse(raw.replace(/```json\n?|```/g,"").trim());}catch(e1){}
-    if(!s||!s.strategy){
-      try{
-        const si=raw.indexOf("{");const ei=raw.lastIndexOf("}");
-        if(si>=0&&ei>si)s=JSON.parse(raw.slice(si,ei+1));
-      }catch(e2){}
-    }
-    if(!s||!s.strategy){
-      // フォールバック：正規表現で各フィールドを抽出
-      function extractField(text,key){
-        const re=new RegExp('"'+key+'"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)"');
-        const m=text.match(re);return m?m[1].replace(/\\n/g,"\n"):"";
-      }
-      function extractArray(text,key){
-        const re=new RegExp('"'+key+'"\\s*:\\s*\\[([^\\]]+)\\]');
-        const m=text.match(re);
-        if(!m)return[];
-        return m[1].match(/"((?:[^"\\\\]|\\\\.)*)"/g)||[];
-      }
-      s={
-        title:extractField(raw,"title")||"Strategy Report",
-        keyInsight:extractField(raw,"keyInsight"),
-        strategy:extractField(raw,"strategy")||raw.replace(/```json|```/g,"").trim().slice(0,500),
-        actions:extractArray(raw,"actions").map(function(a){return a.replace(/^"|"$/g,"");}),
-        kpi:extractArray(raw,"kpi").map(function(k){return k.replace(/^"|"$/g,"");}),
-        nextStep:extractField(raw,"nextStep")
-      };
-    }
-    if(!s)s={title:"Strategy Report",keyInsight:"",strategy:"レポートの生成に失敗しました",actions:[],kpi:[],nextStep:""};
-    S({summary:s,step:"summary",busy:false,statusMsg:""});
+    const raw=await api(SUM,`企画：${st.project}\n\n会議ログ：\n${buildHistText(history)}\nManagerスコア：${total}点\n総評：${mgrResult?.verdict||""}`);
+    S({summary:pj(raw)||{title:"Strategy Report",strategy:raw},step:"summary",busy:false,statusMsg:""});
     saveCurrent();
   }catch(e){if(e.message==="__CANCELLED__")return;S({error:e.message,busy:false,statusMsg:""});}
 }
+
+async function reattachFiles(input){
+  const raw=Array.from(input.files);
+  const processed=await Promise.all(raw.map(pf));
+  // 既存ファイルと重複しないよう追加
+  const existing=st.files.map(f=>f.name);
+  const newFiles=processed.filter(f=>!existing.includes(f.name));
+  st.files=[...st.files,...newFiles];
+  // 再添付リストから削除
+  const reattached=processed.map(f=>f.name);
+  const remaining=(st.needsReattach||[]).filter(n=>!reattached.includes(n));
+  S({needsReattach:remaining.length>0?remaining:null});
+  input.value="";
+  // 全て再添付完了したら自動再開
+  if(remaining.length===0){
+    setTimeout(()=>resumeFromSave(),500);
+  }
+}
 async function retryFromError(){
-  S({error:"",busy:false});
-  // 少し待ってからresumeFromSaveを呼ぶ（render完了後）
-  setTimeout(async()=>{
-    try{
-      await resumeFromSave();
-    }catch(e){
-      if(e.message!=="__CANCELLED__"){
-        S({error:e.message,busy:false});
-      }
+  S({error:""});
+  try{
+    await resumeFromSave();
+  }catch(e){
+    if(e.message!=="__CANCELLED__"){
+      S({error:e.message,busy:false});
     }
-  },100);
+  }
 }
 async function retryBrushup(){if(!st.mgrState)return;S({error:""});await brushupAuto(buildHistText(st.history),st.mgrState,st.loopCount+1,st.history);}
 function buildHistText(hist){
@@ -1656,7 +1081,7 @@ function confirmReset(){
     }
   },150);
 }
-function resetCurrent(){st={...st,step:"input",phaseIdx:0,questions:null,ctx:"",answers:{},loading:null,history:[],mgrState:null,loopCount:0,summary:null,error:"",busy:false,statusMsg:"",brushupProgress:null,brushupLog:[],needsReattach:null,extraMode:false,extraQuestions:[],extraAnswers:{}};render();}
+function resetCurrent(){st={...st,step:"input",phaseIdx:0,questions:null,ctx:"",answers:{},loading:null,history:[],mgrState:null,loopCount:0,summary:null,error:"",busy:false,statusMsg:"",brushupProgress:null,brushupLog:[],needsReattach:null};render();}
 
 // ── INIT ──
 (function(){
@@ -1667,6 +1092,8 @@ function resetCurrent(){st={...st,step:"input",phaseIdx:0,questions:null,ctx:"",
   if(k&&k.startsWith("sk-")){apiKey=k;st.step="projects";}
 })();
 render();
+
+function toggleRound(roundNum){const body=document.getElementById("round-body-"+roundNum);const chev=document.getElementById("round-chevron-"+roundNum);if(!body||!chev)return;const open=body.style.display!=="none";body.style.display=open?"none":"block";chev.style.transform=open?"rotate(0deg)":"rotate(180deg)";}
 </script>
 </body>
 </html>
