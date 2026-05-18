@@ -303,13 +303,13 @@ textarea::placeholder,input::placeholder{color:var(--text3)}
 .status-bar{
   display:flex;align-items:center;gap:10px;
   padding:10px 16px;
-  background:var(--c1l);
-  border:1px solid rgba(35,149,106,.2);
+  background:#FFFFFF;
+  border:1.5px solid var(--border);
   border-radius:var(--r-md);
   margin-bottom:20px;
-  font-size:12px;color:var(--c1d);
+  font-size:12px;color:var(--text);
   font-weight:500;
-  box-shadow:0 1px 6px rgba(35,149,106,.08);
+  box-shadow:var(--shadow-sm);
 }
 .sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .sdot.running{background:var(--c1);animation:glow 1.2s infinite}
@@ -927,12 +927,15 @@ const total=Object.values(m.scores||{}).reduce((a,b)=>a+b,0);
     return`<div class="score-item"><div class="score-name">${k}</div><div class="sbar-wrap"><div class="sbar" style="width:${v*5}%;background:${c}"></div></div><div class="sval" style="color:${c}">${v}<span style="font-size:10px;color:var(--text3)">/20</span></div></div>`;
   }).join("");
   const statusMsg=approved?`<div style="font-size:12px;color:var(--green);padding:6px 0;animation:blink 1.5s infinite">✓ Approved — 最終レポートを生成中...</div>`
-    :st.loopCount>=30&&!st.extraMode?`<div style="border:1.5px solid #2195ca;border-radius:12px;padding:16px;margin-top:12px;background:#EBF6FF">
-        <div style="font-size:13px;font-weight:700;color:#2195ca;margin-bottom:8px">🔍 追加ブラッシュアップで精度を上げますか？</div>
-        <div style="font-size:12px;color:#4A5E72;margin-bottom:12px">エージェントがいくつか質問します。回答することでより現実的・具体的な分析が可能になります。</div>
-        <button class="btn btn-accent" style="max-width:220px" onclick="startExtraMode()">さらに10回ブラッシュアップする</button>
+    :st.loopCount>=40?`<div class="err" style="background:#FEF0EF;color:#c0392b;border-color:rgba(228,85,73,.2)">最大回数（40回）に到達しました。</div>`
+    :st.loopCount>=30&&!st.extraMode&&!st.busy?`<div style="border:1.5px solid #2195ca;border-radius:12px;padding:18px;margin-top:12px;background:linear-gradient(135deg,#EBF6FF,#F0F8FF)">
+        <div style="font-size:14px;font-weight:700;color:#2195ca;margin-bottom:6px">🔍 追加ブラッシュアップで精度を上げる</div>
+        <div style="font-size:12px;color:#4A5E72;margin-bottom:14px">エージェントがいくつか質問します。回答することでより現実的・具体的な分析が可能になります（最大+10回）</div>
+        <button class="btn btn-accent" style="max-width:240px;margin:0" onclick="startExtraMode()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          さらに10回ブラッシュアップする
+        </button>
       </div>`
-    :st.loopCount>=40?`<div class="err">最大回数（40回）に到達。最高スコア案で提出します。</div>`
     :`<div style="font-size:12px;color:var(--text3);padding:6px 0;animation:blink 1.5s infinite">ブラッシュアップ中... (${st.loopCount}/30)</div>`;
   return`<div class="fade">
     <div class="mgr-panel">
@@ -1011,66 +1014,125 @@ function renderBrushupProgress(){
 function renderSummary(){
   const s=st.summary||{};
   const total=Object.values(st.mgrState?.scores||{}).reduce((a,b)=>a+b,0);
-  const actions=(s.actions||[]).map((a,i)=>`<div class="kv-item"><span style="color:var(--amber);font-weight:700;min-width:18px">${i+1}.</span>${a}</div>`).join("");
-  const kpis=(s.kpi||[]).map(k=>`<div class="kv-item"><span style="color:var(--teal)">◆</span>${k}</div>`).join("");
+  const sc=total>=95?"#23956a":total>=70?"#b87000":"#c0392b";
+  const sbg=total>=95?"#E8F5EF":total>=70?"#FEF5E8":"#FEF0EF";
+
+  // アクションプラン（Phase別カード）
+  const phaseColors=["#23956a","#2195ca","#e89f44"];
+  const phaseIcons=["🚀","📈","🏆"];
+  const actionCards=(s.actions||[]).map((a,i)=>{
+    const c=phaseColors[i]||"#8dcba7";
+    const icon=phaseIcons[i]||"◆";
+    const label=["Phase 1","Phase 2","Phase 3"][i]||"Action "+(i+1);
+    return`<div style="flex:1;min-width:200px;background:#fff;border-radius:14px;padding:18px;border:2px solid ${c};position:relative;overflow:hidden">
+      <div style="position:absolute;top:0;left:0;right:0;height:4px;background:${c}"></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <span style="font-size:18px">${icon}</span>
+        <span style="font-size:10px;font-weight:800;color:${c};letter-spacing:.1em;text-transform:uppercase">${label}</span>
+      </div>
+      <div style="font-size:12px;color:#1A2A38;line-height:1.75">${a}</div>
+    </div>`;
+  }).join(`<div style="display:flex;align-items:center;color:#C8D8E4;font-size:22px;flex-shrink:0;padding:0 4px">→</div>`);
+
+  // KPIカード
+  const kpiIcons=["📊","💰","🔄"];
+  const kpiCards=(s.kpi||[]).map((k,i)=>{
+    const parts=k.split("：");
+    const label=parts[0]||k;
+    const value=parts[1]||"";
+    return`<div style="flex:1;background:linear-gradient(135deg,#F0FAF5,#E8F5EF);border-radius:12px;padding:16px;text-align:center;border:1.5px solid rgba(35,149,106,.2)">
+      <div style="font-size:22px;margin-bottom:6px">${kpiIcons[i]||"◆"}</div>
+      <div style="font-size:11px;font-weight:700;color:#23956a;margin-bottom:4px">${label}</div>
+      ${value?`<div style="font-size:12px;color:#4A6070;line-height:1.5">${value}</div>`:""}
+    </div>`;
+  }).join("");
+
+  // スコアゲージ（マネージャー審査）
+  const scoreItems=["市場性","実現性","独自性","戦略整合性","ユーザー共感度"];
+  const scoreGauges=scoreItems.map(k=>{
+    const v=st.mgrState?.scores?.[k]||0;
+    const c=v>=16?"#23956a":v>=12?"#b87000":"#c0392b";
+    const pct=v/20*100;
+    return`<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="font-size:12px;font-weight:600;color:#1A2A38">${k}</span>
+        <span style="font-size:13px;font-weight:700;color:${c}">${v}<span style="font-size:10px;color:#8AA0B0">/20</span></span>
+      </div>
+      <div style="height:6px;background:#E8EEF2;border-radius:3px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${c};border-radius:3px"></div>
+      </div>
+    </div>`;
+  }).join("");
+
   return`<div class="fade">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-      <span style="font-size:10px;color:var(--c1);letter-spacing:.15em;font-weight:800;text-transform:uppercase">Final Report</span>
-      ${total>0?`<span class="approved-tag">✓ ${total}点 承認済み</span>`:""}
+    <!-- ヘッダー -->
+    <div style="background:linear-gradient(135deg,#23956a,#2195ca);border-radius:var(--r-xl);padding:28px;margin-bottom:20px;color:#fff;box-shadow:0 4px 24px rgba(35,149,106,.2)">
+      <div style="font-size:10px;letter-spacing:.2em;opacity:.75;margin-bottom:8px;font-weight:600">FINAL REPORT</div>
+      <div style="font-size:22px;font-weight:800;line-height:1.3;margin-bottom:14px;letter-spacing:-.02em">${s.title||"マーケティング戦略レポート"}</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <span style="background:rgba(255,255,255,.2);padding:5px 14px;border-radius:100px;font-size:12px;font-weight:700;backdrop-filter:blur(8px)">✓ ${total}/100点 承認済み</span>
+        <span style="opacity:.65;font-size:11px">${new Date().toLocaleDateString("ja-JP")}</span>
+      </div>
     </div>
-    <h2 style="font-size:19px;font-weight:800;margin:4px 0 18px;line-height:1.4;letter-spacing:-.01em">${s.title||"Strategy Report"}</h2>
-    <div class="insight-box">
-      <div style="font-size:9px;color:#23956a;letter-spacing:.15em;margin-bottom:5px;font-weight:700">キーインサイト</div>
-      <div style="font-size:14px;font-weight:700;color:#23956a;line-height:1.65">${s.keyInsight||""}</div>
+
+    <!-- KEY INSIGHT -->
+    <div style="background:linear-gradient(135deg,#F0FAF5,#EBF8F2);border:1.5px solid rgba(35,149,106,.2);border-radius:var(--r-lg);padding:20px;margin-bottom:16px;border-left:4px solid #23956a;box-shadow:0 2px 10px rgba(35,149,106,.08)">
+      <div style="font-size:10px;font-weight:800;color:#23956a;letter-spacing:.15em;margin-bottom:8px;text-transform:uppercase">Key Insight</div>
+      <div style="font-size:17px;font-weight:700;color:#1A2A38;line-height:1.55;margin-bottom:12px">${s.keyInsight||""}</div>
+      <div style="font-size:13px;color:#4A6070;line-height:1.9">${s.strategy||""}</div>
     </div>
-    <div class="strat-box">
-      <div style="font-size:9px;color:var(--text3);letter-spacing:.15em;margin-bottom:6px;font-weight:700">戦略</div>
-      <div style="font-size:13px;color:var(--text2);line-height:1.95">${s.strategy||""}</div>
+
+    <!-- ACTION PLAN -->
+    <div style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r-lg);padding:20px;margin-bottom:16px;box-shadow:var(--shadow-sm)">
+      <div style="font-size:10px;font-weight:800;color:#2195ca;letter-spacing:.15em;margin-bottom:6px;text-transform:uppercase">Action Plan</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:16px;letter-spacing:-.02em">実行ロードマップ</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">${actionCards}</div>
     </div>
-    <div class="kv-grid">
-      <div class="kv-card"><div class="kv-title" style="color:var(--purple)">アクションプラン</div>${actions}</div>
-      <div class="kv-card"><div class="kv-title" style="color:var(--teal)">KPI</div>${kpis}</div>
+
+    <!-- KPI -->
+    <div style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r-lg);padding:20px;margin-bottom:16px;box-shadow:var(--shadow-sm)">
+      <div style="font-size:10px;font-weight:800;color:#e89f44;letter-spacing:.15em;margin-bottom:6px;text-transform:uppercase">KPI</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:16px;letter-spacing:-.02em">成果指標</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">${kpiCards}</div>
     </div>
-    ${s.nextStep?`<div class="next-box"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L12 6M12 2C12 2 18 4 20 10C22 16 18 20 12 22C6 20 2 16 4 10C6 4 12 2 12 2Z"/><circle cx="12" cy="13" r="2"/></svg><div><div style="font-size:9px;color:var(--blue);margin-bottom:3px;font-weight:700;letter-spacing:.08em">NEXT ACTION</div><div style="font-size:13px;font-weight:600;color:var(--blue)">${s.nextStep}</div></div></div>`:""}
-    ${st.files.length>0?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:12px"> ${st.files.map(f=>f.name).join("・")}</div>`:""}
-    <button class="btn btn-export" onclick="showExportModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>エクスポート</button>
+
+    <!-- NEXT ACTION -->
+    ${s.nextStep?`<div style="background:linear-gradient(135deg,#EBF6FF,#F0F8FF);border:1.5px solid rgba(33,149,202,.2);border-radius:var(--r-md);padding:16px 20px;display:flex;align-items:center;gap:14px;margin-bottom:16px">
+      <div style="width:36px;height:36px;border-radius:50%;background:#2195ca;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:800;color:#2195ca;margin-bottom:3px;letter-spacing:.1em;text-transform:uppercase">Next Action</div>
+        <div style="font-size:14px;font-weight:700;color:#1A2A38">${s.nextStep}</div>
+      </div>
+    </div>`:""}
+
+    <!-- MANAGER REVIEW -->
+    <div style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r-lg);padding:20px;margin-bottom:20px;box-shadow:var(--shadow-sm)">
+      <div style="font-size:10px;font-weight:800;color:#e89f44;letter-spacing:.15em;margin-bottom:6px;text-transform:uppercase">Manager Review</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:16px;letter-spacing:-.02em">マネージャー審査結果</div>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start">
+        <div style="flex:1;min-width:200px">${scoreGauges}</div>
+        <div style="width:130px;text-align:center;flex-shrink:0">
+          <div style="width:110px;height:110px;border-radius:50%;background:conic-gradient(${sc} ${total}%,#E8EEF2 0);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;box-shadow:0 2px 12px rgba(0,0,0,.08)">
+            <div style="width:82px;height:82px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center">
+              <div style="font-size:24px;font-weight:800;color:${sc};line-height:1">${total}</div>
+              <div style="font-size:10px;color:#8AA0B0">/100</div>
+            </div>
+          </div>
+          <div style="font-size:10px;font-weight:700;color:${sc};background:${sbg};padding:4px 10px;border-radius:100px;display:inline-block">${total>=95?"✓ 承認済み":total>=70?"△ 改善中":"✗ 要改善"}</div>
+        </div>
+      </div>
+      ${st.mgrState?.verdict?`<div style="margin-top:14px;padding:12px 14px;background:#F8FAFB;border-radius:var(--r-sm);font-size:12px;color:#4A6070;line-height:1.75;border-left:3px solid var(--border2)">${st.mgrState.verdict}</div>`:""}
+    </div>
+
+    <button class="btn btn-export" onclick="showExportModal()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      レポートをエクスポート
+    </button>
     <button class="btn btn-ghost" onclick="goProjects()">← プロジェクト一覧へ</button>
   </div>`;
 }
-
-function toggleAccordion(idx){
-  const body=document.getElementById("acc-body-"+idx);
-  const chevron=document.getElementById("acc-chevron-"+idx);
-  if(!body||!chevron)return;
-  const isOpen=body.classList.contains("open");
-  body.classList.toggle("open",!isOpen);
-  chevron.classList.toggle("open",!isOpen);
-}
-
-function backToMeeting(){
-  // 直前の会議画面に戻る
-  const prevStep=st.history&&st.history.length>=PHASE_JA.length?"manager":"meeting";
-  st.step=prevStep;
-  st.busy=false;
-  st.error="";
-  render();
-}
-
-function goEdit(){
-  // 進行中の内容を保持したままinput画面へ
-  cancelled=true;
-  saveCurrent();
-  setTimeout(()=>{
-    cancelled=false;
-    // stepだけinputに戻す（project/facts/filesは保持）
-    st.step="input";
-    st.busy=false;
-    st.loading=null;
-    st.error="";
-    render();
-  },150);
-}
-
 function goProjects(){
   cancelled=true;
   saveCurrent();
@@ -1434,16 +1496,50 @@ async function runAgentsAuto(qs,phaseIdx){
   S({loading:null});return answers;
 }
 async function runManagerAuto(histText,prevRevised,loopCount,history){
-  // Keep previous mgrState so the score panel stays visible during loading
-  S({loopCount,busy:true,statusMsg:`マネージャーがシミュレーション中... (第${loopCount+1}回目)`});
-  const combined=prevRevised?`${histText}\n\n[Revised]\n${prevRevised}`:histText;
+  S({loopCount,busy:true,statusMsg:"マネージャーがシミュレーション中... (第"+(loopCount+1)+"回目)"});
+  const combined=prevRevised?histText+"\n\n[Revised]\n"+prevRevised:histText;
   try{
     checkCancelled();
-    const factsForMgr=st.facts?.trim()?`\n【確定事実】${st.facts.slice(0,150)}`:"";    const raw=await api(MGR,`企画：${st.project}${factsForMgr}\n\n戦略案：\n${combined}\nブラッシュアップ回数：${loopCount}`);
-    const m=pj(raw)||{};const total=Object.values(m.scores||{}).reduce((a,b)=>a+b,0);
-    S({mgrState:m,loopCount,busy:false});saveCurrent();
-    if(total>=95||loopCount>=30)setTimeout(()=>generateFinalAuto(history,m),600);
-    else await brushupAuto(histText,m,loopCount+1,history);
+    const raw=await api(MGR,"企画："+st.project+"\n\n戦略案：\n"+combined+"\nブラッシュアップ回数："+loopCount);
+    // JSONを複数方法でパース
+    let m=pj(raw);
+    if(!m||!m.scores){
+      try{
+        const start=raw.indexOf("{");
+        const end=raw.lastIndexOf("}");
+        if(start>=0&&end>start)m=JSON.parse(raw.slice(start,end+1));
+      }catch(e2){}
+    }
+    // 正規表現でスコアを抽出
+    if(!m||!m.scores){
+      const keys=["市場性","実現性","独自性","戦略整合性","ユーザー共感度"];
+      const scores={};
+      keys.forEach(function(k){
+        const re=new RegExp('"'+k+'"\\s*:\\s*(\\d+)');
+        const match=raw.match(re);
+        scores[k]=match?parseInt(match[1]):0;
+      });
+      const vm=raw.match(/"verdict"\s*:\s*"([^"]+)"/);
+      const fm=raw.match(/"feedback"\s*:\s*"([^"]+)"/);
+      const rm=raw.match(/"revisedStrategy"\s*:\s*"([^"]+)"/);
+      const em=raw.match(/"env"\s*:\s*"([^"]+)"/);
+      m={env:em?em[1]:"仮想空間",scores:scores,verdict:vm?vm[1]:"",feedback:fm?fm[1]:"",revisedStrategy:rm?rm[1]:""};
+    }
+    if(!m)m={};
+    // 各スコアを0-20にクランプ
+    if(m.scores){Object.keys(m.scores).forEach(function(k){m.scores[k]=Math.min(20,Math.max(0,parseInt(m.scores[k])||0));});}
+    const total=Object.values(m.scores||{}).reduce(function(a,b){return a+b;},0);
+    S({mgrState:m,loopCount:loopCount,busy:false});
+    saveCurrent();
+    if(total>=95){
+      setTimeout(function(){generateFinalAuto(history,m);},600);
+    } else if(loopCount>=40){
+      setTimeout(function(){generateFinalAuto(history,m);},600);
+    } else if(loopCount>=30){
+      S({busy:false,statusMsg:"30回到達。追加ブラッシュアップが可能です。"});
+    } else {
+      await brushupAuto(histText,m,loopCount+1,history);
+    }
   }catch(e){
     if(e.message==="__CANCELLED__")return;
     S({error:e.message,busy:false,statusMsg:""});
@@ -1493,55 +1589,43 @@ async function generateFinalAuto(history,mgrResult){
   S({busy:true,statusMsg:"最終レポートを生成中..."});
   const total=Object.values(mgrResult?.scores||{}).reduce((a,b)=>a+b,0);
   try{
-    const raw=await api(SUM,`企画：${st.project}\n\n会議ログ：\n${buildHistText(history)}\nManagerスコア：${total}点\n総評：${mgrResult?.verdict||""}`);
-    S({summary:pj(raw)||{title:"Strategy Report",strategy:raw},step:"summary",busy:false,statusMsg:""});
+    const sumMsg="企画："+st.project+"\n\n会議ログ：\n"+buildHistText(history)+"\nManagerスコア："+total+"点\n総評："+(mgrResult?.verdict||"");
+    const raw=await api(SUM,sumMsg);
+    // 複数方法でJSONパース
+    let s=null;
+    try{s=JSON.parse(raw.replace(/```json\n?|```/g,"").trim());}catch(e1){}
+    if(!s||!s.strategy){
+      try{
+        const si=raw.indexOf("{");const ei=raw.lastIndexOf("}");
+        if(si>=0&&ei>si)s=JSON.parse(raw.slice(si,ei+1));
+      }catch(e2){}
+    }
+    if(!s||!s.strategy){
+      // フォールバック：正規表現で各フィールドを抽出
+      function extractField(text,key){
+        const re=new RegExp('"'+key+'"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)"');
+        const m=text.match(re);return m?m[1].replace(/\\n/g,"\n"):"";
+      }
+      function extractArray(text,key){
+        const re=new RegExp('"'+key+'"\\s*:\\s*\\[([^\\]]+)\\]');
+        const m=text.match(re);
+        if(!m)return[];
+        return m[1].match(/"((?:[^"\\\\]|\\\\.)*)"/g)||[];
+      }
+      s={
+        title:extractField(raw,"title")||"Strategy Report",
+        keyInsight:extractField(raw,"keyInsight"),
+        strategy:extractField(raw,"strategy")||raw.replace(/```json|```/g,"").trim().slice(0,500),
+        actions:extractArray(raw,"actions").map(function(a){return a.replace(/^"|"$/g,"");}),
+        kpi:extractArray(raw,"kpi").map(function(k){return k.replace(/^"|"$/g,"");}),
+        nextStep:extractField(raw,"nextStep")
+      };
+    }
+    if(!s)s={title:"Strategy Report",keyInsight:"",strategy:"レポートの生成に失敗しました",actions:[],kpi:[],nextStep:""};
+    S({summary:s,step:"summary",busy:false,statusMsg:""});
     saveCurrent();
   }catch(e){if(e.message==="__CANCELLED__")return;S({error:e.message,busy:false,statusMsg:""});}
 }
-
-async function reattachFiles(input){
-  const raw=Array.from(input.files);
-  const processed=await Promise.all(raw.map(pf));
-  // 既存ファイルと重複しないよう追加
-  const existing=st.files.map(f=>f.name);
-  const newFiles=processed.filter(f=>!existing.includes(f.name));
-  st.files=[...st.files,...newFiles];
-  // 再添付リストから削除
-  const reattached=processed.map(f=>f.name);
-  const remaining=(st.needsReattach||[]).filter(n=>!reattached.includes(n));
-  S({needsReattach:remaining.length>0?remaining:null});
-  input.value="";
-  // 全て再添付完了したら自動再開
-  if(remaining.length===0){
-    setTimeout(()=>resumeFromSave(),500);
-  }
-}
-async function startExtraMode(){
-  S({extraMode:true,busy:true,statusMsg:"エージェントが追加の質問を生成中..."});
-  // エージェントから質問を生成
-  try{
-    const histText=buildHistText(st.history);
-    const score=Object.values(st.mgrState?.scores||{}).reduce((a,b)=>a+b,0);
-    const feedback=st.mgrState?.feedback||"";
-    const extraSysPrompt="あなたはマーケティング戦略の分析精度を高めるためのインタビュアーです。現在の戦略スコアは"+score+"/100点で改善が必要です。ユーザーに4個の質問をして不明な情報を補完してください。JSONのみ出力：{\"questions\":[\"質問1\",\"質問2\",\"質問3\",\"質問4\"]}";
-    const extraUserMsg="企画："+st.project+"\nマネージャー改善指示："+feedback+"\n会議ログ要約："+histText.slice(0,400);
-    const raw=await api(extraSysPrompt,extraUserMsg);
-    const parsed=pj(raw)||{questions:[]};
-    S({extraQuestions:parsed.questions||[],extraAnswers:{},busy:false,statusMsg:""});
-  }catch(e){
-    S({error:e.message,busy:false,extraMode:false});
-  }
-}
-
-async function submitExtraAnswers(){
-  const answers=st.extraAnswers||{};
-  const qaLines=st.extraQuestions.map((q,i)=>"Q: "+q+"\nA: "+(answers[i]||"（未回答）"));
-  const qaText=qaLines.join("\n");
-  const newFacts=(st.facts||"")+"\n\n【追加情報（エージェントからの質問への回答）】\n"+qaText;
-  S({facts:newFacts,extraMode:false,extraQuestions:[],extraAnswers:{},busy:true});
-  await brushupAuto(buildHistText(st.history),st.mgrState,st.loopCount+1,st.history);
-}
-
 async function retryFromError(){
   S({error:"",busy:false});
   // 少し待ってからresumeFromSaveを呼ぶ（render完了後）
