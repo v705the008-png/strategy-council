@@ -573,6 +573,7 @@ function renderManager(){
         ${(()=>{return (st.brushupLog&&Array.isArray(st.brushupLog)&&st.brushupLog.length>0)?renderBrushupProgress():"";})()}
       </div>
     </div>
+    ${(st.extraMode&&st.extraQuestions&&st.extraQuestions.length>0)?renderExtraQuestions():""}
     ${st.error?`<div class="err">${st.error}<br><button class="retry-btn" onclick="retryBrushup()">リトライ</button></div>`:""}
   </div>`;
 }
@@ -972,16 +973,82 @@ async function runAgentsAuto(qs,phaseIdx){
   S({loading:null});return answers;
 }
 async function runManagerAuto(histText,prevRevised,loopCount,history){
-  // Keep previous mgrState so the score panel stays visible during loading
-  S({loopCount,busy:true,statusMsg:`マネージャーがシミュレーション中... (第${loopCount+1}回目)`});
-  const combined=prevRevised?`${histText}\n\n[Revised]\n${prevRevised}`:histText;
+  S({loopCount:loopCount,busy:true,statusMsg:"マネージャーがシミュレーション中... (第"+(loopCount+1)+"回目)"});
+  const combined=prevRevised?histText+"\n\n[Revised]\n"+prevRevised:histText;
   try{
     checkCancelled();
-    const factsForMgr=st.facts?.trim()?`\n【確定事実】${st.facts.slice(0,150)}`:"";    const raw=await api(MGR,`企画：${st.project}${factsForMgr}\n\n戦略案：\n${combined}\nブラッシュアップ回数：${loopCount}`);
-    const m=pj(raw)||{};const total=Object.values(m.scores||{}).reduce((a,b)=>a+b,0);
-    S({mgrState:m,loopCount,busy:false});saveCurrent();
-    if(total>=95||loopCount>=30)setTimeout(()=>generateFinalAuto(history,m),600);
-    else await brushupAuto(histText,m,loopCount+1,history);
+    const factsNote=st.facts&&st.facts.trim()?"\n【確定事実】"+st.facts.slice(0,150):"";
+    const mgrMsg="企画："+st.project+factsNote+"\n\n戦略案：\n"+combined+"\nブラッシュアップ回数："+loopCount;
+    const raw=await api(MGR,mgrMsg);
+
+    // ── JSONパース（3段階） ──
+    let m=null;
+    // 段階1: 直接パース
+    try{m=JSON.parse(raw);}catch(e1){}
+    // 段階2: マークダウン除去
+    if(!m||!m.scores){
+      try{m=JSON.parse(raw.replace(/```json\n?|```/g,"").trim());}catch(e2){}
+    }
+    // 段階3: {}ブロック抽出
+    if(!m||!m.scores){
+      try{
+        const si=raw.indexOf("{");
+        const ei=raw.lastIndexOf("}");
+        if(si>=0&&ei>si)m=JSON.parse(raw.slice(si,ei+1));
+      }catch(e3){}
+    }
+    // 段階4: 正規表現でスコアを個別抽出
+    if(!m||!m.scores){
+      const keys=["市場性","実現性","独自性","戦略整合性","ユーザー共感度"];
+      const scores={};
+      keys.forEach(function(k){
+        const re=new RegExp('"'+k+'"\\s*:\\s*(\\d+)');
+        const match=raw.match(re);
+        scores[k]=match?parseInt(match[1]):0;
+      });
+      const envM=raw.match(/"env"\s*:\s*"([^"]+)"/);
+      const verdM=raw.match(/"verdict"\s*:\s*"([^"]+)"/);
+      const feedM=raw.match(/"feedback"\s*:\s*"([^"]+)"/);
+      const revM=raw.match(/"revisedStrategy"\s*:\s*"([^"]+)"/);
+      m={
+        env:envM?envM[1]:"仮想空間",
+        scores:scores,
+        verdict:verdM?verdM[1]:"",
+        feedback:feedM?feedM[1]:"",
+        revisedStrategy:revM?revM[1]:""
+      };
+    }
+    if(!m)m={};
+
+    // ── スコアを0-20にクランプ ──
+    if(m.scores){
+      var keys2=Object.keys(m.scores);
+      for(var i=0;i<keys2.length;i++){
+        m.scores[keys2[i]]=Math.min(20,Math.max(0,parseInt(m.scores[keys2[i]])||0));
+      }
+    }
+
+    const total=Object.values(m.scores||{}).reduce(function(a,b){return a+b;},0);
+    S({mgrState:m,loopCount:loopCount,busy:false});
+    saveCurrent();
+
+    // ── ループ継続判定 ──
+    if(total>=95){
+      // 承認！最終レポート生成
+      S({statusMsg:"✓ 承認されました！最終レポートを生成中..."});
+      setTimeout(function(){generateFinalAuto(history,m);},600);
+    } else if(loopCount>=40){
+      // 40回到達 → 強制終了
+      S({statusMsg:"最大回数（40回）到達。最高スコア案でレポートを生成します。"});
+      setTimeout(function(){generateFinalAuto(history,m);},600);
+    } else if(loopCount>=30&&!st.extraMode){
+      // 30回到達 → ユーザーに追加オプションを提示（処理を止める）
+      S({busy:false,statusMsg:"30回のブラッシュアップが完了しました。"});
+      // ここで処理を止める（brushupAutoを呼ばない）
+    } else {
+      // ブラッシュアップ継続
+      await brushupAuto(histText,m,loopCount+1,history);
+    }
   }catch(e){
     if(e.message==="__CANCELLED__")return;
     S({error:e.message,busy:false,statusMsg:""});
@@ -1054,6 +1121,66 @@ async function reattachFiles(input){
     setTimeout(()=>resumeFromSave(),500);
   }
 }
+
+function updateExtraAnswer(idx,val){
+  if(!st.extraAnswers)st.extraAnswers={};
+  st.extraAnswers[idx]=val;
+}
+
+function renderExtraQuestions(){
+  const qs=st.extraQuestions||[];
+  if(qs.length===0)return"";
+  var forms=qs.map(function(q,i){
+    const ans=(st.extraAnswers&&st.extraAnswers[i])||"";
+    return'<div style="margin-bottom:12px">'+
+      '<div style="font-size:12px;font-weight:600;color:#1A2A38;margin-bottom:5px">'+(i+1)+'. '+q+'</div>'+
+      '<textarea rows="2" style="width:100%;border:1.5px solid #E4EAF0;border-radius:8px;padding:8px 12px;font-size:12px;font-family:inherit;resize:none;outline:none;box-sizing:border-box" '+
+      'oninput="updateExtraAnswer('+i+',this.value)" '+
+      'placeholder="回答を入力してください...">'+ans+'</textarea>'+
+    '</div>';
+  }).join("");
+  return'<div style="margin-top:16px;border:1.5px solid #2195ca;border-radius:12px;padding:18px;background:#EBF6FF">'+
+    '<div style="font-size:13px;font-weight:700;color:#2195ca;margin-bottom:4px">エージェントからの質問</div>'+
+    '<div style="font-size:11px;color:#4A5E72;margin-bottom:14px">回答することでより精度の高い分析が可能になります</div>'+
+    forms+
+    '<button style="width:100%;padding:12px;border:none;border-radius:8px;background:linear-gradient(135deg,#23956a,#1a7a56);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit" onclick="submitExtraAnswers()">回答して再分析する →</button>'+
+  '</div>';
+}
+
+async function startExtraMode(){
+  if(!st.extraMode){
+    S({extraMode:true,extraQuestions:[],extraAnswers:{},busy:true,statusMsg:"エージェントが追加の質問を生成中..."});
+  }
+  try{
+    const score=Object.values(st.mgrState&&st.mgrState.scores||{}).reduce(function(a,b){return a+b;},0);
+    const feedback=(st.mgrState&&st.mgrState.feedback)||"";
+    const histText=buildHistText(st.history||[]);
+    const sysP="あなたはマーケティング戦略の分析精度を高めるインタビュアーです。現在スコア"+score+"/100点。改善のため4つの質問をしてください。JSONのみ出力（他テキスト不要）：{\"questions\":[\"質問1\",\"質問2\",\"質問3\",\"質問4\"]}";
+    const userP="企画："+st.project+"\n改善指示："+feedback+"\n要約："+histText.slice(0,300);
+    const raw=await api(sysP,userP);
+    const parsed=pj(raw)||{questions:[]};
+    S({extraQuestions:parsed.questions||[],extraAnswers:{},busy:false,statusMsg:""});
+  }catch(e){
+    if(e.message==="__CANCELLED__")return;
+    S({error:e.message,busy:false,extraMode:false});
+  }
+}
+
+async function submitExtraAnswers(){
+  const answers=st.extraAnswers||{};
+  const qs=st.extraQuestions||[];
+  const qaLines=qs.map(function(q,i){return"Q: "+q+"\nA: "+(answers[i]||"（未回答）");});
+  const qaText=qaLines.join("\n");
+  const newFacts=(st.facts||"")+"\n\n【追加情報（ユーザー回答）】\n"+qaText;
+  S({facts:newFacts,extraMode:false,extraQuestions:[],extraAnswers:{},busy:true,statusMsg:"追加情報を反映してブラッシュアップ中..."});
+  try{
+    await brushupAuto(buildHistText(st.history||[]),st.mgrState,st.loopCount+1,st.history||[]);
+  }catch(e){
+    if(e.message==="__CANCELLED__")return;
+    S({error:e.message,busy:false});
+  }
+}
+
 async function retryFromError(){
   S({error:""});
   try{
