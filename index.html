@@ -462,8 +462,11 @@ function saveCurrent(){
   proj.state={...st,files:st.files.map(f=>f.type==="text"?f:{...f,data:"[binary]"})};
   proj.name=st.project?.slice(0,40)||"無題";
   proj.updatedAt=new Date().toISOString();
-  proj.status=st.step==="summary"?"done":"running";
-  proj.score=st.mgrState?Object.values(st.mgrState.scores||{}).reduce((a,b)=>a+b,0):null;
+  // summaryが存在すれば完了済み（input画面に戻っても"done"を維持）
+  proj.status=(st.step==="summary"||!!st.summary)?"done":"running";
+  // 常にベストスコアで保存（ループ後半で下がっても最高点を維持）
+  const _bestM=st.bestMgrState||st.mgrState;
+  proj.score=_bestM?Object.values(_bestM.scores||{}).reduce((a,b)=>a+b,0):null;
   saveProject(proj);
 }
 
@@ -683,7 +686,8 @@ function renderInput(){
     <button class="btn btn-accent" id="startBtn" onclick="startMeeting()" ${st.project.trim()?"":"disabled"}>
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Start MTG
     </button>
-    ${st.history&&st.history.length>0?`<button class="btn btn-ghost" style="margin-top:6px" onclick="backToMeeting()">← 会議画面に戻る</button>`:""}
+    ${st.summary?`<button class="btn btn-accent" style="margin-top:6px;background:var(--green);border-color:var(--green)" onclick="S({step:'summary'})">📄 最終レポートを見る</button>`:""}
+    ${st.history&&st.history.length>0&&!st.summary?`<button class="btn btn-ghost" style="margin-top:6px" onclick="backToMeeting()">← 会議画面に戻る</button>`:""}
     <button class="btn btn-ghost" onclick="S({step:'projects'})">← 戻る</button>
   </div>`;
 }
@@ -831,8 +835,8 @@ function renderManager(){
         <div class="score-grid">${scoreCards}</div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-radius:12px;margin-bottom:14px;border:1.5px solid var(--border2);background:var(--bg3)">
           <div>
-            <div style="font-size:10px;color:var(--text3);margin-bottom:4px;letter-spacing:.1em;font-weight:700">TOTAL SCORE${bestTotal>total?` <span style="font-size:9px;padding:1px 6px;border-radius:100px;background:var(--accent-light);color:var(--accent)">ベスト ${bestTotal}pt</span>`:""}</div>
-            <div style="font-size:32px;font-weight:800;color:${approved?"var(--accent)":"var(--text)"};line-height:1">${total}<span style="font-size:14px;font-weight:400;color:var(--text3)">/100</span></div>
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px;letter-spacing:.1em;font-weight:700">BEST SCORE${bestTotal>total?`<span style="font-size:9px;margin-left:6px;padding:1px 6px;border-radius:100px;background:var(--bg2);color:var(--text3);border:1px solid var(--border)">今ラウンド ${total}pt</span>`:""}</div>
+            <div style="font-size:32px;font-weight:800;color:${approved?"var(--accent)":bestTotal>=80?"var(--blue2)":"var(--text)"};line-height:1">${bestTotal>0?bestTotal:total}<span style="font-size:14px;font-weight:400;color:var(--text3)">/100</span></div>
           </div>
           <div style="font-size:12px;font-weight:700;color:${approved?"var(--accent)":"var(--text2)"};padding:7px 16px;border-radius:100px;background:var(--bg2);border:1.5px solid var(--border2)">${approved?"■ 承認済み":total>=70?"▶ 改善中":"○ 要改善"}</div>
         </div>
@@ -922,7 +926,11 @@ function renderSummary(){
   // KPIs
   const kpisHtml=(s.kpi||[]).map((k,i)=>`<div style="background:var(--bg3);border-radius:10px;padding:11px 14px;border-left:3px solid ${phaseAccentColors[i]||"var(--accent)"}"><div style="font-size:12px;font-weight:600;color:var(--text);line-height:1.5">${k}</div></div>`).join("");
   // Competitors
-  const compRows=(s.competitors||[]).map(c=>`<tr><td style="font-weight:600;color:var(--text)">${c.name||""}</td><td style="color:var(--text2)">${c.strength||""}</td><td style="color:var(--green);font-weight:600">${c.gap||""}</td></tr>`).join("");
+  const compRows=(s.competitors||[]).map(c=>{
+    const nameCell=c.url?`<a href="${c.url}" target="_blank" rel="noopener" style="font-weight:600;color:var(--accent);text-decoration:none;display:flex;align-items:center;gap:4px">${c.name||""}<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>`
+      :`<span style="font-weight:600;color:var(--text)">${c.name||""}</span>`;
+    return`<tr><td>${nameCell}</td><td style="color:var(--text2)">${c.strength||""}</td><td style="color:var(--green);font-weight:600">${c.gap||""}</td></tr>`;
+  }).join("");
   // Risks
   const risksHtml=(s.risks||[]).map(r=>`<div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:4px">▲ ${r.risk||""}</div><div style="font-size:11px;color:var(--text2);line-height:1.5">→ ${r.mitigation||""}</div></div>`).join("");
   // Tools
@@ -1084,40 +1092,54 @@ function buildReport(){
   return t;
 }
 function exportPDF(){
-  const s=st.summary||{};const m=st.mgrState;
+  const s=st.summary||{};
+  const m=st.bestMgrState||st.mgrState;
   const total=Object.values(m?.scores||{}).reduce((a,b)=>a+b,0);
-  // Build HTML for PDF printing
-  const scoreRows=SCORE_ITEMS.map(k=>{const v=m?.scores?.[k]||0;const c=v>=19?"#34D48A":v>=15?"#F0A429":"#FF5B6B";return`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px"><span>${k}</span><span style="color:${c};font-weight:700">${v}/20</span></div><div style="height:3px;background:#e5e7eb;border-radius:2px"><div style="height:100%;width:${v*5}%;background:${c};border-radius:2px"></div></div></div>`;}).join("");
-  const actions=(s.actions||[]).map((a,i)=>`<div style="padding:5px 0;border-bottom:1px solid #e5e7eb;font-size:12px"><span style="color:#D97706;font-weight:700;margin-right:6px">${i+1}.</span>${a}</div>`).join("");
-  const kpis=(s.kpi||[]).map(k=>`<div style="padding:5px 0;border-bottom:1px solid #e5e7eb;font-size:12px"><span style="color:#0D9488;margin-right:6px">◆</span>${k}</div>`).join("");
-  const log=st.history.map((r,i)=>`<h3 style="font-size:12px;color:#6B7280;margin:16px 0 8px;font-weight:600">Phase ${i+1}: ${PHASE_JA[i]}</h3>${Object.entries(r.answers).map(([id,a])=>`<div style="border-left:2px solid ${AGENTS[id].color};padding-left:10px;margin-bottom:10px"><div style="font-size:10px;font-weight:700;color:${AGENTS[id].color};margin-bottom:2px">${AGENTS[id].name}</div><div style="font-size:12px;color:#374151;line-height:1.7">${a}</div></div>`).join("")}`).join("");
-  const pdfHTML=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Strategy Report</title><style>
-    @media print{body{margin:0}@page{margin:20mm;size:A4}}
-    body{font-family:'Hiragino Sans','Noto Sans JP',sans-serif;color:#111827;max-width:700px;margin:0 auto;padding:24px;font-size:13px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    h1{font-size:20px;font-weight:800;margin-bottom:4px}
-    h2{font-size:11px;font-weight:700;letter-spacing:.1em;color:#5B7FFF;border-bottom:1px solid #e5e7eb;padding-bottom:5px;margin:20px 0 10px;text-transform:uppercase}
-    .box{background:#F9FAFB;border-radius:8px;padding:12px 14px;margin-bottom:10px;border:1px solid #e5e7eb}
-    .insight{background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:12px 14px;font-size:14px;font-weight:700;color:#B45309}
-    .badge{display:inline-block;padding:2px 8px;border-radius:100px;background:#D1FAE5;color:#065F46;font-size:11px;font-weight:700;border:1px solid #A7F3D0;margin-bottom:12px}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
-    .kv{background:#F9FAFB;border-radius:8px;padding:12px;border:1px solid #e5e7eb}
-    .kv-title{font-size:9px;font-weight:700;letter-spacing:.1em;margin-bottom:6px;text-transform:uppercase}
-    .next{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:11px 14px;margin-bottom:12px}
-    .meta{font-size:10px;color:#9CA3AF;margin-bottom:16px}
+  const phaseColors=["#3A3AF5","#5B8DEF","#0FA66A"];
+  const scoreRows=SCORE_ITEMS.map(k=>{
+    const v=Math.min(20,Math.max(0,parseInt(m?.scores?.[k])||0));
+    const c=v>=16?"#3A3AF5":v>=10?"#5B8DEF":"#aaa";
+    return`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="color:#374151">${k}</span><span style="color:${c};font-weight:700">${v}/20</span></div><div style="height:3px;background:#e5e7eb;border-radius:2px"><div style="height:100%;width:${v*5}%;background:${c};border-radius:2px"></div></div></div>`;
+  }).join("");
+  const phasesRows=(s.phases||[]).map((p,i)=>{
+    const col=phaseColors[i]||"#3A3AF5";
+    const acts=(p.actions||[]).map(a=>`<div style="font-size:11px;color:#374151;padding:3px 0;border-bottom:1px solid #f3f4f6;line-height:1.5">• ${a}</div>`).join("");
+    return`<td style="vertical-align:top;padding:0 6px"><div style="border-top:3px solid ${col};padding-top:8px"><div style="width:18px;height:18px;border-radius:50%;background:${col};color:#fff;font-size:9px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;margin-bottom:5px">${p.phase||i+1}</div><div style="font-size:10px;font-weight:800;color:#111;margin-bottom:2px">${p.name||""}</div><div style="font-size:9px;color:#6B7280;margin-bottom:6px">${p.period||""}</div><div style="font-size:10px;font-weight:600;color:${col};margin-bottom:5px;line-height:1.4">${p.goal||""}</div>${acts}</div></td>`;
+  }).join("");
+  const compRows=(s.competitors||[]).map(c=>`<tr><td style="font-weight:600;padding:6px 8px;border-bottom:1px solid #f3f4f6">${c.url?`<a href="${c.url}" style="color:#3A3AF5">${c.name}</a>`:c.name||""}</td><td style="padding:6px 8px;border-bottom:1px solid #f3f4f6;font-size:11px;color:#374151">${c.strength||""}</td><td style="padding:6px 8px;border-bottom:1px solid #f3f4f6;font-size:11px;color:#059669;font-weight:600">${c.gap||""}</td></tr>`).join("");
+  const kpiRows=(s.kpi||[]).map((k,i)=>`<div style="padding:7px 10px;border-left:3px solid ${phaseColors[i]||"#3A3AF5"};background:#F9FAFB;border-radius:0 6px 6px 0;margin-bottom:6px;font-size:11px;font-weight:600;color:#111">${k}</div>`).join("");
+  const riskRows=(s.risks||[]).map(r=>`<div style="border:1px solid #fee2e2;border-radius:6px;padding:8px 10px;margin-bottom:6px"><div style="font-size:10px;font-weight:700;color:#DC2626;margin-bottom:3px">▲ ${r.risk||""}</div><div style="font-size:11px;color:#374151">→ ${r.mitigation||""}</div></div>`).join("");
+  const log=st.history.map((r,i)=>`<div style="margin-bottom:14px"><div style="font-size:10px;font-weight:700;color:#3A3AF5;letter-spacing:.08em;padding:4px 0;border-bottom:1px solid #e5e7eb;margin-bottom:8px">Phase ${i+1}: ${PHASE_JA[i]}</div>${Object.entries(r.answers).map(([id,a])=>`<div style="margin-bottom:8px;padding-left:10px;border-left:2px solid #3A3AF5"><div style="font-size:9px;font-weight:700;color:#3A3AF5;margin-bottom:2px">${AGENTS[id].name}</div><div style="font-size:11px;color:#374151;line-height:1.7">${a}</div></div>`).join("")}</div>`).join("");
+  const pdfHTML=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${s.title||"Strategy Report"}</title><style>
+    @media print{body{margin:0}@page{margin:18mm;size:A4}}
+    body{font-family:'Hiragino Sans','Noto Sans JP','Inter',sans-serif;color:#111;max-width:720px;margin:0 auto;padding:0;font-size:12px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .hero{background:#3A3AF5;color:#fff;padding:28px 28px 24px;margin-bottom:16px;position:relative;overflow:hidden;border-radius:0 0 16px 16px}
+    .hero::after{content:'';position:absolute;right:-40px;top:-40px;width:180px;height:180px;background:rgba(255,255,255,.06);border-radius:50%}
+    .section{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px 18px;margin-bottom:10px}
+    .label{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#3A3AF5;margin-bottom:8px}
+    table{width:100%;border-collapse:collapse}
+    th{background:#F9FAFB;padding:6px 8px;font-size:9px;font-weight:700;text-align:left;border-bottom:1.5px solid #e5e7eb;color:#6B7280;letter-spacing:.08em}
   </style></head><body>
-  <h1>⚡ Strategy Council</h1>
-  <p class="meta">生成日時: ${new Date().toLocaleString("ja-JP")} ／ ${st.project?.slice(0,60)||""}</p>
-  <span class="badge">✓ ${total}/100pt 承認済み</span>
-  <h2>Key Insight</h2><div class="insight">${s.keyInsight||""}</div>
-  <h2>Strategy</h2><div class="box"><p style="line-height:1.9;color:#374151">${s.strategy||""}</p></div>
-  <div class="grid">
-    <div class="kv"><div class="kv-title" style="color:#7C3AED">Action Plan</div>${actions}</div>
-    <div class="kv"><div class="kv-title" style="color:#0D9488">KPI</div>${kpis}</div>
+  <div class="hero">
+    <div style="font-size:9px;color:rgba(255,255,255,.6);letter-spacing:.18em;font-weight:700;margin-bottom:6px;text-transform:uppercase">Final Strategy Report · Strategy Council</div>
+    <div style="font-size:20px;font-weight:800;color:#fff;line-height:1.2;margin-bottom:4px">${s.title||"Strategy Report"}</div>
+    ${s.tagline?`<div style="font-size:12px;color:rgba(255,255,255,.7)">${s.tagline}</div>`:""}
+    <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <span style="background:rgba(255,255,255,.15);padding:3px 12px;border-radius:100px;font-size:11px;font-weight:700;color:#fff">✓ Score ${total}/100</span>
+      ${s.positioning?`<span style="font-size:10px;color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.2);padding:3px 10px;border-radius:100px">${s.positioning}</span>`:""}
+    </div>
+    <div style="font-size:9px;color:rgba(255,255,255,.45);margin-top:8px">${new Date().toLocaleString("ja-JP")} · ${st.project?.slice(0,60)||""}</div>
   </div>
-  ${s.nextStep?`<div class="next"><div style="font-size:9px;font-weight:700;color:#1D4ED8;margin-bottom:3px;letter-spacing:.08em">NEXT ACTION</div><div style="font-size:13px;font-weight:600;color:#1D4ED8">${s.nextStep}</div></div>`:""}
-  <h2>Manager Review</h2>
-  <div class="box"><p style="font-size:11px;color:#6B7280;margin-bottom:8px">仮想空間: ${m?.env||"—"} ／ スコア: ${total}/100</p>${scoreRows}<p style="font-size:12px;color:#374151;margin-top:8px;line-height:1.7">${m?.verdict||""}</p></div>
-  <h2>Meeting Log</h2>${log}
+  <div class="section"><div class="label">Key Insight</div><div style="font-size:14px;font-weight:800;color:#111;line-height:1.5;margin-bottom:${s.challenge?"10px":"0"}">${s.keyInsight||""}</div>${s.challenge?`<div style="background:#F9FAFB;border-left:3px solid #3A3AF5;padding:8px 12px;border-radius:0 6px 6px 0;font-size:11px;color:#374151"><strong style="font-size:9px;display:block;color:#6B7280;margin-bottom:3px;letter-spacing:.1em">CHALLENGE</strong>${s.challenge}</div>`:""}</div>
+  <div class="section"><div class="label">Integrated Strategy</div><div style="font-size:12px;color:#374151;line-height:1.95">${s.strategy||""}</div></div>
+  ${phasesRows?`<div class="section"><div class="label">Strategy Roadmap</div><table><tbody><tr>${phasesRows}</tr></tbody></table></div>`:""}
+  ${s.resources?`<div class="section"><div class="label">Required Resources</div><table><tr><th>Budget</th><th>Team</th><th>Tools</th></tr><tr><td style="padding:8px;font-weight:700;font-size:12px">${s.resources.budget||"−"}</td><td style="padding:8px;font-size:11px">${s.resources.team||"−"}</td><td style="padding:8px;font-size:11px">${(s.resources.tools||[]).join(", ")}</td></tr></table></div>`:""}
+  ${compRows?`<div class="section"><div class="label">Competitive Analysis</div><table><thead><tr><th>競合</th><th>強み</th><th style="color:#059669">我々の優位性</th></tr></thead><tbody>${compRows}</tbody></table></div>`:""}
+  ${kpiRows?`<div class="section"><div class="label">KPI Targets</div>${kpiRows}</div>`:""}
+  ${riskRows?`<div class="section"><div class="label">Risks & Mitigation</div>${riskRows}</div>`:""}
+  <div class="section"><div class="label">Manager Evaluation</div>${scoreRows}${m?.verdict?`<div style="margin-top:8px;font-size:11px;color:#374151;line-height:1.7;background:#F9FAFB;padding:8px 10px;border-radius:6px">${m.verdict}</div>`:""}</div>
+  ${s.nextStep?`<div style="background:linear-gradient(135deg,#3A3AF5,#5B8DEF);border-radius:10px;padding:16px 18px;margin-bottom:12px"><div style="font-size:9px;color:rgba(255,255,255,.65);letter-spacing:.18em;font-weight:700;margin-bottom:5px">NEXT ACTION</div><div style="font-size:14px;font-weight:700;color:#fff">${s.nextStep}</div></div>`:""}
+  <div class="section"><div class="label">Meeting Log</div>${log}</div>
   <script>window.onload=()=>{window.print();}<\/script>
   </body></html>`;
   const w=window.open("","_blank");
@@ -1282,7 +1304,7 @@ function pj(t){
 const FAC=`マーケティング戦略会議の司会AI。参加エージェント：マーケター、プロダクトデザイナー、戦略コンサルタント、UXリサーチャー、CFO、グロースハッカー。各専門家が競合固有名詞・具体数値・実施期限を含む提言を出せるよう、専門性を最大化する論点を設計せよ。JSONのみ出力：{"phase":"フェーズ名","questions":{"marketer":"論点","designer":"論点","consultant":"論点","researcher":"論点","cfo":"論点","growthhacker":"論点"},"context":"このフェーズで明らかにしたいこと40字以内"}`;
 const MGR_MEETING="あなたはマーケティングマネージャー（会議監督役）です。エージェントの発言を分析し、最終評価5項目（市場性・実現性・独自性・戦略整合性・ユーザー共感度）で高得点を取るために現在の議論で不足している観点を特定してください。JSONのみ出力（マークダウン禁止）：{\"gap\":\"現フェーズで不足している重要視点（競合固有名詞・数値根拠・具体施策）を80字で\",\"directive\":\"次フェーズで各エージェントが必ず深掘りすべき最重要論点を80字で（断言口調）\",\"focus\":[\"補強すべき評価項目1\",\"補強すべき評価項目2\"]}";
 const MGR="あなたは厳格なマーケティングマネージャーです。【最重要】前後にマークダウン記号を絶対につけず、有効なJSONのみを出力してください。戦略案を仮想空間でシミュレーションし5項目を各20点満点で採点（各スコアは0〜20の整数のみ）。採点基準：市場性（根拠なし8点以下/根拠あり9-15点/市場データ+競合比較16-20点）、実現性（理想論8点以下/段階的計画9-15点/即実行可能な具体行動16-20点）、独自性（一般論8点以下/差別化要素9-15点/競合にない明確USP16-20点）、戦略整合性（バラバラ8点以下/ある程度整合9-15点/全フェーズ完全整合16-20点）、ユーザー共感度（漠然8点以下/ペルソナ明確9-15点/インサイト深くWTP検証済み16-20点）。高得点を得るには：具体的数値・競合固有名詞・実施日程・担当者像・測定方法を含めること。出力形式：{\"env\":\"仮想空間名\",\"scores\":{\"市場性\":整数,\"実現性\":整数,\"独自性\":整数,\"戦略整合性\":整数,\"ユーザー共感度\":整数},\"verdict\":\"採点理由と高得点への具体指摘120字\",\"feedback\":\"95点未満の場合のみ：最も低い2〜3項目の具体的改善要件を200字で（例：独自性：競合A社・B社との差別化ポイントを固有名詞で3つ明記し価格優位性を数値で示せ）\",\"revisedStrategy\":\"改善案の統合戦略200字（具体数値・実施期限・固有名詞を必ず含む、95点未満のみ）\"}";
-const SUM="あなたはマーケティング戦略の統括AIです。会議ログとマネージャー審査を元に、プロの提案書レベルのレポートをJSONのみで出力してください。コードブロック・マークダウン・改行をJSONの値に入れないこと。出力フォーマット：{\"title\":\"戦略タイトル\",\"tagline\":\"サブタイトル25字\",\"keyInsight\":\"競合名・数値を含む核心インサイト80字\",\"challenge\":\"解決すべき本質課題60字\",\"strategy\":\"競合固有名詞・数値・期限を含む統合戦略250字\",\"positioning\":\"競合との差別化ポジション50字\",\"phases\":[{\"phase\":1,\"name\":\"フェーズ名\",\"period\":\"1〜3ヶ月\",\"goal\":\"このフェーズのゴール40字\",\"actions\":[\"具体施策1\",\"具体施策2\",\"具体施策3\"]},{\"phase\":2,\"name\":\"フェーズ名\",\"period\":\"3〜6ヶ月\",\"goal\":\"ゴール\",\"actions\":[\"施策1\",\"施策2\",\"施策3\"]},{\"phase\":3,\"name\":\"フェーズ名\",\"period\":\"6〜12ヶ月\",\"goal\":\"ゴール\",\"actions\":[\"施策1\",\"施策2\",\"施策3\"]}],\"resources\":{\"budget\":\"概算予算（例：初期300万+月次50万）\",\"team\":\"必要体制（例：PMx1・マーケx2・エンジニアx3）\",\"tools\":[\"ツール1\",\"ツール2\",\"ツール3\"]},\"kpi\":[\"指標1:現状値→目標値・期限\",\"指標2:現状値→目標値・期限\",\"指標3:現状値→目標値・期限\"],\"risks\":[{\"risk\":\"想定リスク\",\"mitigation\":\"対策\"},{\"risk\":\"リスク2\",\"mitigation\":\"対策2\"}],\"competitors\":[{\"name\":\"競合名\",\"strength\":\"競合の強み\",\"gap\":\"我々の優位性\"},{\"name\":\"競合名2\",\"strength\":\"強み\",\"gap\":\"優位性\"}],\"nextStep\":\"明日できる最初の1アクション（具体的な担当者・行動）\"}";
+const SUM="あなたはマーケティング戦略の統括AIです。会議ログとマネージャー審査を元に、プロの提案書レベルのレポートをJSONのみで出力してください。コードブロック・マークダウン・改行をJSONの値に入れないこと。出力フォーマット：{\"title\":\"戦略タイトル\",\"tagline\":\"サブタイトル25字\",\"keyInsight\":\"競合名・数値を含む核心インサイト80字\",\"challenge\":\"解決すべき本質課題60字\",\"strategy\":\"競合固有名詞・数値・期限を含む統合戦略250字\",\"positioning\":\"競合との差別化ポジション50字\",\"phases\":[{\"phase\":1,\"name\":\"フェーズ名\",\"period\":\"1〜3ヶ月\",\"goal\":\"このフェーズのゴール40字\",\"actions\":[\"具体施策1\",\"具体施策2\",\"具体施策3\"]},{\"phase\":2,\"name\":\"フェーズ名\",\"period\":\"3〜6ヶ月\",\"goal\":\"ゴール\",\"actions\":[\"施策1\",\"施策2\",\"施策3\"]},{\"phase\":3,\"name\":\"フェーズ名\",\"period\":\"6〜12ヶ月\",\"goal\":\"ゴール\",\"actions\":[\"施策1\",\"施策2\",\"施策3\"]}],\"resources\":{\"budget\":\"概算予算（例：初期300万+月次50万）\",\"team\":\"必要体制（例：PMx1・マーケx2・エンジニアx3）\",\"tools\":[\"ツール1\",\"ツール2\",\"ツール3\"]},\"kpi\":[\"指標1:現状値→目標値・期限\",\"指標2:現状値→目標値・期限\",\"指標3:現状値→目標値・期限\"],\"risks\":[{\"risk\":\"想定リスク\",\"mitigation\":\"対策\"},{\"risk\":\"リスク2\",\"mitigation\":\"対策2\"}],\"competitors\":[{\"name\":\"競合名\",\"url\":\"https://example.com\",\"strength\":\"競合の強み\",\"gap\":\"我々の優位性\"},{\"name\":\"競合名2\",\"url\":\"https://example2.com\",\"strength\":\"強み\",\"gap\":\"優位性\"}],\"nextStep\":\"明日できる最初の1アクション（具体的な担当者・行動）\"}";
 const SYNTH="あなたはマーケティング戦略の統合エキスパートです。【最重要】JSONのみ出力。スコア上位3つの戦略案を分析し、各案の最も優れた要素（競合比較・具体数値・独自USP・実行計画・ユーザーインサイト）を厳選して一つの最強戦略に統合してください。単なる平均ではなく、各案のベストな要素だけを組み合わせること。出力形式：{\"synthesizedStrategy\":\"統合された最強戦略300字以上（競合固有名詞・具体数値・実施期限・測定KPIを必ず含む）\",\"keyStrengths\":\"各案から採用した強みの要点100字\"}";
 
 // ── FULL AUTO FLOW ──
@@ -1557,15 +1579,22 @@ async function brushupAuto(histText,prevMgr,newCount,history){
        statusMsg:`ブラッシュアップ ${newCount}/${maxBrushupRounds}回 — ${AGENTS[id].name} が改善中...`});
     try{
       checkCancelled();
+      const factsConstraint=st.facts&&st.facts.trim()
+        ?"\n\n【絶対遵守の確定事実・制約（これに反する提案は禁止）】\n"+st.facts.slice(0,200)
+        :"";
+      const bestBase=st.bestMgrState?.revisedStrategy
+        ?"\n\n【現在のベスト戦略案（この内容を土台にして、弱点部分のみ改善せよ。良い部分は必ず保持すること）】\n"+st.bestMgrState.revisedStrategy
+        :"";
       const ans=await api(
         ROLES[id]+brushupResearchNote,
         "企画："+st.project.slice(0,150)
+        +factsConstraint
+        +bestBase
         +"\n\n現在の評価スコア："+scoresSummary
         +"\n改善が必要な項目："+weakAreas
         +"\nマネージャー改善指示："+feedback
-        +"\n\n過去の議論要約："+histSummary
-        +"\n\n上記の改善指示を踏まえ、特に「"+weakAreas+"」を改善する具体的施策を250字で述べよ。"
-        +"競合固有名詞・具体数値・実施期限・担当者像・測定KPIを必ず含め断言口調で。曖昧表現・一般論は禁止。"
+        +"\n\n上記のベスト戦略案をベースに、特に「"+weakAreas+"」を改善する施策を250字で提案せよ。"
+        +"確定事実に違反しないこと。競合固有名詞・具体数値・実施期限・測定KPIを必ず含め断言口調で。"
       );
       revised[id]=ans;
       // done state - fully immutable update
@@ -1575,11 +1604,28 @@ async function brushupAuto(histText,prevMgr,newCount,history){
     catch(e){if(e.message==="__CANCELLED__")throw e;S({error:e.message,busy:false});throw e;}
   }
 
-  const revisedText=Object.entries(revised).map(([id,a])=>`${AGENTS[id].name}(revised): ${a}`).join("\n");
-  const bestStrategy=st.bestMgrState?.revisedStrategy&&st.bestMgrState.revisedStrategy!==prevMgr?.revisedStrategy
-    ?"[ベスト戦略ベース]\n"+st.bestMgrState.revisedStrategy+"\n[今回の改善]\n"+revisedText
-    :(prevMgr?.revisedStrategy||"")+"\n"+revisedText;
-  await runManagerAuto(histText,bestStrategy,newCount,history);
+  const revisedText=Object.entries(revised).map(([id,a])=>`${AGENTS[id].name}: ${a}`).join("\n");
+  // 改善案をベスト戦略に統合して1つのコヒーレントな戦略に合成
+  S({statusMsg:`ブラッシュアップ ${newCount}/${maxBrushupRounds}回 — 改善案を統合中...`});
+  let synthesizedStrategy=(st.bestMgrState?.revisedStrategy||prevMgr?.revisedStrategy||"")+" "+revisedText;
+  try{
+    checkCancelled();
+    const factsConstraintSynth=st.facts&&st.facts.trim()?"\n\n【絶対遵守の制約（違反禁止）】"+st.facts.slice(0,200):"";
+    const synthRaw=await api(
+      "あなたは戦略統合AIです。ベスト戦略案をベースに各エージェントの改善提案を統合し、弱点項目のみを改善した最強の一貫した戦略案を出力してください。良い要素は必ず保持。JSONのみ出力（マークダウン禁止）：{\"updatedStrategy\":\"統合改善戦略300字以上（競合固有名詞・具体数値・実施期限を必ず含む）\"}",
+      "ベスト戦略案：\n"+(st.bestMgrState?.revisedStrategy||prevMgr?.revisedStrategy||"なし")
+      +factsConstraintSynth
+      +"\n\n評価スコア："+scoresSummary
+      +"\n改善が必要な項目："+weakAreas
+      +"\n\n各エージェントの改善提案：\n"+revisedText
+    );
+    let sp=null;
+    try{sp=JSON.parse(synthRaw);}catch(e){}
+    if(!sp)try{sp=JSON.parse(synthRaw.replace(/```json\n?|```/g,"").trim());}catch(e){}
+    if(!sp){const si=synthRaw.indexOf("{"),ei=synthRaw.lastIndexOf("}");if(si>=0&&ei>si)try{sp=JSON.parse(synthRaw.slice(si,ei+1));}catch(e){}}
+    if(sp?.updatedStrategy)synthesizedStrategy=sp.updatedStrategy;
+  }catch(e){if(e.message==="__CANCELLED__")throw e;}
+  await runManagerAuto(histText,synthesizedStrategy,newCount,history);
 }
 async function synthesizeTop3Auto(history,mgrHistory){
   try{
@@ -1649,7 +1695,9 @@ async function generateFinalAuto(history,mgrResult){
   const useBest=st.bestMgrState||mgrResult;
   const total=Object.values(useBest&&useBest.scores||{}).reduce(function(a,b){return a+b;},0);
   try{
-    const sumMsg="企画："+st.project+"\n\n会議ログ：\n"+buildHistText(history)+"\nManagerスコア："+total+"点\n総評："+(mgrResult&&mgrResult.verdict||"");
+    const factsForSum=st.facts&&st.facts.trim()?"\n\n【重要な制約・確定事実（これに反する提案・施策は絶対に出力しないこと）】\n"+st.facts:"";
+    const bestStrategyForSum=useBest?.revisedStrategy?"\n\n【採用するベスト戦略案】\n"+useBest.revisedStrategy:"";
+    const sumMsg="企画："+st.project+factsForSum+bestStrategyForSum+"\n\n会議ログ：\n"+buildHistText(history)+"\nManagerスコア："+total+"点\n総評："+(useBest&&useBest.verdict||"");
     const raw=await api(SUM,sumMsg,0,2000);
 
     // ── 4段階パース ──
