@@ -426,9 +426,11 @@ const PHASE_JA=["課題・ゴール定義","市場・ユーザー分析","戦略
 const SCORE_ITEMS=["市場性","実現性","独自性","戦略整合性","ユーザー共感度"];
 const PROJ_KEY="sc_projects";
 const APIKEY_KEY="sc_apikey";
+const GEMINI_KEY_STORAGE="sc_geminikey";
 
 // ─── STATE ───
 let apiKey="";
+let geminiKey="";
 let cancelled=false;
 let currentProjId=null;
 function checkCancelled(){ if(cancelled) throw new Error("__CANCELLED__"); }
@@ -498,6 +500,7 @@ function render(){
 // ── API KEY ──
 function renderApiKey(){
   const saved=localStorage.getItem(APIKEY_KEY)||"";
+  const savedG=localStorage.getItem(GEMINI_KEY_STORAGE)||"";
   return`<div class="api-screen fade">
     <div style="font-size:32px;margin-bottom:14px">⚡</div>
     <h2>APIキー設定</h2>
@@ -508,18 +511,32 @@ function renderApiKey(){
       <button class="eye" onclick="toggleEye()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
     </div>
     <p class="api-note">取得先: <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a></p>
+    <div style="margin:18px 0 6px;padding:14px;background:linear-gradient(135deg,#EBF6FF,#F0F8FF);border:1.5px solid rgba(33,149,202,.25);border-radius:14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:11px;font-weight:800;color:#2195ca;letter-spacing:.06em">GEMINI DEEP RESEARCH</span>
+        <span style="font-size:9px;padding:2px 7px;border-radius:100px;background:rgba(33,149,202,.15);color:#2195ca;font-weight:700">任意</span>
+      </div>
+      <p style="font-size:12px;color:#4A5E72;margin-bottom:8px;line-height:1.6">Google AI APIキーを登録すると、各フェーズで競合・市場・成功事例をWeb検索してエージェントの精度が大幅に向上します。</p>
+      ${savedG?`<div class="saved-key-box" style="margin-bottom:8px"><span style="font-size:11px">Gemini: ${savedG.slice(0,12)}••••</span><button class="forget-btn" onclick="forgetGeminiKey()">削除</button></div>`:""}
+      <input type="password" id="geminiKeyInput" placeholder="${savedG?"変更する場合のみ入力":"AIza..."}" style="width:100%;background:#fff;border:1.5px solid rgba(33,149,202,.3);border-radius:10px;color:#0F1128;padding:10px 12px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box"/>
+      <p style="font-size:10px;color:#8AA0B0;margin-top:5px">取得先: aistudio.google.com → 「Get API key」（無料枠あり）</p>
+    </div>
     <button class="btn btn-accent" onclick="submitApiKey()">開始する →</button>
   </div>`;
 }
 function toggleEye(){const i=document.getElementById("apiKeyInput");if(i)i.type=i.type==="password"?"text":"password";}
-function forgetKey(){if(confirm("APIキーを削除しますか？")){localStorage.removeItem(APIKEY_KEY);apiKey="";render();}}
+function forgetKey(){if(confirm("Anthropic APIキーを削除しますか？")){localStorage.removeItem(APIKEY_KEY);apiKey="";render();}}
+function forgetGeminiKey(){if(confirm("Gemini APIキーを削除しますか？")){localStorage.removeItem(GEMINI_KEY_STORAGE);geminiKey="";render();}}
 function submitApiKey(){
   const v=document.getElementById("apiKeyInput")?.value?.trim();
   const saved=localStorage.getItem(APIKEY_KEY)||"";
   const key=v||saved;
-  if(!key||!key.startsWith("sk-"))return alert("正しいAPIキーを入力してください");
+  if(!key||!key.startsWith("sk-"))return alert("正しいAnthropicAPIキーを入力してください");
   if(v)localStorage.setItem(APIKEY_KEY,v);
   apiKey=key;
+  const gv=document.getElementById("geminiKeyInput")?.value?.trim();
+  if(gv){localStorage.setItem(GEMINI_KEY_STORAGE,gv);geminiKey=gv;}
+  else{const sg=localStorage.getItem(GEMINI_KEY_STORAGE)||"";if(sg)geminiKey=sg;}
   S({step:"projects"});
 }
 
@@ -688,7 +705,8 @@ function renderMeeting(){
         ${a?`<div class="agent-ans">${a}</div>`:isL?`<div class="dots"><div class="dot b1" style="background:${AGENTS[id].color}"></div><div class="dot b2" style="background:${AGENTS[id].color}"></div><div class="dot b3" style="background:${AGENTS[id].color}"></div></div>`:""}
       </div>`;
     }).join("");
-    cur=`<div class="fade"><div class="phase-lbl">${PHASES[st.phaseIdx]}</div><div class="phase-ttl">${PHASE_JA[st.phaseIdx]}</div>${st.ctx?`<div class="ctx-box">${st.ctx}</div>`:""}${cards}</div>`;
+    const researchBadge=st.phaseResearch?`<div style="display:inline-flex;align-items:center;gap:5px;font-size:10px;padding:3px 10px;border-radius:100px;background:linear-gradient(135deg,#EBF6FF,#E0F0FF);color:#2195ca;border:1.5px solid rgba(33,149,202,.25);font-weight:700;margin-bottom:10px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Gemini Deep Research 適用済み</div>`:"";
+    cur=`<div class="fade"><div class="phase-lbl">${PHASES[st.phaseIdx]}</div><div class="phase-ttl">${PHASE_JA[st.phaseIdx]}</div>${researchBadge}${st.ctx?`<div class="ctx-box">${st.ctx}</div>`:""}${cards}</div>`;
   }
   return`<div><div class="prog-wrap"><div class="prog-stages">${progDots}</div></div>${statusBox}${reattachBanner}${hist}${cur}${st.error?`<div class="err">${st.error}<br><button class="retry-btn" onclick="retryFromError()">リトライ</button></div>`:""}</div>`;
 }
@@ -700,7 +718,8 @@ function renderManager(){
     <div style="font-size:13px;color:var(--text2);margin-bottom:16px">マネージャー審査が一時停止しています</div>
     <button class="btn btn-accent" style="max-width:240px" onclick="retryFromError()">▶ 続きから再開する</button>
   </div>`;
-  if(!st.mgrState)return`<div class="spinner">マネージャーが仮想空間でシミュレーション中...<br><span style="font-size:11px;display:block;margin-top:6px">ループ ${st.loopCount}/30</span></div>`;
+  const _maxLoops=st.extraUsed?40:30;
+  if(!st.mgrState)return`<div class="spinner">マネージャーが仮想空間でシミュレーション中...<br><span style="font-size:11px;display:block;margin-top:6px">ループ ${st.loopCount}/${_maxLoops}</span></div>`;
   const m=st.mgrState;if(!m)return`<div class="spinner">読み込み中...</div>`;
   const total=Object.values(m.scores||{}).reduce((a,b)=>a+b,0);
   const approved=total>=95;
@@ -719,20 +738,21 @@ function renderManager(){
       <div style="font-size:16px;font-weight:800;color:${c}">${v}<span style="font-size:10px;color:#8E97C0;font-weight:400">/20</span></div>
     </div>`;
   }).join("");
+  const maxLoops=st.extraUsed?40:30;
   const statusMsg=approved?`<div style="font-size:12px;color:var(--green);padding:6px 0;animation:blink 1.5s infinite">✓ Approved — 最終レポートを生成中...</div>`
-    :st.loopCount>=40?`<div class="err" style="background:#FEF0EF;color:#c0392b">最大回数（40回）に到達しました。</div>`
+    :st.loopCount>=40?`<div class="err" style="background:#FEF0EF;color:#c0392b">最大回数（40回）に到達しました。最高スコア案でレポートを生成します。</div>`
     :st.loopCount>=30&&!st.extraMode&&!st.extraUsed&&!st.busy?`<div style="border:1.5px solid #2195ca;border-radius:12px;padding:18px;margin-top:12px;background:#EBF6FF">
-        <div style="font-size:13px;font-weight:700;color:#2195ca;margin-bottom:6px">🔍 追加ブラッシュアップで精度を上げる</div>
-        <div style="font-size:12px;color:#4A5E72;margin-bottom:12px">エージェントがいくつか質問します。回答することでより具体的な分析が可能になります（最大+10回）</div>
+        <div style="font-size:13px;font-weight:700;color:#2195ca;margin-bottom:6px">追加ブラッシュアップで精度を上げる</div>
+        <div style="font-size:12px;color:#4A5E72;margin-bottom:12px">エージェントがいくつか質問します。回答することでより具体的な分析が可能になります（さらに最大10回）</div>
         <button class="btn btn-accent" style="max-width:240px;margin:0" onclick="startExtraMode()">さらに10回ブラッシュアップする</button>
       </div>`
-    :`<div style="font-size:12px;color:var(--text3);padding:6px 0;animation:blink 1.5s infinite">ブラッシュアップ中... (${st.loopCount}/30)</div>`;
+    :`<div style="font-size:12px;color:var(--text3);padding:6px 0;animation:blink 1.5s infinite">ブラッシュアップ中... (${st.loopCount}/${maxLoops})</div>`;
   return`<div class="fade">
     <div class="mgr-panel">
       <div class="mgr-hdr">
         ${ICONS.manager}
         <span style="font-size:12px;font-weight:700;letter-spacing:.04em">マネージャー審査</span>
-        <span class="loop-badge">ループ ${st.loopCount}/30</span>
+        <span class="loop-badge">ループ ${st.loopCount}/${maxLoops}</span>
         ${approved?`<span style="margin-left:8px;font-size:10px;font-weight:700;color:var(--green)">✓ 承認済み</span>`:""}
       </div>
       <div class="mgr-body">
@@ -1053,6 +1073,26 @@ async function api(system,msg,retryCount=0){
   if(!res.ok&&res.status===0)throw new Error("ネットワークエラー：Vercelから開いてください。");
   return data.content[0].text;
 }
+
+// ── GEMINI DEEP RESEARCH ──
+async function geminiResearch(query){
+  if(!geminiKey)return"";
+  try{
+    const res=await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key="+geminiKey,
+      {method:"POST",headers:{"Content-Type":"application/json"},
+       body:JSON.stringify({
+         contents:[{role:"user",parts:[{text:query}]}],
+         tools:[{google_search:{}}]
+       })}
+    );
+    const data=await res.json();
+    if(data.error){console.warn("Gemini Research error:",data.error.message);return"";}
+    const text=(data.candidates?.[0]?.content?.parts||[]).map(p=>p.text||"").join("");
+    return text.slice(0,800);
+  }catch(e){console.warn("Gemini Research failed:",e.message);return"";}
+}
+
 function cleanText(t){
   if(!t)return"";
   // ```json...```ブロックを除去
@@ -1077,7 +1117,7 @@ function pj(t){
 
 // ── PROMPTS ──
 const FAC=`マーケティング戦略会議の司会AI。参加エージェント：マーケター、デザイナー、経営コンサルタント、ユーザーリサーチャー。JSONのみ出力：{"phase":"フェーズ名","questions":{"marketer":"質問","designer":"質問","consultant":"質問","researcher":"質問"},"context":"このフェーズで明らかにしたいこと40字以内"}`;
-const MGR="あなたは厳格なマーケティングマネージャーです。【最重要】前後にマークダウン記号を絶対につけず、有効なJSONのみを出力してください。戦略案を仮想空間でシミュレーションし5項目を各20点満点で採点（各スコアは0〜20の整数のみ）。採点基準：市場性（根拠なし8点以下/根拠あり9-15点/市場データあり16-20点）、実現性（理想論8点以下/段階的計画9-15点/即実行可能16-20点）、独自性（一般論8点以下/差別化要素9-15点/明確USP16-20点）、戦略整合性（バラバラ8点以下/ある程度整合9-15点/完全整合16-20点）、ユーザー共感度（漠然8点以下/ペルソナ明確9-15点/インサイト深い16-20点）。出力形式：{\"env\":\"仮想空間名\",\"scores\":{\"市場性\":整数,\"実現性\":整数,\"独自性\":整数,\"戦略整合性\":整数,\"ユーザー共感度\":整数},\"verdict\":\"採点理由100字\",\"feedback\":\"95点未満の改善指示100字（95点以上は空文字）\",\"revisedStrategy\":\"改善戦略150字（95点未満のみ）\"}";
+const MGR="あなたは厳格なマーケティングマネージャーです。【最重要】前後にマークダウン記号を絶対につけず、有効なJSONのみを出力してください。戦略案を仮想空間でシミュレーションし5項目を各20点満点で採点（各スコアは0〜20の整数のみ）。採点基準：市場性（根拠なし8点以下/根拠あり9-15点/市場データ+競合比較16-20点）、実現性（理想論8点以下/段階的計画9-15点/即実行可能な具体行動16-20点）、独自性（一般論8点以下/差別化要素9-15点/競合にない明確USP16-20点）、戦略整合性（バラバラ8点以下/ある程度整合9-15点/全フェーズ完全整合16-20点）、ユーザー共感度（漠然8点以下/ペルソナ明確9-15点/インサイト深くWTP検証済み16-20点）。高得点を得るには：具体的数値・競合固有名詞・実施日程・担当者像・測定方法を含めること。出力形式：{\"env\":\"仮想空間名\",\"scores\":{\"市場性\":整数,\"実現性\":整数,\"独自性\":整数,\"戦略整合性\":整数,\"ユーザー共感度\":整数},\"verdict\":\"採点理由と高得点への具体指摘120字\",\"feedback\":\"95点未満の場合のみ：最も低い2〜3項目の具体的改善要件を200字で（例：独自性：競合A社・B社との差別化ポイントを固有名詞で3つ明記し価格優位性を数値で示せ）\",\"revisedStrategy\":\"改善案の統合戦略200字（具体数値・実施期限・固有名詞を必ず含む、95点未満のみ）\"}";
 const SUM="あなたはマーケティング戦略の統括AIです。以下のフォーマット通りに純粋なJSONのみを出力してください。JSONの前後に説明文・コードブロック・```json等のマークダウンは一切つけないこと。キーと値に改行を入れないこと。\n出力フォーマット（このまま使用）：{\"title\":\"戦略タイトル\",\"keyInsight\":\"核心インサイト50字\",\"strategy\":\"Phase1/2/3含む統合戦略200字\",\"actions\":[\"Phase1(1ヶ月):施策\",\"Phase2(3ヶ月):施策\",\"Phase3(6ヶ月):施策\"],\"kpi\":[\"指標1:現状→目標\",\"指標2:現状→目標\",\"指標3:現状→目標\"],\"nextStep\":\"明日できる1アクション\"}";
 
 // ── FULL AUTO FLOW ──
@@ -1092,19 +1132,45 @@ async function runPhase(phaseIdx,history){
   const histText=buildHistText(history);
   try{
     checkCancelled();
+
+    // ── Gemini Deep Research（Geminiキーがある場合のみ実行）──
+    let researchCtx="";
+    if(geminiKey){
+      const researchQueries={
+        0:`${st.project} 業界の主な課題・ペインポイント・最新トレンド（日本市場）`,
+        1:`${st.project} 市場規模データ・主要競合他社名・成功事例・ユーザー動向`,
+        2:`${st.project} 効果的なマーケティング戦略事例・差別化に成功したブランド`,
+        3:`${st.project} KPIベンチマーク・実行計画の成功事例・具体的数値目標`
+      };
+      const rq=researchQueries[phaseIdx]||`${st.project} 市場調査`;
+      S({statusMsg:`Phase ${phaseIdx+1} — Gemini Deep Research 実行中...`});
+      const raw=await geminiResearch(
+        `以下のビジネス企画に関して「${PHASE_JA[phaseIdx]}」フェーズの市場調査を実施してください。\n`
+        +`企画概要：${st.project.slice(0,120)}\n`
+        +`調査観点：${rq}\n\n`
+        +"競合他社の固有名詞・具体的数値・最新の成功事例を含む調査結果を400字以内の日本語でまとめてください。"
+      );
+      researchCtx=raw;
+      S({phaseResearch:raw,statusMsg:`Phase ${phaseIdx+1}「${PHASE_JA[phaseIdx]}」 質問を生成中...`});
+    }
+
     const factsSection=st.facts?.trim()?`
 【確定数値（推論禁止）】${st.facts.slice(0,200)}`:"";
     const matsSection=st.materials?.trim()?`
 【参考資料】${st.materials.slice(0,300)}`:"";
+    const researchSection=researchCtx?`
+【Gemini Deep Research — 市場調査データ】
+${researchCtx.slice(0,500)}
+※このデータを積極活用し、競合固有名詞・数値を論点に含めること`:"";
     const msg=history.length===0
-      ?`企画:${st.project.slice(0,200)}${factsSection}${matsSection}
+      ?`企画:${st.project.slice(0,200)}${factsSection}${matsSection}${researchSection}
 フェーズ1(${PHASE_JA[0]})`
-      :`企画:${st.project.slice(0,200)}${factsSection}
+      :`企画:${st.project.slice(0,200)}${factsSection}${researchSection}
 議論:${histText}
 フェーズ${phaseIdx+1}(${PHASE_JA[phaseIdx]})`;
     const raw=await api(FAC,msg);const p=pj(raw)||{};
     S({questions:p.questions||{},ctx:p.context||"",busy:false,statusMsg:`Phase ${phaseIdx+1}「${PHASE_JA[phaseIdx]}」 エージェントが回答中...`});
-    const answers=await runAgentsAuto(p.questions||{},phaseIdx);
+    const answers=await runAgentsAuto(p.questions||{},phaseIdx,researchCtx);
     const newHistory=[...history,{phase:PHASE_JA[phaseIdx],questions:p.questions||{},answers}];
     S({history:newHistory,answers:{}});
     if(phaseIdx+1<PHASE_JA.length){
@@ -1131,9 +1197,13 @@ async function runPhase(phaseIdx,history){
     }
   }catch(e){if(e.message==="__CANCELLED__")return;S({error:e.message,busy:false,statusMsg:""});}
 }
-async function runAgentsAuto(qs,phaseIdx){
+async function runAgentsAuto(qs,phaseIdx,researchCtx){
   const answers={};
   const agentKeys=Object.keys(AGENTS);
+  const researchNote=researchCtx
+    ?"\n\n【Gemini Deep Research — 活用必須データ】\n"+researchCtx.slice(0,500)
+     +"\n★上記の競合固有名詞・数値・事例を必ず引用して回答せよ"
+    :"";
   for(let i=0;i<agentKeys.length;i++){
     const id=agentKeys[i];
     S({loading:id,statusMsg:`${PHASES[phaseIdx]} — ${AGENTS[id].name} が回答中... (${i+1}/${agentKeys.length})`});
@@ -1141,7 +1211,7 @@ async function runAgentsAuto(qs,phaseIdx){
       checkCancelled();
       const factsNote=st.facts?.trim()?`
 【必須前提・確定数値（推論で変えるな）】${st.facts.slice(0,200)}`:"";
-      const ans=await api(ROLES[id],`企画：${st.project}${factsNote}
+      const ans=await api(ROLES[id]+researchNote,`企画：${st.project}${factsNote}
 質問：${qs[id]||"このフェーズについて専門的見解を述べてください。"}`);
       answers[id]=ans;
       st.answers={...st.answers,[id]:ans};
@@ -1227,15 +1297,19 @@ async function runManagerAuto(histText,prevRevised,loopCount,history){
       S({statusMsg:"✓ 承認されました！最終レポートを生成中..."});
       setTimeout(function(){generateFinalAuto(history,m);},600);
     } else if(loopCount>=40){
-      // 40回到達 → 強制終了
+      // 40回到達（extraモード含む最大値）→ 強制終了
       S({statusMsg:"最大回数（40回）到達。最高スコア案でレポートを生成します。"});
       setTimeout(function(){generateFinalAuto(history,m);},600);
     } else if(loopCount>=30&&!st.extraMode&&!st.extraUsed){
-      // 30回到達 → ユーザーに追加オプションを提示（処理を止める）
+      // 30回到達かつextraモード未使用 → ユーザーに追加オプションを提示（処理を止める）
       S({busy:false,statusMsg:"30回のブラッシュアップが完了しました。"});
-      // ここで処理を止める（brushupAutoを呼ばない）
+      // ここで処理を止める（extraUsed=trueなら絶対ここに来ない）
+    } else if(loopCount>=30&&st.extraUsed){
+      // extraモード使用済み → 40回まで継続
+      S({statusMsg:"追加ブラッシュアップ継続中 ("+loopCount+"/40)..."});
+      await brushupAuto(histText,m,loopCount+1,history);
     } else {
-      // ブラッシュアップ継続
+      // 通常ブラッシュアップ継続
       await brushupAuto(histText,m,loopCount+1,history);
     }
   }catch(e){
@@ -1259,23 +1333,48 @@ async function brushupAuto(histText,prevMgr,newCount,history){
   }
 
   // Add new round with empty agents
+  const maxBrushupRounds=st.extraUsed?40:30;
   const newLog=[...st.brushupLog,{round:newCount,feedback:fbShort,agents:{}}];
-  S({busy:true, brushupLog:newLog, statusMsg:`ブラッシュアップ ${newCount}/30回 — 改善開始...`});
+  S({busy:true, brushupLog:newLog, statusMsg:`ブラッシュアップ ${newCount}/${maxBrushupRounds}回 — 改善開始...`});
+
+  // スコア情報と低評価項目を抽出
+  const scoresSummary=Object.entries(prevMgr.scores||{}).map(([k,v])=>k+":"+v+"/20").join(" / ");
+  const weakAreas=Object.entries(prevMgr.scores||{}).filter(([,v])=>parseInt(v)<16).map(([k])=>k).join("・")||"なし";
+  const histSummary=buildHistText(history).slice(0,400);
+
+  // ── Gemini Deep Research（ブラッシュアップ専用：弱点項目を狙い撃ち）──
+  let brushupResearch="";
+  if(geminiKey&&weakAreas!=="なし"&&newCount%3===1){
+    // 3ラウンドに1回リサーチ実行（APIコスト最適化）
+    S({statusMsg:`Gemini Deep Research — 「${weakAreas}」改善事例を調査中...`});
+    brushupResearch=await geminiResearch(
+      `以下のビジネス企画で「${weakAreas}」スコアが低い。改善のための具体的な成功事例・競合他社比較データ・数値指標を日本語400字以内で調査してください。\n企画：${st.project.slice(0,120)}\n改善指示：${feedback.slice(0,100)}`
+    );
+  }
+  const brushupResearchNote=brushupResearch
+    ?"\n\n【Gemini Deep Research — 改善参考データ】\n"+brushupResearch+"\n★上記データを引用して改善施策を提示せよ"
+    :"";
 
   for(const id of Object.keys(AGENTS)){
     // thinking state - fully immutable update
     S({brushupLog:updateLog(id,{status:"thinking",ans:""}),
-       statusMsg:`ブラッシュアップ ${newCount}/30回 — ${AGENTS[id].name} が改善中...`});
+       statusMsg:`ブラッシュアップ ${newCount}/${maxBrushupRounds}回 — ${AGENTS[id].name} が改善中...`});
     try{
       checkCancelled();
       const ans=await api(
-        ROLES[id],
-        `改善指示：${feedback}\n企画：${st.project.slice(0,100)}\n結論のみ50字で`
+        ROLES[id]+brushupResearchNote,
+        "企画："+st.project.slice(0,150)
+        +"\n\n現在の評価スコア："+scoresSummary
+        +"\n改善が必要な項目："+weakAreas
+        +"\nマネージャー改善指示："+feedback
+        +"\n\n過去の議論要約："+histSummary
+        +"\n\n上記の改善指示を踏まえ、特に「"+weakAreas+"」を改善する具体的施策を150字で述べよ。"
+        +"競合固有名詞・数値目標・実施期限を必ず含め断言口調で。"
       );
       revised[id]=ans;
       // done state - fully immutable update
       S({brushupLog:updateLog(id,{status:"done",ans}),
-         statusMsg:`ブラッシュアップ ${newCount}/30回 — ${AGENTS[id].name} 完了`});
+         statusMsg:`ブラッシュアップ ${newCount}/${maxBrushupRounds}回 — ${AGENTS[id].name} 完了`});
     }
     catch(e){if(e.message==="__CANCELLED__")throw e;S({error:e.message,busy:false});throw e;}
   }
@@ -1461,6 +1560,8 @@ function resetCurrent(){st={...st,step:"input",phaseIdx:0,questions:null,ctx:"",
   }
   const k=localStorage.getItem(APIKEY_KEY);
   if(k&&k.startsWith("sk-")){apiKey=k;st.step="projects";}
+  const gk=localStorage.getItem(GEMINI_KEY_STORAGE);
+  if(gk)geminiKey=gk;
 })();
 render();
 
