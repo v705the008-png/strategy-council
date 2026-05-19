@@ -758,13 +758,20 @@ function togglePhaseAcc(ri){
 
 // ── MANAGER ──
 function renderManager(){
+  // 全体フロー（会議フェーズと共通）— Manager審査(index=4)がactive
+  const _progDots=["課題定義","市場分析","戦略立案","実行計画","Manager審査"].map((name,i)=>{
+    const cls=i<4?"done":i===4?"active":"";
+    return`<div class="prog-stage ${cls}"><div class="prog-dot">${i<4?"✓":i+1}</div><div class="prog-name">${name}</div></div>`;
+  }).join("");
+  const _progWrap=`<div class="prog-wrap"><div class="prog-stages">${_progDots}</div></div>`;
+
   // First time (no mgrState yet): show spinner
-  if(!st.mgrState&&!st.busy)return`<div style="text-align:center;padding:32px 0">
+  if(!st.mgrState&&!st.busy)return`<div>${_progWrap}<div style="text-align:center;padding:32px 0">
     <div style="font-size:13px;color:var(--text2);margin-bottom:16px">マネージャー審査が一時停止しています</div>
     <button class="btn btn-accent" style="max-width:240px" onclick="retryFromError()">▶ 続きから再開する</button>
-  </div>`;
+  </div></div>`;
   const _maxLoops=st.extraUsed?40:30;
-  if(!st.mgrState)return`<div class="spinner">マネージャーが仮想空間でシミュレーション中...<br><span style="font-size:11px;display:block;margin-top:6px">ループ ${st.loopCount}/${_maxLoops}</span></div>`;
+  if(!st.mgrState)return`<div>${_progWrap}<div class="spinner">マネージャーが仮想空間でシミュレーション中...<br><span style="font-size:11px;display:block;margin-top:6px">ループ ${st.loopCount}/${_maxLoops}</span></div></div>`;
   const m=st.mgrState;if(!m)return`<div class="spinner">読み込み中...</div>`;
   const total=Object.values(m.scores||{}).reduce((a,b)=>a+b,0);
   const approved=total>=95;
@@ -783,6 +790,12 @@ function renderManager(){
     </div>`;
   }).join("");
   const maxLoops=st.extraUsed?40:30;
+  const canResume=!st.busy&&!approved&&st.loopCount<40&&!(st.loopCount>=30&&!st.extraMode&&!st.extraUsed);
+  const mgrStatusIndicator=st.busy
+    ?`<span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--accent);font-weight:600;margin-left:auto"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent);animation:glow 1.2s infinite;flex-shrink:0"></span>実行中</span>`
+    :canResume
+      ?`<button onclick="retryFromError()" style="margin-left:auto;padding:4px 12px;border-radius:var(--r-sm);border:1.5px solid var(--accent);background:var(--accent-light);color:var(--accent);font-size:11px;font-family:inherit;cursor:pointer;font-weight:700">▶ 再開</button>`
+      :"";
   const statusMsg=approved?`<div style="font-size:12px;color:var(--green);padding:6px 0;animation:blink 1.5s infinite">✓ Approved — 最終レポートを生成中...</div>`
     :st.loopCount>=40?`<div class="err" style="background:#FEF0EF;color:#c0392b">最大回数（40回）に到達しました。最高スコア案でレポートを生成します。</div>`
     :st.loopCount>=30&&!st.extraMode&&!st.extraUsed&&!st.busy?`<div style="border:1.5px solid #2195ca;border-radius:12px;padding:18px;margin-top:12px;background:#EBF6FF">
@@ -791,13 +804,13 @@ function renderManager(){
         <button class="btn btn-accent" style="max-width:240px;margin:0" onclick="startExtraMode()">さらに10回ブラッシュアップする</button>
       </div>`
     :`<div style="font-size:12px;color:var(--text3);padding:6px 0;animation:blink 1.5s infinite">ブラッシュアップ中... (${st.loopCount}/${maxLoops})</div>`;
-  return`<div class="fade">
+  return`<div class="fade">${_progWrap}
     <div class="mgr-panel">
       <div class="mgr-hdr">
         ${ICONS.manager}
         <span style="font-size:12px;font-weight:700;letter-spacing:.04em">マネージャー審査</span>
         <span class="loop-badge">ループ ${st.loopCount}/${maxLoops}</span>
-        ${approved?`<span style="margin-left:8px;font-size:10px;font-weight:700;color:var(--green)">✓ 承認済み</span>`:""}
+        ${approved?`<span style="margin-left:auto;font-size:10px;font-weight:700;color:var(--green)">✓ 承認済み</span>`:mgrStatusIndicator}
       </div>
       <div class="mgr-body">
         ${m.env?`<div class="env-badge" style="display:inline-flex;align-items:center;gap:5px">${ICONS.globe} ${m.env}</div>`:""}
