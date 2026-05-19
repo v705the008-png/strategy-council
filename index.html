@@ -22,12 +22,14 @@
   --accent:#3A3AF5;
   --accent2:#2828D4;
   --accent-light:#EEEEFF;
-  --amber:#F5A623;
-  --amber-light:#FFF8ED;
-  --green:#0FA66A;
-  --green-light:#E8FBF3;
-  --red:#F04438;
-  --red-light:#FFF0EE;
+  --amber:#E8C400;
+  --amber-light:#FFFBD4;
+  --yellow:#E8C400;
+  --yellow-light:#FFFBD4;
+  --green:#3A3AF5;
+  --green-light:#EEEEFF;
+  --red:#E84040;
+  --red-light:#FFF0F0;
   --blue2:#5B8DEF;
   --card-hover:#F5F6FF;
   --shadow-sm:0 1px 4px rgba(58,58,245,.07),0 1px 2px rgba(0,0,0,.04);
@@ -313,7 +315,7 @@ textarea::placeholder,input::placeholder{color:var(--text3)}
 .kv-title{font-size:9px;letter-spacing:.15em;margin-bottom:10px;font-weight:800;text-transform:uppercase}
 .kv-item{font-size:12px;color:var(--text2);padding:7px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;line-height:1.5}
 .next-box{background:linear-gradient(135deg,var(--accent-light),#EBF3FF);border:1.5px solid rgba(58,58,245,.2);border-radius:var(--r-md);padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:16px;box-shadow:0 2px 8px rgba(58,58,245,.08)}
-.approved-tag{display:inline-flex;align-items:center;gap:5px;font-size:10px;padding:4px 12px;border-radius:100px;background:var(--green-light);color:var(--green);border:1.5px solid rgba(15,166,106,.25);font-weight:700}
+.approved-tag{display:inline-flex;align-items:center;gap:5px;font-size:10px;padding:4px 12px;border-radius:100px;background:var(--accent-light);color:var(--accent);border:1.5px solid rgba(58,58,245,.25);font-weight:700}
 /* REPORT */
 .rpt-section{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r-lg);padding:24px;margin-bottom:12px;box-shadow:var(--shadow-sm)}
 .rpt-label{font-size:10px;color:var(--accent);letter-spacing:.18em;font-weight:700;margin-bottom:10px;text-transform:uppercase}
@@ -325,8 +327,8 @@ textarea::placeholder,input::placeholder{color:var(--text3)}
 .comp-table td{padding:9px 10px;font-size:11px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5}
 .flow-node{background:var(--bg2);color:var(--text);border:1.5px solid var(--border);border-radius:10px;padding:7px 11px;font-size:11px;font-weight:700;text-align:center;line-height:1.4;box-shadow:0 2px 6px rgba(0,0,0,.06);white-space:nowrap}
 .flow-node.hub{background:var(--accent);color:#fff;border:none}
-.flow-node.source{background:#F04438;color:#fff;border:none}
-.flow-node.result{background:#0FA66A;color:#fff;border:none}
+.flow-node.source{background:var(--accent);color:#fff;border:none}
+.flow-node.result{background:var(--amber);color:#111;border:none}
 
 /* MISC */
 .spinner{text-align:center;padding:52px 0;font-size:13px;color:var(--text3);animation:blink 1.5s infinite;font-weight:500}
@@ -431,6 +433,9 @@ const APIKEY_KEY="sc_apikey";
 const GEMINI_KEY_STORAGE="sc_geminikey";
 const OPENAI_KEY_STORAGE="sc_openaikey";
 
+// ── CURRENT DATE（全プロンプトに注入）──
+function todayStr(){return new Date().toLocaleDateString("ja-JP",{year:"numeric",month:"long",day:"numeric"});}
+
 // ─── STATE ───
 let apiKey="";
 let geminiKey="";
@@ -528,10 +533,10 @@ function renderApiKey(){
       <input type="password" id="geminiKeyInput" placeholder="${savedG?"変更する場合のみ入力":"AIza..."}" style="width:100%;background:#fff;border:1.5px solid rgba(33,149,202,.3);border-radius:10px;color:#0F1128;padding:10px 12px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box"/>
       <p style="font-size:10px;color:#8AA0B0;margin-top:5px">取得先: aistudio.google.com → 「Get API key」（無料枠あり）</p>
     </div>
-    <div style="margin:0 0 6px;padding:14px;background:linear-gradient(135deg,#F0FFF8,#EDFBF4);border:1.5px solid rgba(15,166,106,.25);border-radius:14px">
+    <div style="margin:0 0 6px;padding:14px;background:linear-gradient(135deg,#F0F0FF,#EEEEFF);border:1.5px solid rgba(58,58,245,.25);border-radius:14px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-        <span style="font-size:11px;font-weight:800;color:#0FA66A;letter-spacing:.06em">GPT IMAGE 2.0 — レポート図解</span>
-        <span style="font-size:9px;padding:2px 7px;border-radius:100px;background:rgba(15,166,106,.15);color:#0FA66A;font-weight:700">推奨</span>
+        <span style="font-size:11px;font-weight:800;color:var(--accent);letter-spacing:.06em">GPT IMAGE 2.0 — レポート図解</span>
+        <span style="font-size:9px;padding:2px 7px;border-radius:100px;background:var(--accent-light);color:var(--accent);font-weight:700">推奨</span>
       </div>
       <p style="font-size:12px;color:#4A5E72;margin-bottom:8px;line-height:1.6">OpenAI APIキーを登録すると、最終レポートにGPT Image 2.0生成の高品質戦略ビジュアルが追加されます。未登録の場合はGemini Nano Banana（Imagen 3）でフォールバック生成します。</p>
       ${localStorage.getItem(OPENAI_KEY_STORAGE)?`<div class="saved-key-box" style="margin-bottom:8px"><span style="font-size:11px">OpenAI: ${localStorage.getItem(OPENAI_KEY_STORAGE).slice(0,12)}••••</span><button class="forget-btn" onclick="forgetOpenAIKey()">削除</button></div>`:""}
@@ -573,8 +578,8 @@ function renderProjects(){
         ?`<span class="proj-status status-done">✓ DONE${p.score?` · ${p.score}pt`:""}</span>`
         :`<span class="proj-status status-running">● 進行中</span>`;
       const icon=p.status==="done"?ICONS.done:ICONS.running;
-      const iconBg=p.status==="done"?"var(--green-light)":"var(--accent-light)";
-      const iconColor=p.status==="done"?"var(--green)":"var(--accent)";
+      const iconBg="var(--accent-light)";
+      const iconColor="var(--accent)";
       return`<div class="proj-card" onclick="openProject('${p.id}')">
         <div class="proj-icon" style="background:${iconBg};color:${iconColor};box-shadow:none">${icon}</div>
         <div class="proj-info">
@@ -702,7 +707,7 @@ function renderInput(){
     <button class="btn btn-accent" id="startBtn" onclick="startMeeting()" ${st.project.trim()?"":"disabled"}>
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Start MTG
     </button>
-    ${st.summary?`<button class="btn btn-accent" style="margin-top:6px;background:var(--green);border-color:var(--green)" onclick="S({step:'summary'})">📄 最終レポートを見る</button>`:""}
+    ${st.summary?`<button class="btn btn-accent" style="margin-top:6px;background:var(--amber);color:#111;box-shadow:0 3px 14px rgba(232,196,0,.35)" onclick="S({step:'summary'})">📄 最終レポートを見る</button>`:""}
     ${st.history&&st.history.length>0&&!st.summary?`<button class="btn btn-ghost" style="margin-top:6px" onclick="backToMeeting()">← 会議画面に戻る</button>`:""}
     <button class="btn btn-ghost" onclick="S({step:'projects'})">← 戻る</button>
   </div>`;
@@ -830,7 +835,7 @@ function renderManager(){
     :canResume
       ?`<button onclick="retryFromError()" style="margin-left:auto;padding:4px 12px;border-radius:var(--r-sm);border:1.5px solid var(--accent);background:var(--accent-light);color:var(--accent);font-size:11px;font-family:inherit;cursor:pointer;font-weight:700">▶ 再開</button>`
       :"";
-  const statusMsg=approved?`<div style="font-size:12px;color:var(--green);padding:6px 0;animation:blink 1.5s infinite">✓ Approved — 最終レポートを生成中...</div>`
+  const statusMsg=approved?`<div style="font-size:12px;color:var(--accent);padding:6px 0;animation:blink 1.5s infinite">✓ Approved — 最終レポートを生成中...</div>`
     :st.loopCount>=40?`<div class="err" style="background:#FEF0EF;color:#c0392b">最大回数（40回）に到達しました。最高スコア案でレポートを生成します。</div>`
     :st.loopCount>=30&&!st.extraMode&&!st.extraUsed&&!st.busy?`<div style="border:1.5px solid #2195ca;border-radius:12px;padding:18px;margin-top:12px;background:#EBF6FF">
         <div style="font-size:13px;font-weight:700;color:#2195ca;margin-bottom:6px">追加ブラッシュアップで精度を上げる</div>
@@ -844,7 +849,7 @@ function renderManager(){
         ${ICONS.manager}
         <span style="font-size:12px;font-weight:700;letter-spacing:.04em">マネージャー審査</span>
         <span class="loop-badge">ループ ${st.loopCount}/${maxLoops}</span>
-        ${approved?`<span style="margin-left:auto;font-size:10px;font-weight:700;color:var(--green)">✓ 承認済み</span>`:mgrStatusIndicator}
+        ${approved?`<span style="margin-left:auto;font-size:10px;font-weight:700;color:var(--accent)">✓ 承認済み</span>`:mgrStatusIndicator}
       </div>
       <div class="mgr-body">
         ${m.env?`<div class="env-badge" style="display:inline-flex;align-items:center;gap:5px">${ICONS.globe} ${m.env}</div>`:""}
@@ -908,8 +913,8 @@ function renderBrushupProgress(){
 
 function renderFlowDiagram(diagram){
   if(!diagram||!diagram.nodes||!diagram.nodes.length)return"";
-  const tc={source:"#fff",hub:"#fff",action:"var(--text)",result:"#fff"};
-  const bc={source:"#F04438",hub:"var(--accent)",action:"var(--bg2)",result:"#0FA66A"};
+  const bc={source:"var(--accent)",hub:"#0F1128",action:"var(--bg2)",result:"var(--amber)"};
+  const tc={source:"#fff",hub:"#fff",action:"var(--text)",result:"#111"};
   const bd={source:"none",hub:"none",action:"1.5px solid var(--border)",result:"none"};
   const nodes=diagram.nodes.slice(0,7);
   const html=nodes.map((n,i)=>{
@@ -925,7 +930,7 @@ function renderSummary(){
   const s=st.summary||{};
   const m=st.bestMgrState||st.mgrState;
   const total=Object.values(m?.scores||{}).reduce((a,b)=>a+b,0);
-  const phaseAccentColors=["var(--accent)","#5B8DEF","#0FA66A"];
+  const phaseAccentColors=["var(--accent)","#5B8DEF","var(--amber)"];
   // Phase Roadmap
   const phasesHtml=(s.phases||[]).map((p,i)=>{
     const col=phaseAccentColors[i]||"var(--accent)";
@@ -945,10 +950,10 @@ function renderSummary(){
   const compRows=(s.competitors||[]).map(c=>{
     const nameCell=c.url?`<a href="${c.url}" target="_blank" rel="noopener" style="font-weight:600;color:var(--accent);text-decoration:none;display:flex;align-items:center;gap:4px">${c.name||""}<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>`
       :`<span style="font-weight:600;color:var(--text)">${c.name||""}</span>`;
-    return`<tr><td>${nameCell}</td><td style="color:var(--text2)">${c.strength||""}</td><td style="color:var(--green);font-weight:600">${c.gap||""}</td></tr>`;
+    return`<tr><td>${nameCell}</td><td style="color:var(--text2)">${c.strength||""}</td><td style="color:var(--amber);font-weight:700">${c.gap||""}</td></tr>`;
   }).join("");
   // Risks
-  const risksHtml=(s.risks||[]).map(r=>`<div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:4px">▲ ${r.risk||""}</div><div style="font-size:11px;color:var(--text2);line-height:1.5">→ ${r.mitigation||""}</div></div>`).join("");
+  const risksHtml=(s.risks||[]).map(r=>`<div style="background:var(--bg3);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:4px">▲ ${r.risk||""}</div><div style="font-size:11px;color:var(--text2);line-height:1.5">→ ${r.mitigation||""}</div></div>`).join("");
   // Tools
   const toolsHtml=(s.resources?.tools||[]).map(t=>`<span style="padding:3px 10px;border-radius:100px;background:var(--accent-light);color:var(--accent);font-size:10px;font-weight:700">${t}</span>`).join(" ");
   // Score bars
@@ -960,7 +965,7 @@ function renderSummary(){
 
   // Analysis Journey HTML
   const journeyHtml=(s.analysisJourney||[]).map((j,i)=>{
-    const jColors=["var(--accent)","#5B8DEF","#0FA66A","var(--amber)"];
+    const jColors=["var(--accent)","#5B8DEF","var(--amber)","#8B7FD4"];
     const jCol=jColors[i]||"var(--accent)";
     const isLast=i===(s.analysisJourney.length-1);
     return`<div style="display:flex;gap:14px;${isLast?"":"margin-bottom:0"}">
@@ -979,8 +984,8 @@ function renderSummary(){
   const bgHtml=s.background?`
     <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-top:12px">
       ${s.background.situation?`<div style="background:var(--bg3);border-radius:var(--r-sm);padding:10px 14px;border-left:3px solid var(--accent)"><div style="font-size:9px;color:var(--text3);letter-spacing:.1em;font-weight:700;margin-bottom:3px">SITUATION · 現状</div><div style="font-size:12px;color:var(--text2);line-height:1.65">${s.background.situation}</div></div>`:""}
-      ${s.background.problem?`<div style="background:#FFF5F5;border-radius:var(--r-sm);padding:10px 14px;border-left:3px solid var(--red)"><div style="font-size:9px;color:var(--red);letter-spacing:.1em;font-weight:700;margin-bottom:3px">PROBLEM · 課題</div><div style="font-size:12px;color:var(--text2);line-height:1.65">${s.background.problem}</div></div>`:""}
-      ${s.background.opportunity?`<div style="background:var(--green-light);border-radius:var(--r-sm);padding:10px 14px;border-left:3px solid var(--green)"><div style="font-size:9px;color:var(--green);letter-spacing:.1em;font-weight:700;margin-bottom:3px">OPPORTUNITY · 機会</div><div style="font-size:12px;color:var(--text2);line-height:1.65">${s.background.opportunity}</div></div>`:""}
+      ${s.background.problem?`<div style="background:var(--bg3);border-radius:var(--r-sm);padding:10px 14px;border-left:3px solid var(--accent)"><div style="font-size:9px;color:var(--text3);letter-spacing:.1em;font-weight:700;margin-bottom:3px">PROBLEM · 課題</div><div style="font-size:12px;color:var(--text2);line-height:1.65">${s.background.problem}</div></div>`:""}
+      ${s.background.opportunity?`<div style="background:var(--amber-light);border-radius:var(--r-sm);padding:10px 14px;border-left:3px solid var(--amber)"><div style="font-size:9px;color:#8B7000;letter-spacing:.1em;font-weight:700;margin-bottom:3px">OPPORTUNITY · 機会</div><div style="font-size:12px;color:var(--text2);line-height:1.65">${s.background.opportunity}</div></div>`:""}
     </div>`:"";
 
   const reportImgs=st.reportImages||{};
@@ -1050,7 +1055,7 @@ function renderSummary(){
     <!-- COMPETITIVE ANALYSIS -->
     ${compRows?`<div class="rpt-section" style="overflow-x:auto">
       <div class="rpt-label">Competitive Analysis</div>
-      <table class="comp-table"><thead><tr><th>競合</th><th>競合の強み</th><th style="color:var(--green)">我々の優位性</th></tr></thead><tbody>${compRows}</tbody></table>
+      <table class="comp-table"><thead><tr><th>競合</th><th>競合の強み</th><th style="color:var(--amber)">我々の優位性</th></tr></thead><tbody>${compRows}</tbody></table>
     </div>`:""}
 
     <!-- KPIs -->
@@ -1157,7 +1162,7 @@ function exportPDF(){
   const s=st.summary||{};
   const m=st.bestMgrState||st.mgrState;
   const total=Object.values(m?.scores||{}).reduce((a,b)=>a+b,0);
-  const phaseColors=["#3A3AF5","#5B8DEF","#0FA66A"];
+  const phaseColors=["#3A3AF5","#5B8DEF","#E8C400"];
   const scoreRows=SCORE_ITEMS.map(k=>{
     const v=Math.min(20,Math.max(0,parseInt(m?.scores?.[k])||0));
     const c=v>=16?"#3A3AF5":v>=10?"#5B8DEF":"#aaa";
@@ -1174,7 +1179,7 @@ function exportPDF(){
   const log=st.history.map((r,i)=>`<div style="margin-bottom:14px"><div style="font-size:10px;font-weight:700;color:#3A3AF5;letter-spacing:.08em;padding:4px 0;border-bottom:1px solid #e5e7eb;margin-bottom:8px">Phase ${i+1}: ${PHASE_JA[i]}</div>${Object.entries(r.answers).map(([id,a])=>`<div style="margin-bottom:8px;padding-left:10px;border-left:2px solid #3A3AF5"><div style="font-size:9px;font-weight:700;color:#3A3AF5;margin-bottom:2px">${AGENTS[id].name}</div><div style="font-size:11px;color:#374151;line-height:1.7">${a}</div></div>`).join("")}</div>`).join("");
   // Narrative sections for PDF
   const pdfJourneyRows=(s.analysisJourney||[]).map((j,i)=>{
-    const jCols=["#3A3AF5","#5B8DEF","#0FA66A","#F5A623"];
+    const jCols=["#3A3AF5","#5B8DEF","#E8C400","#8B7FD4"];
     const col=jCols[i]||"#3A3AF5";
     return`<tr><td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;vertical-align:top"><div style="width:22px;height:22px;border-radius:50%;background:${col};color:#fff;font-size:9px;font-weight:800;display:inline-flex;align-items:center;justify-content:center">${j.phase||i+1}</div></td><td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;font-size:9px;font-weight:700;color:${col};white-space:nowrap;vertical-align:top">${j.name||""}</td><td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;font-size:11px;color:#374151;line-height:1.6">${j.finding||""}</td></tr>`;
   }).join("");
@@ -1534,7 +1539,7 @@ async function runManagerAuto(histText,prevRevised,loopCount,history){
   try{
     checkCancelled();
     const factsNote=st.facts&&st.facts.trim()?"\n【確定事実】"+st.facts.slice(0,150):"";
-    const mgrMsg="企画："+st.project+factsNote+"\n\n戦略案：\n"+combined+"\nブラッシュアップ回数："+loopCount;
+    const mgrMsg="企画："+st.project+"\n【現在日付】"+todayStr()+factsNote+"\n\n戦略案：\n"+combined+"\nブラッシュアップ回数："+loopCount;
     const raw=await api(MGR,mgrMsg);
 
     // ── JSONパース（3段階） ──
@@ -1841,7 +1846,7 @@ async function generateFinalAuto(history,mgrResult){
   try{
     const factsForSum=st.facts&&st.facts.trim()?"\n\n【重要な制約・確定事実（これに反する提案・施策は絶対に出力しないこと）】\n"+st.facts:"";
     const bestStrategyForSum=useBest?.revisedStrategy?"\n\n【採用するベスト戦略案】\n"+useBest.revisedStrategy:"";
-    const sumMsg="企画："+st.project+factsForSum+bestStrategyForSum+"\n\n会議ログ：\n"+buildHistText(history)+"\nManagerスコア："+total+"点\n総評："+(useBest&&useBest.verdict||"");
+    const sumMsg="企画："+st.project+"\n\n【本日の日付】"+todayStr()+"（フェーズ開始時期・期限は全てこの日付を基準に計算すること。過去の日付を使用禁止）"+factsForSum+bestStrategyForSum+"\n\n会議ログ：\n"+buildHistText(history)+"\nManagerスコア："+total+"点\n総評："+(useBest&&useBest.verdict||"");
     const raw=await api(SUM,sumMsg,0,2000);
 
     // ── 4段階パース ──
@@ -1968,7 +1973,7 @@ async function startExtraMode(){
     const score=Object.values(st.mgrState&&st.mgrState.scores||{}).reduce(function(a,b){return a+b;},0);
     const feedback=(st.mgrState&&st.mgrState.feedback)||"";
     const histText=buildHistText(st.history||[]);
-    const sysP="あなたはマーケティング戦略の分析精度を高めるインタビュアーです。現在スコア"+score+"/100点。改善のため4つの質問をしてください。JSONのみ出力（他テキスト不要）：{\"questions\":[\"質問1\",\"質問2\",\"質問3\",\"質問4\"]}";
+    const sysP="あなたはマーケティング戦略アドバイザーです。ユーザーはこのアプリを使っている＝専門知識がない一般のビジネスオーナーです。難しい専門用語・分析フレームワークの質問は絶対NG。「いつ始めますか？」「予算はいくらですか？」レベルの、誰でも即答できるシンプルな確認質問を4つ生成してください。JSONのみ出力：{\"questions\":[\"質問1\",\"質問2\",\"質問3\",\"質問4\"]}。質問のルール：①中学生でも答えられる平易な日本語②Yes/Noか具体的な数字・言葉で答えられる③専門用語（ROI・KPI・CAC等）を使わない④スコア改善に必要な情報（予算・期間・過去の経験・顧客像）に絞る";
     const userP="企画："+st.project+"\n改善指示："+feedback+"\n要約："+histText.slice(0,300);
     const raw=await api(sysP,userP);
     const parsed=pj(raw)||{questions:[]};
