@@ -429,17 +429,19 @@ const SCORE_ITEMS=["市場性","実現性","独自性","戦略整合性","ユー
 const PROJ_KEY="sc_projects";
 const APIKEY_KEY="sc_apikey";
 const GEMINI_KEY_STORAGE="sc_geminikey";
+const OPENAI_KEY_STORAGE="sc_openaikey";
 
 // ─── STATE ───
 let apiKey="";
 let geminiKey="";
+let openaiKey="";
 let cancelled=false;
 let currentProjId=null;
 function checkCancelled(){ if(cancelled) throw new Error("__CANCELLED__"); }
 let st={
   step:"projects",project:"",files:[],
   phaseIdx:0,questions:null,ctx:"",answers:{},loading:null,
-  history:[],mgrState:null,loopCount:0,mgrHistory:[],mgrNotes:[],reportDiagram:null,
+  history:[],mgrState:null,loopCount:0,mgrHistory:[],mgrNotes:[],reportDiagram:null,reportImages:null,
   summary:null,error:"",busy:false,statusMsg:"",
 };
 
@@ -526,12 +528,23 @@ function renderApiKey(){
       <input type="password" id="geminiKeyInput" placeholder="${savedG?"変更する場合のみ入力":"AIza..."}" style="width:100%;background:#fff;border:1.5px solid rgba(33,149,202,.3);border-radius:10px;color:#0F1128;padding:10px 12px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box"/>
       <p style="font-size:10px;color:#8AA0B0;margin-top:5px">取得先: aistudio.google.com → 「Get API key」（無料枠あり）</p>
     </div>
+    <div style="margin:0 0 6px;padding:14px;background:linear-gradient(135deg,#F0FFF8,#EDFBF4);border:1.5px solid rgba(15,166,106,.25);border-radius:14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:11px;font-weight:800;color:#0FA66A;letter-spacing:.06em">GPT IMAGE 2.0 — レポート図解</span>
+        <span style="font-size:9px;padding:2px 7px;border-radius:100px;background:rgba(15,166,106,.15);color:#0FA66A;font-weight:700">推奨</span>
+      </div>
+      <p style="font-size:12px;color:#4A5E72;margin-bottom:8px;line-height:1.6">OpenAI APIキーを登録すると、最終レポートにGPT Image 2.0生成の高品質戦略ビジュアルが追加されます。未登録の場合はGemini Nano Banana（Imagen 3）でフォールバック生成します。</p>
+      ${localStorage.getItem(OPENAI_KEY_STORAGE)?`<div class="saved-key-box" style="margin-bottom:8px"><span style="font-size:11px">OpenAI: ${localStorage.getItem(OPENAI_KEY_STORAGE).slice(0,12)}••••</span><button class="forget-btn" onclick="forgetOpenAIKey()">削除</button></div>`:""}
+      <input type="password" id="openaiKeyInput" placeholder="${localStorage.getItem(OPENAI_KEY_STORAGE)?"変更する場合のみ入力":"sk-proj-..."}" style="width:100%;background:#fff;border:1.5px solid rgba(15,166,106,.3);border-radius:10px;color:#0F1128;padding:10px 12px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box"/>
+      <p style="font-size:10px;color:#8AA0B0;margin-top:5px">取得先: platform.openai.com → API Keys（有料）</p>
+    </div>
     <button class="btn btn-accent" onclick="submitApiKey()">開始する →</button>
   </div>`;
 }
 function toggleEye(){const i=document.getElementById("apiKeyInput");if(i)i.type=i.type==="password"?"text":"password";}
 function forgetKey(){if(confirm("Anthropic APIキーを削除しますか？")){localStorage.removeItem(APIKEY_KEY);apiKey="";render();}}
 function forgetGeminiKey(){if(confirm("Gemini APIキーを削除しますか？")){localStorage.removeItem(GEMINI_KEY_STORAGE);geminiKey="";render();}}
+function forgetOpenAIKey(){if(confirm("OpenAI APIキーを削除しますか？")){localStorage.removeItem(OPENAI_KEY_STORAGE);openaiKey="";render();}}
 function submitApiKey(){
   const v=document.getElementById("apiKeyInput")?.value?.trim();
   const saved=localStorage.getItem(APIKEY_KEY)||"";
@@ -542,6 +555,9 @@ function submitApiKey(){
   const gv=document.getElementById("geminiKeyInput")?.value?.trim();
   if(gv){localStorage.setItem(GEMINI_KEY_STORAGE,gv);geminiKey=gv;}
   else{const sg=localStorage.getItem(GEMINI_KEY_STORAGE)||"";if(sg)geminiKey=sg;}
+  const ov=document.getElementById("openaiKeyInput")?.value?.trim();
+  if(ov){localStorage.setItem(OPENAI_KEY_STORAGE,ov);openaiKey=ov;}
+  else{const so=localStorage.getItem(OPENAI_KEY_STORAGE)||"";if(so)openaiKey=so;}
   S({step:"projects"});
 }
 
@@ -942,6 +958,33 @@ function renderSummary(){
     return`<div><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:3px"><span>${k}</span><span style="font-weight:700;color:${v>=16?"var(--accent)":"var(--text)"}">${v}/20</span></div><div style="height:3px;background:var(--border);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${v>=16?"var(--accent)":"var(--blue2)"};border-radius:3px;transition:width .8s"></div></div></div>`;
   }).join("");
 
+  // Analysis Journey HTML
+  const journeyHtml=(s.analysisJourney||[]).map((j,i)=>{
+    const jColors=["var(--accent)","#5B8DEF","#0FA66A","var(--amber)"];
+    const jCol=jColors[i]||"var(--accent)";
+    const isLast=i===(s.analysisJourney.length-1);
+    return`<div style="display:flex;gap:14px;${isLast?"":"margin-bottom:0"}">
+      <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0">
+        <div style="width:28px;height:28px;border-radius:50%;background:${jCol};color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px ${jCol}44">${j.phase||i+1}</div>
+        ${isLast?"":`<div style="width:2px;flex:1;background:linear-gradient(${jCol},${jColors[i+1]||"var(--accent)"}44);margin:4px 0;min-height:24px"></div>`}
+      </div>
+      <div style="padding-bottom:${isLast?"0":"20px"}">
+        <div style="font-size:10px;font-weight:800;color:${jCol};letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px">${j.name||"Phase "+(j.phase||i+1)}</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.7">${j.finding||""}</div>
+      </div>
+    </div>`;
+  }).join("");
+
+  // Background context
+  const bgHtml=s.background?`
+    <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-top:12px">
+      ${s.background.situation?`<div style="background:var(--bg3);border-radius:var(--r-sm);padding:10px 14px;border-left:3px solid var(--accent)"><div style="font-size:9px;color:var(--text3);letter-spacing:.1em;font-weight:700;margin-bottom:3px">SITUATION · 現状</div><div style="font-size:12px;color:var(--text2);line-height:1.65">${s.background.situation}</div></div>`:""}
+      ${s.background.problem?`<div style="background:#FFF5F5;border-radius:var(--r-sm);padding:10px 14px;border-left:3px solid var(--red)"><div style="font-size:9px;color:var(--red);letter-spacing:.1em;font-weight:700;margin-bottom:3px">PROBLEM · 課題</div><div style="font-size:12px;color:var(--text2);line-height:1.65">${s.background.problem}</div></div>`:""}
+      ${s.background.opportunity?`<div style="background:var(--green-light);border-radius:var(--r-sm);padding:10px 14px;border-left:3px solid var(--green)"><div style="font-size:9px;color:var(--green);letter-spacing:.1em;font-weight:700;margin-bottom:3px">OPPORTUNITY · 機会</div><div style="font-size:12px;color:var(--text2);line-height:1.65">${s.background.opportunity}</div></div>`:""}
+    </div>`:"";
+
+  const reportImgs=st.reportImages||{};
+
   return`<div class="fade">
     <!-- HERO -->
     <div style="background:#3A3AF5;border-radius:var(--r-lg);padding:32px 28px 28px;margin-bottom:12px;position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(58,58,245,.22)">
@@ -956,6 +999,19 @@ function renderSummary(){
       </div>
     </div>
 
+    <!-- WHY THIS PROPOSAL — なぜこの提案か -->
+    ${s.whyThisStrategy?`<div class="rpt-section" style="border-left:4px solid var(--accent);padding-left:18px">
+      <div class="rpt-label">Why This Proposal? — なぜこの提案か</div>
+      <div style="font-size:14px;font-weight:700;color:var(--text);line-height:1.75;letter-spacing:-.01em">${s.whyThisStrategy}</div>
+      ${bgHtml}
+    </div>`:""}
+
+    <!-- ANALYSIS JOURNEY — 分析の軌跡 -->
+    ${journeyHtml?`<div class="rpt-section">
+      <div class="rpt-label">Analysis Journey — 分析の軌跡</div>
+      <div style="padding:4px 0">${journeyHtml}</div>
+    </div>`:""}
+
     <!-- KEY INSIGHT + CHALLENGE -->
     <div class="rpt-section">
       <div class="rpt-label">Key Insight</div>
@@ -968,6 +1024,12 @@ function renderSummary(){
       <div class="rpt-label">Integrated Strategy</div>
       <div style="font-size:13px;color:var(--text2);line-height:1.95">${cleanText(s.strategy||"")}</div>
     </div>
+
+    <!-- STRATEGY VISUAL IMAGE -->
+    ${reportImgs.strategy?`<div class="rpt-section" style="padding:0;overflow:hidden">
+      <div style="padding:14px 16px 10px"><div class="rpt-label" style="margin-bottom:0">Strategy Visual</div></div>
+      <img src="${reportImgs.strategy}" alt="Strategy Visual" style="width:100%;display:block;max-height:420px;object-fit:cover" loading="lazy"/>
+    </div>`:""}
 
     <!-- PHASE ROADMAP -->
     ${s.phases&&s.phases.length?`<div class="rpt-section"><div class="rpt-label">Strategy Roadmap</div><div class="rpt-phase-wrap">${phasesHtml}</div></div>`:""}
@@ -1110,28 +1172,49 @@ function exportPDF(){
   const kpiRows=(s.kpi||[]).map((k,i)=>`<div style="padding:7px 10px;border-left:3px solid ${phaseColors[i]||"#3A3AF5"};background:#F9FAFB;border-radius:0 6px 6px 0;margin-bottom:6px;font-size:11px;font-weight:600;color:#111">${k}</div>`).join("");
   const riskRows=(s.risks||[]).map(r=>`<div style="border:1px solid #fee2e2;border-radius:6px;padding:8px 10px;margin-bottom:6px"><div style="font-size:10px;font-weight:700;color:#DC2626;margin-bottom:3px">▲ ${r.risk||""}</div><div style="font-size:11px;color:#374151">→ ${r.mitigation||""}</div></div>`).join("");
   const log=st.history.map((r,i)=>`<div style="margin-bottom:14px"><div style="font-size:10px;font-weight:700;color:#3A3AF5;letter-spacing:.08em;padding:4px 0;border-bottom:1px solid #e5e7eb;margin-bottom:8px">Phase ${i+1}: ${PHASE_JA[i]}</div>${Object.entries(r.answers).map(([id,a])=>`<div style="margin-bottom:8px;padding-left:10px;border-left:2px solid #3A3AF5"><div style="font-size:9px;font-weight:700;color:#3A3AF5;margin-bottom:2px">${AGENTS[id].name}</div><div style="font-size:11px;color:#374151;line-height:1.7">${a}</div></div>`).join("")}</div>`).join("");
+  // Narrative sections for PDF
+  const pdfJourneyRows=(s.analysisJourney||[]).map((j,i)=>{
+    const jCols=["#3A3AF5","#5B8DEF","#0FA66A","#F5A623"];
+    const col=jCols[i]||"#3A3AF5";
+    return`<tr><td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;vertical-align:top"><div style="width:22px;height:22px;border-radius:50%;background:${col};color:#fff;font-size:9px;font-weight:800;display:inline-flex;align-items:center;justify-content:center">${j.phase||i+1}</div></td><td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;font-size:9px;font-weight:700;color:${col};white-space:nowrap;vertical-align:top">${j.name||""}</td><td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;font-size:11px;color:#374151;line-height:1.6">${j.finding||""}</td></tr>`;
+  }).join("");
+  const pdfBgRows=s.background?[
+    s.background.situation?`<tr><td style="padding:6px 10px;border-bottom:1px solid #f3f4f6;font-size:9px;font-weight:700;color:#3A3AF5;width:70px">SITUATION</td><td style="padding:6px 10px;border-bottom:1px solid #f3f4f6;font-size:11px;color:#374151">${s.background.situation}</td></tr>`:"",
+    s.background.problem?`<tr><td style="padding:6px 10px;border-bottom:1px solid #f3f4f6;font-size:9px;font-weight:700;color:#DC2626">PROBLEM</td><td style="padding:6px 10px;border-bottom:1px solid #f3f4f6;font-size:11px;color:#374151">${s.background.problem}</td></tr>`:"",
+    s.background.opportunity?`<tr><td style="padding:6px 10px;font-size:9px;font-weight:700;color:#059669">OPPORTUNITY</td><td style="padding:6px 10px;font-size:11px;color:#374151">${s.background.opportunity}</td></tr>`:"",
+  ].join(""):"";
+  const reportImgsPdf=st.reportImages||{};
   const pdfHTML=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${s.title||"Strategy Report"}</title><style>
-    @media print{body{margin:0}@page{margin:18mm;size:A4}}
+    @media print{body{margin:0}@page{margin:14mm;size:A4}}
     body{font-family:'Hiragino Sans','Noto Sans JP','Inter',sans-serif;color:#111;max-width:720px;margin:0 auto;padding:0;font-size:12px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .hero{background:#3A3AF5;color:#fff;padding:28px 28px 24px;margin-bottom:16px;position:relative;overflow:hidden;border-radius:0 0 16px 16px}
+    .hero{background:#3A3AF5;color:#fff;padding:28px 28px 24px;margin-bottom:14px;position:relative;overflow:hidden;border-radius:0 0 18px 18px}
     .hero::after{content:'';position:absolute;right:-40px;top:-40px;width:180px;height:180px;background:rgba(255,255,255,.06);border-radius:50%}
-    .section{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px 18px;margin-bottom:10px}
+    .section{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;margin-bottom:10px}
     .label{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#3A3AF5;margin-bottom:8px}
     table{width:100%;border-collapse:collapse}
     th{background:#F9FAFB;padding:6px 8px;font-size:9px;font-weight:700;text-align:left;border-bottom:1.5px solid #e5e7eb;color:#6B7280;letter-spacing:.08em}
+    .why-box{background:linear-gradient(135deg,#F0F0FF,#E8E8FF);border:1.5px solid rgba(58,58,245,.2);border-radius:10px;padding:14px 16px;margin-bottom:10px;border-left:4px solid #3A3AF5}
   </style></head><body>
   <div class="hero">
     <div style="font-size:9px;color:rgba(255,255,255,.6);letter-spacing:.18em;font-weight:700;margin-bottom:6px;text-transform:uppercase">Final Strategy Report · Strategy Council</div>
     <div style="font-size:20px;font-weight:800;color:#fff;line-height:1.2;margin-bottom:4px">${s.title||"Strategy Report"}</div>
-    ${s.tagline?`<div style="font-size:12px;color:rgba(255,255,255,.7)">${s.tagline}</div>`:""}
-    <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    ${s.tagline?`<div style="font-size:12px;color:rgba(255,255,255,.7);margin-bottom:4px">${s.tagline}</div>`:""}
+    <div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <span style="background:rgba(255,255,255,.15);padding:3px 12px;border-radius:100px;font-size:11px;font-weight:700;color:#fff">✓ Score ${total}/100</span>
       ${s.positioning?`<span style="font-size:10px;color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.2);padding:3px 10px;border-radius:100px">${s.positioning}</span>`:""}
     </div>
     <div style="font-size:9px;color:rgba(255,255,255,.45);margin-top:8px">${new Date().toLocaleString("ja-JP")} · ${st.project?.slice(0,60)||""}</div>
   </div>
+
+  ${s.whyThisStrategy?`<div class="why-box"><div class="label" style="color:#3A3AF5">Why This Proposal? — なぜこの提案か</div><div style="font-size:13px;font-weight:700;color:#111;line-height:1.75;margin-bottom:${pdfBgRows?"10px":"0"}">${s.whyThisStrategy}</div>${pdfBgRows?`<table style="margin-top:6px"><tbody>${pdfBgRows}</tbody></table>`:""}</div>`:""}
+
+  ${pdfJourneyRows?`<div class="section"><div class="label">Analysis Journey — 分析の軌跡</div><table><tbody>${pdfJourneyRows}</tbody></table></div>`:""}
+
   <div class="section"><div class="label">Key Insight</div><div style="font-size:14px;font-weight:800;color:#111;line-height:1.5;margin-bottom:${s.challenge?"10px":"0"}">${s.keyInsight||""}</div>${s.challenge?`<div style="background:#F9FAFB;border-left:3px solid #3A3AF5;padding:8px 12px;border-radius:0 6px 6px 0;font-size:11px;color:#374151"><strong style="font-size:9px;display:block;color:#6B7280;margin-bottom:3px;letter-spacing:.1em">CHALLENGE</strong>${s.challenge}</div>`:""}</div>
   <div class="section"><div class="label">Integrated Strategy</div><div style="font-size:12px;color:#374151;line-height:1.95">${s.strategy||""}</div></div>
+
+  ${reportImgsPdf.strategy?`<div class="section" style="padding:0;overflow:hidden"><div style="padding:12px 16px 8px"><div class="label" style="margin-bottom:0">Strategy Visual — GPT Image 2.0</div></div><img src="${reportImgsPdf.strategy}" alt="Strategy Visual" style="width:100%;display:block;max-height:380px;object-fit:cover"/></div>`:""}
+
   ${phasesRows?`<div class="section"><div class="label">Strategy Roadmap</div><table><tbody><tr>${phasesRows}</tr></tbody></table></div>`:""}
   ${s.resources?`<div class="section"><div class="label">Required Resources</div><table><tr><th>Budget</th><th>Team</th><th>Tools</th></tr><tr><td style="padding:8px;font-weight:700;font-size:12px">${s.resources.budget||"−"}</td><td style="padding:8px;font-size:11px">${s.resources.team||"−"}</td><td style="padding:8px;font-size:11px">${(s.resources.tools||[]).join(", ")}</td></tr></table></div>`:""}
   ${compRows?`<div class="section"><div class="label">Competitive Analysis</div><table><thead><tr><th>競合</th><th>強み</th><th style="color:#059669">我々の優位性</th></tr></thead><tbody>${compRows}</tbody></table></div>`:""}
@@ -1304,7 +1387,7 @@ function pj(t){
 const FAC=`マーケティング戦略会議の司会AI。参加エージェント：マーケター、プロダクトデザイナー、戦略コンサルタント、UXリサーチャー、CFO、グロースハッカー。各専門家が競合固有名詞・具体数値・実施期限を含む提言を出せるよう、専門性を最大化する論点を設計せよ。JSONのみ出力：{"phase":"フェーズ名","questions":{"marketer":"論点","designer":"論点","consultant":"論点","researcher":"論点","cfo":"論点","growthhacker":"論点"},"context":"このフェーズで明らかにしたいこと40字以内"}`;
 const MGR_MEETING="あなたはマーケティングマネージャー（会議監督役）です。エージェントの発言を分析し、最終評価5項目（市場性・実現性・独自性・戦略整合性・ユーザー共感度）で高得点を取るために現在の議論で不足している観点を特定してください。JSONのみ出力（マークダウン禁止）：{\"gap\":\"現フェーズで不足している重要視点（競合固有名詞・数値根拠・具体施策）を80字で\",\"directive\":\"次フェーズで各エージェントが必ず深掘りすべき最重要論点を80字で（断言口調）\",\"focus\":[\"補強すべき評価項目1\",\"補強すべき評価項目2\"]}";
 const MGR="あなたは厳格なマーケティングマネージャーです。【最重要】前後にマークダウン記号を絶対につけず、有効なJSONのみを出力してください。戦略案を仮想空間でシミュレーションし5項目を各20点満点で採点（各スコアは0〜20の整数のみ）。採点基準：市場性（根拠なし8点以下/根拠あり9-15点/市場データ+競合比較16-20点）、実現性（理想論8点以下/段階的計画9-15点/即実行可能な具体行動16-20点）、独自性（一般論8点以下/差別化要素9-15点/競合にない明確USP16-20点）、戦略整合性（バラバラ8点以下/ある程度整合9-15点/全フェーズ完全整合16-20点）、ユーザー共感度（漠然8点以下/ペルソナ明確9-15点/インサイト深くWTP検証済み16-20点）。高得点を得るには：具体的数値・競合固有名詞・実施日程・担当者像・測定方法を含めること。出力形式：{\"env\":\"仮想空間名\",\"scores\":{\"市場性\":整数,\"実現性\":整数,\"独自性\":整数,\"戦略整合性\":整数,\"ユーザー共感度\":整数},\"verdict\":\"採点理由と高得点への具体指摘120字\",\"feedback\":\"95点未満の場合のみ：最も低い2〜3項目の具体的改善要件を200字で（例：独自性：競合A社・B社との差別化ポイントを固有名詞で3つ明記し価格優位性を数値で示せ）\",\"revisedStrategy\":\"改善案の統合戦略200字（具体数値・実施期限・固有名詞を必ず含む、95点未満のみ）\"}";
-const SUM="あなたはマーケティング戦略の統括AIです。会議ログとマネージャー審査を元に、プロの提案書レベルのレポートをJSONのみで出力してください。コードブロック・マークダウン・改行をJSONの値に入れないこと。出力フォーマット：{\"title\":\"戦略タイトル\",\"tagline\":\"サブタイトル25字\",\"keyInsight\":\"競合名・数値を含む核心インサイト80字\",\"challenge\":\"解決すべき本質課題60字\",\"strategy\":\"競合固有名詞・数値・期限を含む統合戦略250字\",\"positioning\":\"競合との差別化ポジション50字\",\"phases\":[{\"phase\":1,\"name\":\"フェーズ名\",\"period\":\"1〜3ヶ月\",\"goal\":\"このフェーズのゴール40字\",\"actions\":[\"具体施策1\",\"具体施策2\",\"具体施策3\"]},{\"phase\":2,\"name\":\"フェーズ名\",\"period\":\"3〜6ヶ月\",\"goal\":\"ゴール\",\"actions\":[\"施策1\",\"施策2\",\"施策3\"]},{\"phase\":3,\"name\":\"フェーズ名\",\"period\":\"6〜12ヶ月\",\"goal\":\"ゴール\",\"actions\":[\"施策1\",\"施策2\",\"施策3\"]}],\"resources\":{\"budget\":\"概算予算（例：初期300万+月次50万）\",\"team\":\"必要体制（例：PMx1・マーケx2・エンジニアx3）\",\"tools\":[\"ツール1\",\"ツール2\",\"ツール3\"]},\"kpi\":[\"指標1:現状値→目標値・期限\",\"指標2:現状値→目標値・期限\",\"指標3:現状値→目標値・期限\"],\"risks\":[{\"risk\":\"想定リスク\",\"mitigation\":\"対策\"},{\"risk\":\"リスク2\",\"mitigation\":\"対策2\"}],\"competitors\":[{\"name\":\"競合名\",\"url\":\"https://example.com\",\"strength\":\"競合の強み\",\"gap\":\"我々の優位性\"},{\"name\":\"競合名2\",\"url\":\"https://example2.com\",\"strength\":\"強み\",\"gap\":\"優位性\"}],\"nextStep\":\"明日できる最初の1アクション（具体的な担当者・行動）\"}";
+const SUM="あなたはマーケティング戦略の統括AIです。会議ログとマネージャー審査を元に、プロの提案書レベルのレポートをJSONのみで出力してください。コードブロック・マークダウン・改行をJSONの値に入れないこと。出力フォーマット：{\"title\":\"戦略タイトル\",\"tagline\":\"サブタイトル25字\",\"keyInsight\":\"競合名・数値を含む核心インサイト80字\",\"challenge\":\"解決すべき本質課題60字\",\"strategy\":\"競合固有名詞・数値・期限を含む統合戦略250字\",\"positioning\":\"競合との差別化ポジション50字\",\"whyThisStrategy\":\"なぜこの提案なのか？会議での分析プロセス・根拠・どのような議論を経てこの結論に至ったかを150字で（初見者でも理解できる論理展開）\",\"background\":{\"situation\":\"現在の市場・事業状況・前提条件を100字で\",\"problem\":\"この企画が本質的に解決すべき課題を80字で\",\"opportunity\":\"今この機会を掌握すべき理由・市場の追い風を80字で\"},\"analysisJourney\":[{\"phase\":1,\"name\":\"課題定義\",\"finding\":\"このフェーズで明らかになった最重要インサイト80字\"},{\"phase\":2,\"name\":\"市場分析\",\"finding\":\"市場・競合・ユーザーから得た核心洞察80字\"},{\"phase\":3,\"name\":\"戦略立案\",\"finding\":\"導き出された戦略的方向性・差別化ポイント80字\"},{\"phase\":4,\"name\":\"実行計画\",\"finding\":\"実行に向けた重要示唆・優先アクション80字\"}],\"phases\":[{\"phase\":1,\"name\":\"フェーズ名\",\"period\":\"1〜3ヶ月\",\"goal\":\"このフェーズのゴール40字\",\"actions\":[\"具体施策1\",\"具体施策2\",\"具体施策3\"]},{\"phase\":2,\"name\":\"フェーズ名\",\"period\":\"3〜6ヶ月\",\"goal\":\"ゴール\",\"actions\":[\"施策1\",\"施策2\",\"施策3\"]},{\"phase\":3,\"name\":\"フェーズ名\",\"period\":\"6〜12ヶ月\",\"goal\":\"ゴール\",\"actions\":[\"施策1\",\"施策2\",\"施策3\"]}],\"resources\":{\"budget\":\"概算予算（例：初期300万+月次50万）\",\"team\":\"必要体制（例：PMx1・マーケx2・エンジニアx3）\",\"tools\":[\"ツール1\",\"ツール2\",\"ツール3\"]},\"kpi\":[\"指標1:現状値→目標値・期限\",\"指標2:現状値→目標値・期限\",\"指標3:現状値→目標値・期限\"],\"risks\":[{\"risk\":\"想定リスク\",\"mitigation\":\"対策\"},{\"risk\":\"リスク2\",\"mitigation\":\"対策2\"}],\"competitors\":[{\"name\":\"競合名\",\"url\":\"https://example.com\",\"strength\":\"競合の強み\",\"gap\":\"我々の優位性\"},{\"name\":\"競合名2\",\"url\":\"https://example2.com\",\"strength\":\"強み\",\"gap\":\"優位性\"}],\"nextStep\":\"明日できる最初の1アクション（具体的な担当者・行動）\"}";
 const SYNTH="あなたはマーケティング戦略の統合エキスパートです。【最重要】JSONのみ出力。スコア上位3つの戦略案を分析し、各案の最も優れた要素（競合比較・具体数値・独自USP・実行計画・ユーザーインサイト）を厳選して一つの最強戦略に統合してください。単なる平均ではなく、各案のベストな要素だけを組み合わせること。出力形式：{\"synthesizedStrategy\":\"統合された最強戦略300字以上（競合固有名詞・具体数値・実施期限・測定KPIを必ず含む）\",\"keyStrengths\":\"各案から採用した強みの要点100字\"}";
 
 // ── FULL AUTO FLOW ──
@@ -1690,6 +1773,67 @@ async function geminiDiagram(strategy,challenge,phases){
     return null;
   }catch(e){return null;}
 }
+// ── IMAGE GENERATION ──
+// GPT Image 2.0 (model: gpt-image-1 — OpenAI API名) → Gemini Nano Banana フォールバック
+async function generateImageGPT(prompt){
+  if(!openaiKey)return null;
+  try{
+    // GPT Image 2.0 = model "gpt-image-1" (OpenAI公式API識別子)
+    const res=await fetch("https://api.openai.com/v1/images/generations",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+openaiKey},
+      body:JSON.stringify({model:"gpt-image-1",prompt:prompt,n:1,size:"1024x1024",quality:"high"})
+    });
+    const data=await res.json();
+    if(data.error){console.warn("GPT Image 2.0 error:",data.error.message);return null;}
+    const b64=data.data?.[0]?.b64_json;
+    if(b64)return"data:image/png;base64,"+b64;
+    return data.data?.[0]?.url||null;
+  }catch(e){console.warn("GPT Image 2.0 failed:",e.message);return null;}
+}
+async function generateImageNanoBanana(prompt){
+  // Gemini Nano Banana = imagen-3.0-generate-002（フォールバック専用）
+  if(!geminiKey)return null;
+  try{
+    const res=await fetch("https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key="+geminiKey,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({instances:[{prompt:prompt}],parameters:{sampleCount:1,aspectRatio:"1:1",safetyFilterLevel:"block_few"}})
+    });
+    const data=await res.json();
+    if(data.error){console.warn("Nano Banana error:",data.error.message);return null;}
+    const b64=data.predictions?.[0]?.bytesBase64Encoded;
+    const mime=data.predictions?.[0]?.mimeType||"image/png";
+    if(b64)return"data:"+mime+";base64,"+b64;
+    return null;
+  }catch(e){console.warn("Nano Banana failed:",e.message);return null;}
+}
+async function generateStrategyImage(strategy,keyInsight,projectName){
+  // 画像プロンプト（英語で品質最大化）
+  const imgPrompt=`A premium marketing strategy presentation slide visual for "${projectName.slice(0,40)}". Core concept: ${keyInsight.slice(0,80)}. Strategy essence: ${strategy.slice(0,120)}. Art direction: clean minimalist corporate design, dominant blue #3A3AF5 palette with white space, abstract geometric flow representing business growth, data-driven aesthetic, strategic arrows and nodes, no text, no words, no letters. High quality illustration style.`;
+
+  // ① GPT Image 2.0 を必ず最初に試みる（必須）
+  if(openaiKey){
+    S({statusMsg:"🎨 GPT Image 2.0 で戦略ビジュアルを生成中..."});
+    const img=await generateImageGPT(imgPrompt);
+    if(img){S({statusMsg:"✓ GPT Image 2.0 生成完了"});return img;}
+    // GPT Image が失敗した場合のみ Nano Banana へ
+    S({statusMsg:"GPT Image 2.0 失敗 → Nano Banana (Gemini Imagen) にフォールバック中..."});
+  } else {
+    // OpenAI キー未設定の場合は警告してスキップ
+    console.warn("OpenAI API キー未設定のため GPT Image 2.0 をスキップ。Nano Banana を試みます。");
+    S({statusMsg:"⚠ OpenAI キー未設定 → Nano Banana (Gemini Imagen) で代替生成中..."});
+  }
+
+  // ② Gemini Nano Banana（フォールバック）
+  if(geminiKey){
+    const img=await generateImageNanoBanana(imgPrompt);
+    if(img){S({statusMsg:"✓ Nano Banana 生成完了"});return img;}
+  }
+  S({statusMsg:"画像生成をスキップしました（API キーを設定するとビジュアルが追加されます）"});
+  return null;
+}
+
 async function generateFinalAuto(history,mgrResult){
   S({busy:true,statusMsg:"最終レポートを生成中..."});
   const useBest=st.bestMgrState||mgrResult;
@@ -1756,7 +1900,16 @@ async function generateFinalAuto(history,mgrResult){
       S({statusMsg:"Gemini で戦略フロー図を生成中..."});
       reportDiagram=await geminiDiagram(s.strategy,s.challenge||"",s.phases||[]);
     }
-    S({summary:s,reportDiagram,step:"summary",busy:false,statusMsg:""});
+    // 戦略ビジュアル画像を生成（GPT Image 1 または Gemini Imagen）
+    let reportImages=null;
+    if((openaiKey||geminiKey)&&s.keyInsight&&s.strategy){
+      try{
+        checkCancelled();
+        const imgResult=await generateStrategyImage(s.strategy,s.keyInsight,st.project);
+        if(imgResult)reportImages={strategy:imgResult};
+      }catch(e){if(e.message==="__CANCELLED__")throw e;console.warn("Image generation failed:",e.message);}
+    }
+    S({summary:s,reportDiagram,reportImages,step:"summary",busy:false,statusMsg:""});
     saveCurrent();
   }catch(e){
     if(e.message==="__CANCELLED__")return;
@@ -1868,7 +2021,7 @@ function confirmReset(){
     }
   },150);
 }
-function resetCurrent(){st={...st,step:"input",phaseIdx:0,questions:null,ctx:"",answers:{},loading:null,history:[],mgrState:null,loopCount:0,mgrHistory:[],mgrNotes:[],summary:null,reportDiagram:null,error:"",busy:false,statusMsg:"",brushupProgress:null,brushupLog:[],needsReattach:null};render();}
+function resetCurrent(){st={...st,step:"input",phaseIdx:0,questions:null,ctx:"",answers:{},loading:null,history:[],mgrState:null,loopCount:0,mgrHistory:[],mgrNotes:[],summary:null,reportDiagram:null,reportImages:null,error:"",busy:false,statusMsg:"",brushupProgress:null,brushupLog:[],needsReattach:null};render();}
 
 // ── INIT ──
 (function(){
@@ -1879,6 +2032,8 @@ function resetCurrent(){st={...st,step:"input",phaseIdx:0,questions:null,ctx:"",
   if(k&&k.startsWith("sk-")){apiKey=k;st.step="projects";}
   const gk=localStorage.getItem(GEMINI_KEY_STORAGE);
   if(gk)geminiKey=gk;
+  const ok=localStorage.getItem(OPENAI_KEY_STORAGE);
+  if(ok)openaiKey=ok;
 })();
 render();
 
