@@ -305,32 +305,28 @@ textarea::placeholder,input::placeholder{color:var(--text3)}
   border:1.5px solid rgba(245,166,35,.3);font-weight:700;
 }
 
-/* SUMMARY */
-.insight-box{
-  background:linear-gradient(135deg,var(--accent-light),#EBF3FF);
-  border:1.5px solid rgba(58,58,245,.2);
-  border-radius:var(--r-lg);padding:20px;margin-bottom:16px;
-  border-left:4px solid var(--accent);
-  box-shadow:0 2px 10px rgba(58,58,245,.08);
-}
+/* SUMMARY — legacy (accordion等で使用) */
+.insight-box{background:linear-gradient(135deg,var(--accent-light),#EBF3FF);border:1.5px solid rgba(58,58,245,.2);border-radius:var(--r-lg);padding:20px;margin-bottom:16px;border-left:4px solid var(--accent);box-shadow:0 2px 10px rgba(58,58,245,.08)}
 .strat-box{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r-lg);padding:18px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
 .kv-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
 .kv-card{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r-md);padding:16px;box-shadow:var(--shadow-sm)}
 .kv-title{font-size:9px;letter-spacing:.15em;margin-bottom:10px;font-weight:800;text-transform:uppercase}
 .kv-item{font-size:12px;color:var(--text2);padding:7px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;line-height:1.5}
-.next-box{
-  background:linear-gradient(135deg,var(--accent-light),#EBF3FF);
-  border:1.5px solid rgba(58,58,245,.2);
-  border-radius:var(--r-md);padding:14px 18px;
-  display:flex;align-items:center;gap:12px;margin-bottom:16px;
-  box-shadow:0 2px 8px rgba(58,58,245,.08);
-}
-.approved-tag{
-  display:inline-flex;align-items:center;gap:5px;font-size:10px;
-  padding:4px 12px;border-radius:100px;
-  background:var(--green-light);color:var(--green);
-  border:1.5px solid rgba(15,166,106,.25);font-weight:700;
-}
+.next-box{background:linear-gradient(135deg,var(--accent-light),#EBF3FF);border:1.5px solid rgba(58,58,245,.2);border-radius:var(--r-md);padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:16px;box-shadow:0 2px 8px rgba(58,58,245,.08)}
+.approved-tag{display:inline-flex;align-items:center;gap:5px;font-size:10px;padding:4px 12px;border-radius:100px;background:var(--green-light);color:var(--green);border:1.5px solid rgba(15,166,106,.25);font-weight:700}
+/* REPORT */
+.rpt-section{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r-lg);padding:24px;margin-bottom:12px;box-shadow:var(--shadow-sm)}
+.rpt-label{font-size:10px;color:var(--accent);letter-spacing:.18em;font-weight:700;margin-bottom:10px;text-transform:uppercase}
+.rpt-phase-wrap{display:flex;align-items:stretch;gap:8px;overflow-x:auto;padding-bottom:4px}
+.rpt-phase{flex:1;min-width:140px;background:var(--bg3);border-radius:12px;padding:14px 12px;border-top:3px solid var(--accent)}
+.rpt-phase-num{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.comp-table{width:100%;border-collapse:collapse;margin-top:8px}
+.comp-table th{background:var(--bg3);padding:7px 10px;font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-align:left;border-bottom:1.5px solid var(--border)}
+.comp-table td{padding:9px 10px;font-size:11px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5}
+.flow-node{background:var(--bg2);color:var(--text);border:1.5px solid var(--border);border-radius:10px;padding:7px 11px;font-size:11px;font-weight:700;text-align:center;line-height:1.4;box-shadow:0 2px 6px rgba(0,0,0,.06);white-space:nowrap}
+.flow-node.hub{background:var(--accent);color:#fff;border:none}
+.flow-node.source{background:#F04438;color:#fff;border:none}
+.flow-node.result{background:#0FA66A;color:#fff;border:none}
 
 /* MISC */
 .spinner{text-align:center;padding:52px 0;font-size:13px;color:var(--text3);animation:blink 1.5s infinite;font-weight:500}
@@ -399,16 +395,20 @@ textarea::placeholder,input::placeholder{color:var(--text3)}
 <script>
 // ─── CONFIG ───
 const AGENTS={
-  marketer:{name:"MARKETER",icon:"marketer",color:"#5B7FFF"},
-  designer:{name:"DESIGNER",icon:"designer",color:"#5B7FFF"},
-  consultant:{name:"CONSULTANT",icon:"consultant",color:"#5B7FFF"},
-  researcher:{name:"RESEARCHER",icon:"researcher",color:"#5B7FFF"},
+  marketer:    {name:"MARKETER",icon:"marketer",color:"#5B7FFF"},
+  designer:    {name:"DESIGNER",icon:"designer",color:"#5B7FFF"},
+  consultant:  {name:"CONSULTANT",icon:"consultant",color:"#5B7FFF"},
+  researcher:  {name:"RESEARCHER",icon:"researcher",color:"#5B7FFF"},
+  cfo:         {name:"CFO",icon:"cfo",color:"#5B7FFF"},
+  growthhacker:{name:"GROWTH",icon:"growthhacker",color:"#5B7FFF"},
 };
 const ICONS={
-  marketer:   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
-  designer:   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>',
-  consultant: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>',
-  researcher: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+  marketer:    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
+  designer:    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>',
+  consultant:  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>',
+  researcher:  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+  cfo:         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+  growthhacker:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>',
   manager:    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
   running:    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/><polyline points="1 20 1 14 7 14"/></svg>',
   done:       '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
@@ -416,10 +416,12 @@ const ICONS={
   globe:      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
 };
 const ROLES={
-  marketer:"あなたはシニアマーケターです。市場分析、ターゲット設定、顧客獲得戦略、ブランドポジショニング、KPI設計の専門家です。確定数値がある場合は必ずそれを前提に使い、推論で数値を作らないでください。200字以内で具体的に答えてください。",
-  designer:"あなたはUX/ブランドデザイナーです。ユーザー体験設計、ビジュアルアイデンティティの専門家です。確定数値がある場合は必ずそれを前提に使い、推論で数値を作らないでください。200字以内で具体的に答えてください。",
-  consultant:"あなたはMcKinsey出身の経営コンサルタントです。事業戦略、競合分析、P&L管理の専門家です。確定数値がある場合は必ずそれを前提に使い、推論で数値を作らないでください。200字以内で具体的に答えてください。",
-  researcher:"あなたはUXリサーチャーです。定性・定量調査、ペルソナ構築の専門家です。確定数値がある場合は必ずそれを前提に使い、推論で数値を作らないでください。200字以内で具体的に答えてください。",
+  marketer:"あなたはP&G・ユニリーバ出身のシニアマーケターです。専門：市場規模算定・競合ポジショニング・顧客LTV設計・グロースKPI。【必須ルール】①競合他社の固有名詞を最低2社明記して比較②数値は市場データに基づく根拠付きで③「〜すべき」禁止・「〜を実施する」断言口調④確定数値は推論で変えるな⑤250字で回答。",
+  designer:"あなたはApple・Google出身のプロダクトデザイナーです。専門：UXフロー設計・CVR改善・オンボーディング体験・ブランド認知。【必須ルール】①具体的なUI施策（例：ファーストビュー3秒以内に価値訴求）②競合サービスの体験と比較③離脱率・CVR等の数値目標を明記④確定数値は推論で変えるな⑤250字で回答。",
+  consultant:"あなたはMcKinsey・BCG出身の戦略コンサルタントです。専門：3C分析・競合戦略・P&L設計・事業スケール戦略。【必須ルール】①競合固有名詞を最低2社挙げて比較②財務的実現可能性（ROI・回収期間）を明示③フェーズ別の優先施策を断言④確定数値は推論で変えるな⑤250字で回答。",
+  researcher:"あなたはNielsen・リクルート出身のUXリサーチャーです。専門：ペルソナ構築・行動観察・ジョブ理論・NPS分析。【必須ルール】①具体的なペルソナ像（年齢・職業・行動パターン）を明記②ユーザーインサイトを支える根拠データを引用③WTP（支払意思額）を推定して明示④確定数値は推論で変えるな⑤250字で回答。",
+  cfo:"あなたはGoldman Sachs・SoftBank出身のCFOです。専門：財務モデリング・資金調達・ROI算定・コスト最適化・Exit戦略。【必須ルール】①初期投資・月次コスト・BEP（損益分岐点）を具体的に試算②資金調達額と調達手段を明記③競合の財務規模（資金調達額・売上）と比較④確定数値は推論で変えるな⑤250字で回答。",
+  growthhacker:"あなたはAirbnb・Uber出身のGrowth Hackerです。専門：バイラルループ設計・A/Bテスト・リテンション施策・PLG（Product-Led Growth）戦略。【必須ルール】①獲得単価（CAC）と目標を具体的に提示②バイラル係数（K-factor）の設計を明示③競合のグロース施策を固有名詞で引用④確定数値は推論で変えるな⑤250字で回答。",
 };
 const PHASES=["課題定義","市場分析","戦略立案","実行計画"];
 const PHASE_JA=["課題・ゴール定義","市場・ユーザー分析","戦略立案","実行計画・KPI"];
@@ -437,7 +439,7 @@ function checkCancelled(){ if(cancelled) throw new Error("__CANCELLED__"); }
 let st={
   step:"projects",project:"",files:[],
   phaseIdx:0,questions:null,ctx:"",answers:{},loading:null,
-  history:[],mgrState:null,loopCount:0,
+  history:[],mgrState:null,loopCount:0,mgrHistory:[],mgrNotes:[],reportDiagram:null,
   summary:null,error:"",busy:false,statusMsg:"",
 };
 
@@ -720,7 +722,19 @@ function renderMeeting(){
         <span class="accordion-summary">${preview}…</span>
         ${chevron}
       </div>
-      <div class="accordion-body${isOpen?" open":""}">${agentRows}</div>
+      <div class="accordion-body${isOpen?" open":""}">
+        ${agentRows}
+        ${(()=>{
+          const note=st.mgrNotes?.[ri]?.note;
+          if(!note||(!note.gap&&!note.directive))return"";
+          return`<div style="margin:10px 0 4px;padding:10px 14px;background:var(--accent-light);border-left:3px solid var(--accent);border-radius:0 8px 8px 0">
+            <div style="font-size:10px;font-weight:700;color:var(--accent);letter-spacing:.05em;margin-bottom:5px">▼ MANAGER DIRECTIVE</div>
+            ${note.gap?`<div style="font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:3px">不足観点：${note.gap}</div>`:""}
+            ${note.directive?`<div style="font-size:11px;color:var(--text);line-height:1.7;font-weight:600">次フェーズ指示：${note.directive}</div>`:""}
+            ${note.focus?.length?`<div style="margin-top:5px;display:flex;gap:5px;flex-wrap:wrap">${note.focus.map(f=>`<span style="font-size:10px;padding:2px 8px;border-radius:100px;background:var(--accent);color:#fff;font-weight:700">${f}</span>`).join("")}</div>`:""}
+          </div>`;
+        })()}
+      </div>
     </div>`;
   }).join("");
 
@@ -872,31 +886,123 @@ function renderBrushupProgress(){
   return'<div style="margin-top:16px;border-top:1px solid #E4EAF0;padding-top:16px">'+rounds+'</div>';
 }
 
+function renderFlowDiagram(diagram){
+  if(!diagram||!diagram.nodes||!diagram.nodes.length)return"";
+  const tc={source:"#fff",hub:"#fff",action:"var(--text)",result:"#fff"};
+  const bc={source:"#F04438",hub:"var(--accent)",action:"var(--bg2)",result:"#0FA66A"};
+  const bd={source:"none",hub:"none",action:"1.5px solid var(--border)",result:"none"};
+  const nodes=diagram.nodes.slice(0,7);
+  const html=nodes.map((n,i)=>{
+    const arrow=i<nodes.length-1?`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="flex-shrink:0"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>`:"";
+    return`<div style="display:flex;align-items:center;gap:6px"><div class="flow-node ${n.type||''}" style="background:${bc[n.type]||bc.action};color:${tc[n.type]||tc.action};border:${bd[n.type]||bd.action}">${n.label}</div>${arrow}</div>`;
+  }).join("");
+  return`<div class="rpt-section">
+    <div class="rpt-label">${diagram.headline||"Strategy Flow"}</div>
+    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;overflow-x:auto;padding-bottom:2px">${html}</div>
+  </div>`;
+}
 function renderSummary(){
   const s=st.summary||{};
-  const total=Object.values(st.mgrState?.scores||{}).reduce((a,b)=>a+b,0);
-  const actions=(s.actions||[]).map((a,i)=>`<div class="kv-item"><span style="color:var(--amber);font-weight:700;min-width:18px">${i+1}.</span>${a}</div>`).join("");
-  const kpis=(s.kpi||[]).map(k=>`<div class="kv-item"><span style="color:var(--teal)">◆</span>${k}</div>`).join("");
+  const m=st.bestMgrState||st.mgrState;
+  const total=Object.values(m?.scores||{}).reduce((a,b)=>a+b,0);
+  const phaseAccentColors=["var(--accent)","#5B8DEF","#0FA66A"];
+  // Phase Roadmap
+  const phasesHtml=(s.phases||[]).map((p,i)=>{
+    const col=phaseAccentColors[i]||"var(--accent)";
+    const acts=(p.actions||[]).map(a=>`<div style="font-size:11px;color:var(--text2);padding:4px 0;border-bottom:1px solid var(--border);line-height:1.5;display:flex;gap:5px"><span style="color:${col};flex-shrink:0">•</span>${a}</div>`).join("");
+    return`<div class="rpt-phase" style="border-top-color:${col}">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+        <div class="rpt-phase-num" style="background:${col}">${p.phase||i+1}</div>
+        <div><div style="font-size:11px;font-weight:800;color:var(--text)">${p.name||""}</div><div style="font-size:9px;color:var(--text3)">${p.period||""}</div></div>
+      </div>
+      <div style="font-size:11px;font-weight:600;color:${col};margin-bottom:8px;line-height:1.4">${p.goal||""}</div>
+      ${acts}
+    </div>`;
+  }).join(`<div style="display:flex;align-items:center;color:var(--accent);font-size:18px;flex-shrink:0;align-self:center;padding:0 2px">→</div>`);
+  // KPIs
+  const kpisHtml=(s.kpi||[]).map((k,i)=>`<div style="background:var(--bg3);border-radius:10px;padding:11px 14px;border-left:3px solid ${phaseAccentColors[i]||"var(--accent)"}"><div style="font-size:12px;font-weight:600;color:var(--text);line-height:1.5">${k}</div></div>`).join("");
+  // Competitors
+  const compRows=(s.competitors||[]).map(c=>`<tr><td style="font-weight:600;color:var(--text)">${c.name||""}</td><td style="color:var(--text2)">${c.strength||""}</td><td style="color:var(--green);font-weight:600">${c.gap||""}</td></tr>`).join("");
+  // Risks
+  const risksHtml=(s.risks||[]).map(r=>`<div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:4px">▲ ${r.risk||""}</div><div style="font-size:11px;color:var(--text2);line-height:1.5">→ ${r.mitigation||""}</div></div>`).join("");
+  // Tools
+  const toolsHtml=(s.resources?.tools||[]).map(t=>`<span style="padding:3px 10px;border-radius:100px;background:var(--accent-light);color:var(--accent);font-size:10px;font-weight:700">${t}</span>`).join(" ");
+  // Score bars
+  const scoreBars=SCORE_ITEMS.map(k=>{
+    const v=Math.min(20,Math.max(0,parseInt(m?.scores?.[k])||0));
+    const pct=v/20*100;
+    return`<div><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:3px"><span>${k}</span><span style="font-weight:700;color:${v>=16?"var(--accent)":"var(--text)"}">${v}/20</span></div><div style="height:3px;background:var(--border);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${v>=16?"var(--accent)":"var(--blue2)"};border-radius:3px;transition:width .8s"></div></div></div>`;
+  }).join("");
+
   return`<div class="fade">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-      <span style="font-size:10px;color:var(--accent);letter-spacing:.15em;font-weight:700">最終レポート</span>
-      ${total>0?`<span class="approved-tag">✓ ${total}点 承認済み</span>`:""}
+    <!-- HERO -->
+    <div style="background:#3A3AF5;border-radius:var(--r-lg);padding:32px 28px 28px;margin-bottom:12px;position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(58,58,245,.22)">
+      <div style="position:absolute;right:-50px;top:-50px;width:220px;height:220px;background:rgba(255,255,255,.05);border-radius:50%;pointer-events:none"></div>
+      <div style="position:absolute;right:40px;bottom:-30px;width:120px;height:120px;background:rgba(255,255,255,.04);border-radius:50%;pointer-events:none"></div>
+      <div style="font-size:10px;color:rgba(255,255,255,.55);letter-spacing:.18em;font-weight:700;margin-bottom:8px;text-transform:uppercase">Final Strategy Report</div>
+      <h2 style="font-size:22px;font-weight:800;color:#fff;margin:0 0 6px;line-height:1.25;letter-spacing:-.02em">${s.title||"Strategy Report"}</h2>
+      ${s.tagline?`<div style="font-size:13px;color:rgba(255,255,255,.7);font-weight:500;margin-bottom:14px">${s.tagline}</div>`:""}
+      <div style="display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap">
+        ${total>0?`<div style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.15);border-radius:100px;padding:5px 14px;font-size:11px;color:#fff;font-weight:700">✓ Score ${total}/100</div>`:""}
+        ${s.positioning?`<div style="font-size:11px;color:rgba(255,255,255,.65);padding:4px 12px;border-radius:100px;border:1px solid rgba(255,255,255,.25)">${s.positioning}</div>`:""}
+      </div>
     </div>
-    <h2 style="font-size:19px;font-weight:800;margin:4px 0 18px;line-height:1.4;letter-spacing:-.01em">${s.title||"Strategy Report"}</h2>
-    <div class="insight-box">
-      <div style="font-size:9px;color:var(--amber);letter-spacing:.15em;margin-bottom:5px;font-weight:700">キーインサイト</div>
-      <div style="font-size:14px;font-weight:700;color:var(--amber);line-height:1.65">${s.keyInsight||""}</div>
+
+    <!-- KEY INSIGHT + CHALLENGE -->
+    <div class="rpt-section">
+      <div class="rpt-label">Key Insight</div>
+      <div style="font-size:16px;font-weight:800;color:var(--text);line-height:1.55;margin-bottom:${s.challenge?"12px":"0"};letter-spacing:-.01em">${s.keyInsight||""}</div>
+      ${s.challenge?`<div style="background:var(--bg3);border-radius:var(--r-sm);padding:10px 14px;border-left:3px solid var(--accent)"><div style="font-size:9px;color:var(--text3);letter-spacing:.12em;font-weight:700;margin-bottom:4px">CHALLENGE</div><div style="font-size:12px;color:var(--text2);line-height:1.65">${s.challenge}</div></div>`:""}
     </div>
-    <div class="strat-box">
-      <div style="font-size:9px;color:var(--text3);letter-spacing:.15em;margin-bottom:6px;font-weight:700">戦略</div>
+
+    <!-- STRATEGY -->
+    <div class="rpt-section">
+      <div class="rpt-label">Integrated Strategy</div>
       <div style="font-size:13px;color:var(--text2);line-height:1.95">${cleanText(s.strategy||"")}</div>
     </div>
-    <div class="kv-grid">
-      <div class="kv-card"><div class="kv-title" style="color:var(--purple)">アクションプラン</div>${actions}</div>
-      <div class="kv-card"><div class="kv-title" style="color:var(--teal)">KPI</div>${kpis}</div>
+
+    <!-- PHASE ROADMAP -->
+    ${s.phases&&s.phases.length?`<div class="rpt-section"><div class="rpt-label">Strategy Roadmap</div><div class="rpt-phase-wrap">${phasesHtml}</div></div>`:""}
+
+    <!-- FLOW DIAGRAM (Gemini) -->
+    ${renderFlowDiagram(st.reportDiagram)}
+
+    <!-- RESOURCES -->
+    ${s.resources?`<div class="rpt-section">
+      <div class="rpt-label">Required Resources</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:${toolsHtml?"10px":"0"}">
+        <div style="background:var(--bg3);border-radius:var(--r-sm);padding:11px 14px"><div style="font-size:9px;color:var(--text3);letter-spacing:.1em;font-weight:700;margin-bottom:4px">BUDGET</div><div style="font-size:12px;font-weight:700;color:var(--text)">${s.resources.budget||"−"}</div></div>
+        <div style="background:var(--bg3);border-radius:var(--r-sm);padding:11px 14px"><div style="font-size:9px;color:var(--text3);letter-spacing:.1em;font-weight:700;margin-bottom:4px">TEAM</div><div style="font-size:11px;color:var(--text2);line-height:1.5">${s.resources.team||"−"}</div></div>
+      </div>
+      ${toolsHtml?`<div style="display:flex;gap:6px;flex-wrap:wrap">${toolsHtml}</div>`:""}
+    </div>`:""}
+
+    <!-- COMPETITIVE ANALYSIS -->
+    ${compRows?`<div class="rpt-section" style="overflow-x:auto">
+      <div class="rpt-label">Competitive Analysis</div>
+      <table class="comp-table"><thead><tr><th>競合</th><th>競合の強み</th><th style="color:var(--green)">我々の優位性</th></tr></thead><tbody>${compRows}</tbody></table>
+    </div>`:""}
+
+    <!-- KPIs -->
+    ${kpisHtml?`<div class="rpt-section"><div class="rpt-label">KPI Targets</div><div style="display:grid;gap:8px">${kpisHtml}</div></div>`:""}
+
+    <!-- RISKS -->
+    ${risksHtml?`<div class="rpt-section"><div class="rpt-label">Risks & Mitigation</div>${risksHtml}</div>`:""}
+
+    <!-- MANAGER EVALUATION -->
+    <div class="rpt-section">
+      <div class="rpt-label">Manager Evaluation</div>
+      <div style="display:grid;gap:10px">${scoreBars}</div>
+      ${m?.verdict?`<div style="margin-top:12px;font-size:12px;color:var(--text2);line-height:1.75;padding:10px 14px;background:var(--bg3);border-radius:var(--r-sm)">${m.verdict}</div>`:""}
     </div>
-    ${s.nextStep?`<div class="next-box"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L12 6M12 2C12 2 18 4 20 10C22 16 18 20 12 22C6 20 2 16 4 10C6 4 12 2 12 2Z"/><circle cx="12" cy="13" r="2"/></svg><div><div style="font-size:9px;color:var(--blue);margin-bottom:3px;font-weight:700;letter-spacing:.08em">NEXT ACTION</div><div style="font-size:13px;font-weight:600;color:var(--blue)">${s.nextStep}</div></div></div>`:""}
-    ${st.files.length>0?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:12px"> ${st.files.map(f=>f.name).join("・")}</div>`:""}
+
+    <!-- NEXT ACTION -->
+    ${s.nextStep?`<div style="background:linear-gradient(135deg,#3A3AF5,#5B8DEF);border-radius:var(--r-lg);padding:20px 24px;margin-bottom:12px;box-shadow:0 4px 20px rgba(58,58,245,.18)">
+      <div style="font-size:9px;color:rgba(255,255,255,.65);letter-spacing:.18em;font-weight:700;margin-bottom:6px;text-transform:uppercase">Next Action</div>
+      <div style="font-size:15px;font-weight:700;color:#fff;line-height:1.5">${s.nextStep}</div>
+    </div>`:""}
+
+    ${st.files.length>0?`<div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:10px">${st.files.map(f=>f.name).join(" · ")}</div>`:""}
     <button class="btn btn-export" onclick="showExportModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>エクスポート</button>
     <button class="btn btn-ghost" onclick="goProjects()">← プロジェクト一覧へ</button>
   </div>`;
@@ -1101,7 +1207,7 @@ function toTxt(f){return new Promise((r,j)=>{const rd=new FileReader();rd.onload
 function removeFile(i){st.files=st.files.filter((_,idx)=>idx!==i);render();}
 
 // ── API ──
-async function api(system,msg,retryCount=0){
+async function api(system,msg,retryCount=0,maxTokens=1000){
   const content=[];
   for(const f of (st.files||[])){
     if(f.data&&f.data!=="[binary]"){
@@ -1109,7 +1215,7 @@ async function api(system,msg,retryCount=0){
     }
   }
   content.push({type:"text",text:msg});
-  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:600,system,messages:[{role:"user",content}]})});
+  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:maxTokens,system,messages:[{role:"user",content}]})});
   const data=await res.json();
   if(data.error){
     if(res.status===429||data.error.message?.includes("rate limit")||data.error.message?.includes("token")){
@@ -1173,9 +1279,11 @@ function pj(t){
 }
 
 // ── PROMPTS ──
-const FAC=`マーケティング戦略会議の司会AI。参加エージェント：マーケター、デザイナー、経営コンサルタント、ユーザーリサーチャー。JSONのみ出力：{"phase":"フェーズ名","questions":{"marketer":"質問","designer":"質問","consultant":"質問","researcher":"質問"},"context":"このフェーズで明らかにしたいこと40字以内"}`;
+const FAC=`マーケティング戦略会議の司会AI。参加エージェント：マーケター、プロダクトデザイナー、戦略コンサルタント、UXリサーチャー、CFO、グロースハッカー。各専門家が競合固有名詞・具体数値・実施期限を含む提言を出せるよう、専門性を最大化する論点を設計せよ。JSONのみ出力：{"phase":"フェーズ名","questions":{"marketer":"論点","designer":"論点","consultant":"論点","researcher":"論点","cfo":"論点","growthhacker":"論点"},"context":"このフェーズで明らかにしたいこと40字以内"}`;
+const MGR_MEETING="あなたはマーケティングマネージャー（会議監督役）です。エージェントの発言を分析し、最終評価5項目（市場性・実現性・独自性・戦略整合性・ユーザー共感度）で高得点を取るために現在の議論で不足している観点を特定してください。JSONのみ出力（マークダウン禁止）：{\"gap\":\"現フェーズで不足している重要視点（競合固有名詞・数値根拠・具体施策）を80字で\",\"directive\":\"次フェーズで各エージェントが必ず深掘りすべき最重要論点を80字で（断言口調）\",\"focus\":[\"補強すべき評価項目1\",\"補強すべき評価項目2\"]}";
 const MGR="あなたは厳格なマーケティングマネージャーです。【最重要】前後にマークダウン記号を絶対につけず、有効なJSONのみを出力してください。戦略案を仮想空間でシミュレーションし5項目を各20点満点で採点（各スコアは0〜20の整数のみ）。採点基準：市場性（根拠なし8点以下/根拠あり9-15点/市場データ+競合比較16-20点）、実現性（理想論8点以下/段階的計画9-15点/即実行可能な具体行動16-20点）、独自性（一般論8点以下/差別化要素9-15点/競合にない明確USP16-20点）、戦略整合性（バラバラ8点以下/ある程度整合9-15点/全フェーズ完全整合16-20点）、ユーザー共感度（漠然8点以下/ペルソナ明確9-15点/インサイト深くWTP検証済み16-20点）。高得点を得るには：具体的数値・競合固有名詞・実施日程・担当者像・測定方法を含めること。出力形式：{\"env\":\"仮想空間名\",\"scores\":{\"市場性\":整数,\"実現性\":整数,\"独自性\":整数,\"戦略整合性\":整数,\"ユーザー共感度\":整数},\"verdict\":\"採点理由と高得点への具体指摘120字\",\"feedback\":\"95点未満の場合のみ：最も低い2〜3項目の具体的改善要件を200字で（例：独自性：競合A社・B社との差別化ポイントを固有名詞で3つ明記し価格優位性を数値で示せ）\",\"revisedStrategy\":\"改善案の統合戦略200字（具体数値・実施期限・固有名詞を必ず含む、95点未満のみ）\"}";
-const SUM="あなたはマーケティング戦略の統括AIです。以下のフォーマット通りに純粋なJSONのみを出力してください。JSONの前後に説明文・コードブロック・```json等のマークダウンは一切つけないこと。キーと値に改行を入れないこと。\n出力フォーマット（このまま使用）：{\"title\":\"戦略タイトル\",\"keyInsight\":\"核心インサイト50字\",\"strategy\":\"Phase1/2/3含む統合戦略200字\",\"actions\":[\"Phase1(1ヶ月):施策\",\"Phase2(3ヶ月):施策\",\"Phase3(6ヶ月):施策\"],\"kpi\":[\"指標1:現状→目標\",\"指標2:現状→目標\",\"指標3:現状→目標\"],\"nextStep\":\"明日できる1アクション\"}";
+const SUM="あなたはマーケティング戦略の統括AIです。会議ログとマネージャー審査を元に、プロの提案書レベルのレポートをJSONのみで出力してください。コードブロック・マークダウン・改行をJSONの値に入れないこと。出力フォーマット：{\"title\":\"戦略タイトル\",\"tagline\":\"サブタイトル25字\",\"keyInsight\":\"競合名・数値を含む核心インサイト80字\",\"challenge\":\"解決すべき本質課題60字\",\"strategy\":\"競合固有名詞・数値・期限を含む統合戦略250字\",\"positioning\":\"競合との差別化ポジション50字\",\"phases\":[{\"phase\":1,\"name\":\"フェーズ名\",\"period\":\"1〜3ヶ月\",\"goal\":\"このフェーズのゴール40字\",\"actions\":[\"具体施策1\",\"具体施策2\",\"具体施策3\"]},{\"phase\":2,\"name\":\"フェーズ名\",\"period\":\"3〜6ヶ月\",\"goal\":\"ゴール\",\"actions\":[\"施策1\",\"施策2\",\"施策3\"]},{\"phase\":3,\"name\":\"フェーズ名\",\"period\":\"6〜12ヶ月\",\"goal\":\"ゴール\",\"actions\":[\"施策1\",\"施策2\",\"施策3\"]}],\"resources\":{\"budget\":\"概算予算（例：初期300万+月次50万）\",\"team\":\"必要体制（例：PMx1・マーケx2・エンジニアx3）\",\"tools\":[\"ツール1\",\"ツール2\",\"ツール3\"]},\"kpi\":[\"指標1:現状値→目標値・期限\",\"指標2:現状値→目標値・期限\",\"指標3:現状値→目標値・期限\"],\"risks\":[{\"risk\":\"想定リスク\",\"mitigation\":\"対策\"},{\"risk\":\"リスク2\",\"mitigation\":\"対策2\"}],\"competitors\":[{\"name\":\"競合名\",\"strength\":\"競合の強み\",\"gap\":\"我々の優位性\"},{\"name\":\"競合名2\",\"strength\":\"強み\",\"gap\":\"優位性\"}],\"nextStep\":\"明日できる最初の1アクション（具体的な担当者・行動）\"}";
+const SYNTH="あなたはマーケティング戦略の統合エキスパートです。【最重要】JSONのみ出力。スコア上位3つの戦略案を分析し、各案の最も優れた要素（競合比較・具体数値・独自USP・実行計画・ユーザーインサイト）を厳選して一つの最強戦略に統合してください。単なる平均ではなく、各案のベストな要素だけを組み合わせること。出力形式：{\"synthesizedStrategy\":\"統合された最強戦略300字以上（競合固有名詞・具体数値・実施期限・測定KPIを必ず含む）\",\"keyStrengths\":\"各案から採用した強みの要点100字\"}";
 
 // ── FULL AUTO FLOW ──
 async function startMeeting(){
@@ -1219,10 +1327,16 @@ async function runPhase(phaseIdx,history){
 【Gemini Deep Research — 市場調査データ】
 ${researchCtx.slice(0,500)}
 ※このデータを積極活用し、競合固有名詞・数値を論点に含めること`:"";
+    // 前フェーズのマネージャー指示を FAC に渡す
+    const prevNote=st.mgrNotes?.length>0?st.mgrNotes[st.mgrNotes.length-1]?.note:null;
+    const mgrDirectiveSection=prevNote?.directive?`
+【マネージャー指示（前フェーズ評価より）】${prevNote.directive}
+補強必須観点：${prevNote.gap}
+重点項目：${(prevNote.focus||[]).join("・")}`:"";
     const msg=history.length===0
       ?`企画:${st.project.slice(0,200)}${factsSection}${matsSection}${researchSection}
 フェーズ1(${PHASE_JA[0]})`
-      :`企画:${st.project.slice(0,200)}${factsSection}${researchSection}
+      :`企画:${st.project.slice(0,200)}${factsSection}${researchSection}${mgrDirectiveSection}
 議論:${histText}
 フェーズ${phaseIdx+1}(${PHASE_JA[phaseIdx]})`;
     const raw=await api(FAC,msg);const p=pj(raw)||{};
@@ -1231,8 +1345,25 @@ ${researchCtx.slice(0,500)}
     const newHistory=[...history,{phase:PHASE_JA[phaseIdx],questions:p.questions||{},answers}];
     S({history:newHistory,answers:{}});
     if(phaseIdx+1<PHASE_JA.length){
-      // フェーズ間30秒待機
-      for(let w=30;w>0;w--){
+      // マネージャーがフェーズを分析して次フェーズへの指示を生成
+      S({statusMsg:`Phase ${phaseIdx+1} 完了 — マネージャーが議論を分析中...`});
+      let mgrNote={gap:"",directive:"",focus:[]};
+      try{
+        checkCancelled();
+        const noteRaw=await api(MGR_MEETING,
+          "企画："+st.project+"\n\n"+PHASE_JA[phaseIdx]+"の議論結果：\n"
+          +buildHistText(newHistory).slice(-1200)
+        );
+        let parsed=null;
+        try{parsed=JSON.parse(noteRaw);}catch(e){}
+        if(!parsed)try{parsed=JSON.parse(noteRaw.replace(/```json\n?|```/g,"").trim());}catch(e){}
+        if(!parsed){const si=noteRaw.indexOf("{"),ei=noteRaw.lastIndexOf("}");if(si>=0&&ei>si)try{parsed=JSON.parse(noteRaw.slice(si,ei+1));}catch(e){}}
+        if(parsed)mgrNote=parsed;
+      }catch(e){if(e.message==="__CANCELLED__")throw e;}
+      const mgrNotes=[...(st.mgrNotes||[]),{phaseIdx,note:mgrNote}];
+      S({mgrNotes});
+      // フェーズ間20秒待機（マネージャー分析後）
+      for(let w=20;w>0;w--){
         if(cancelled)throw new Error("__CANCELLED__");
         st.statusMsg=`次のフェーズまで ${w}秒待機中...`;
         const el=document.getElementById("statusMsg");
@@ -1268,7 +1399,11 @@ async function runAgentsAuto(qs,phaseIdx,researchCtx){
       checkCancelled();
       const factsNote=st.facts?.trim()?`
 【必須前提・確定数値（推論で変えるな）】${st.facts.slice(0,200)}`:"";
-      const ans=await api(ROLES[id]+researchNote,`企画：${st.project}${factsNote}
+      const prevMgrNote=st.mgrNotes?.length>0?st.mgrNotes[st.mgrNotes.length-1]?.note:null;
+      const mgrHint=prevMgrNote?.directive?`
+【マネージャー指示】${prevMgrNote.directive}
+不足観点を補強せよ：${prevMgrNote.gap}`:"";
+      const ans=await api(ROLES[id]+researchNote,`企画：${st.project}${factsNote}${mgrHint}
 質問：${qs[id]||"このフェーズについて専門的見解を述べてください。"}`);
       answers[id]=ans;
       st.answers={...st.answers,[id]:ans};
@@ -1347,7 +1482,9 @@ async function runManagerAuto(histText,prevRevised,loopCount,history){
     const total=Object.values(m.scores||{}).reduce(function(a,b){return a+b;},0);
     const prevBest=st.bestMgrState?Object.values(st.bestMgrState.scores||{}).reduce((a,b)=>a+b,0):0;
     const bestMgrState=total>=prevBest?m:(st.bestMgrState||m);
-    S({mgrState:m,bestMgrState,loopCount:loopCount,busy:false});
+    // 全ループの評価履歴を蓄積（上位3案統合のために使用）
+    const mgrHistory=[...(st.mgrHistory||[]),{loopCount,total,m}];
+    S({mgrState:m,bestMgrState,mgrHistory,loopCount:loopCount,busy:false});
     saveCurrent();
 
     // ── ループ継続判定 ──
@@ -1356,9 +1493,9 @@ async function runManagerAuto(histText,prevRevised,loopCount,history){
       S({statusMsg:"✓ 承認されました！最終レポートを生成中..."});
       setTimeout(function(){generateFinalAuto(history,m);},600);
     } else if(loopCount>=40){
-      // 40回到達（extraモード含む最大値）→ 強制終了
-      S({statusMsg:"最大回数（40回）到達。最高スコア案でレポートを生成します。"});
-      setTimeout(function(){generateFinalAuto(history,m);},600);
+      // 40回到達 → 上位3案を統合してワンモアチャンス
+      S({statusMsg:"最大回数（40回）到達。上位3案を統合して最終評価を行います..."});
+      setTimeout(function(){synthesizeTop3Auto(history,mgrHistory);},600);
     } else if(loopCount>=30&&!st.extraMode&&!st.extraUsed){
       // 30回到達かつextraモード未使用 → ユーザーに追加オプションを提示（処理を止める）
       S({busy:false,statusMsg:"30回のブラッシュアップが完了しました。"});
@@ -1427,8 +1564,8 @@ async function brushupAuto(histText,prevMgr,newCount,history){
         +"\n改善が必要な項目："+weakAreas
         +"\nマネージャー改善指示："+feedback
         +"\n\n過去の議論要約："+histSummary
-        +"\n\n上記の改善指示を踏まえ、特に「"+weakAreas+"」を改善する具体的施策を150字で述べよ。"
-        +"競合固有名詞・数値目標・実施期限を必ず含め断言口調で。"
+        +"\n\n上記の改善指示を踏まえ、特に「"+weakAreas+"」を改善する具体的施策を250字で述べよ。"
+        +"競合固有名詞・具体数値・実施期限・担当者像・測定KPIを必ず含め断言口調で。曖昧表現・一般論は禁止。"
       );
       revised[id]=ans;
       // done state - fully immutable update
@@ -1444,13 +1581,76 @@ async function brushupAuto(histText,prevMgr,newCount,history){
     :(prevMgr?.revisedStrategy||"")+"\n"+revisedText;
   await runManagerAuto(histText,bestStrategy,newCount,history);
 }
+async function synthesizeTop3Auto(history,mgrHistory){
+  try{
+    checkCancelled();
+    // スコア上位3案を抽出
+    const sorted=[...(mgrHistory||[])].sort((a,b)=>b.total-a.total).slice(0,3);
+    if(sorted.length===0){generateFinalAuto(history,st.bestMgrState);return;}
+    const top3Text=sorted.map((e,i)=>`【第${i+1}位 ${e.total}点 / ループ${e.loopCount}回目】\n戦略：${e.m.revisedStrategy||""}\n総評：${e.m.verdict||""}`).join("\n\n");
+    S({busy:true,statusMsg:"上位"+sorted.length+"案を統合中... (AIが各案のベスト要素を抽出しています)"});
+    const raw=await api(SYNTH,"企画："+st.project+"\n\n上位"+sorted.length+"案：\n"+top3Text);
+    let synth=null;
+    try{synth=JSON.parse(raw);}catch(e){}
+    if(!synth){try{synth=JSON.parse(raw.replace(/```json\n?|```/g,"").trim());}catch(e){}}
+    if(!synth){const si=raw.indexOf("{"),ei=raw.lastIndexOf("}");if(si>=0&&ei>si)try{synth=JSON.parse(raw.slice(si,ei+1));}catch(e){}}
+    const synthesized=synth?.synthesizedStrategy||sorted[0].m.revisedStrategy||"";
+    if(!synthesized){generateFinalAuto(history,st.bestMgrState);return;}
+    // 統合戦略をマネージャーに再評価させる
+    S({statusMsg:"統合戦略をマネージャーが最終評価中..."});
+    await new Promise(r=>setTimeout(r,3000));
+    const histText=buildHistText(history);
+    const combined=histText+"\n\n[TOP3統合戦略]\n"+synthesized;
+    const factsNote=st.facts&&st.facts.trim()?"\n【確定事実】"+st.facts.slice(0,150):"";
+    const mgrMsg="企画："+st.project+factsNote+"\n\n戦略案：\n"+combined+"\n※上位3案を統合した最終評価です";
+    const mgrRaw=await api(MGR,mgrMsg);
+    let mFinal=null;
+    try{mFinal=JSON.parse(mgrRaw);}catch(e){}
+    if(!mFinal){try{mFinal=JSON.parse(mgrRaw.replace(/```json\n?|```/g,"").trim());}catch(e){}}
+    if(!mFinal){const si=mgrRaw.indexOf("{"),ei=mgrRaw.lastIndexOf("}");if(si>=0&&ei>si)try{mFinal=JSON.parse(mgrRaw.slice(si,ei+1));}catch(e){}}
+    if(mFinal&&mFinal.scores){
+      Object.keys(mFinal.scores).forEach(k=>{mFinal.scores[k]=Math.min(20,Math.max(0,parseInt(mFinal.scores[k])||0));});
+      const synthTotal=Object.values(mFinal.scores).reduce((a,b)=>a+b,0);
+      const bestTotal=st.bestMgrState?Object.values(st.bestMgrState.scores||{}).reduce((a,b)=>a+b,0):0;
+      if(synthTotal>bestTotal){
+        // 統合案がベストを更新
+        S({mgrState:mFinal,bestMgrState:mFinal,statusMsg:"統合戦略が最高スコア("+synthTotal+"点)を達成！レポートを生成します。"});
+        saveCurrent();
+        setTimeout(function(){generateFinalAuto(history,mFinal);},800);
+        return;
+      }
+    }
+    // 統合でも改善しなかった → 既存ベスト案でレポート
+    S({statusMsg:"最高スコア案でレポートを生成します。"});
+    setTimeout(function(){generateFinalAuto(history,st.bestMgrState);},600);
+  }catch(e){
+    if(e.message==="__CANCELLED__")return;
+    // エラー時もベスト案でフォールバック
+    setTimeout(function(){generateFinalAuto(history,st.bestMgrState);},600);
+  }
+}
+async function geminiDiagram(strategy,challenge,phases){
+  if(!geminiKey)return null;
+  try{
+    const phaseNames=(phases||[]).map(p=>p.name).join("→");
+    const prompt="以下のマーケティング戦略を5〜7ステップの実行フローに構造化し、JSONのみ返してください。出力形式：{\"headline\":\"フロー名10字\",\"nodes\":[{\"id\":0,\"type\":\"source\",\"label\":\"課題\"},{\"id\":1,\"type\":\"hub\",\"label\":\"コア戦略\"},{\"id\":2,\"type\":\"action\",\"label\":\"施策A\"},{\"id\":3,\"type\":\"action\",\"label\":\"施策B\"},{\"id\":4,\"type\":\"action\",\"label\":\"施策C\"},{\"id\":5,\"type\":\"result\",\"label\":\"期待成果\"}]}。typeは source/hub/action/result のいずれか。ラベルは12字以内。\n戦略："+strategy.slice(0,150)+(phaseNames?"\nフェーズ："+phaseNames:"");
+    const res=await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key="+geminiKey,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}]})});
+    const data=await res.json();
+    if(data.error)return null;
+    const text=(data.candidates?.[0]?.content?.parts||[]).map(p=>p.text||"").join("");
+    const clean=text.replace(/```json\n?|```/g,"").trim();
+    const si=clean.indexOf("{"),ei=clean.lastIndexOf("}");
+    if(si>=0&&ei>si)try{return JSON.parse(clean.slice(si,ei+1));}catch(e){}
+    return null;
+  }catch(e){return null;}
+}
 async function generateFinalAuto(history,mgrResult){
   S({busy:true,statusMsg:"最終レポートを生成中..."});
   const useBest=st.bestMgrState||mgrResult;
   const total=Object.values(useBest&&useBest.scores||{}).reduce(function(a,b){return a+b;},0);
   try{
     const sumMsg="企画："+st.project+"\n\n会議ログ：\n"+buildHistText(history)+"\nManagerスコア："+total+"点\n総評："+(mgrResult&&mgrResult.verdict||"");
-    const raw=await api(SUM,sumMsg);
+    const raw=await api(SUM,sumMsg,0,2000);
 
     // ── 4段階パース ──
     let s=null;
@@ -1502,7 +1702,13 @@ async function generateFinalAuto(history,mgrResult){
       }
     }
     if(!s)s={title:"Strategy Report",keyInsight:"",strategy:"",actions:[],kpi:[],nextStep:""};
-    S({summary:s,step:"summary",busy:false,statusMsg:""});
+    // Gemini で図解データを生成（キーがある場合のみ）
+    let reportDiagram=null;
+    if(geminiKey&&s.strategy){
+      S({statusMsg:"Gemini で戦略フロー図を生成中..."});
+      reportDiagram=await geminiDiagram(s.strategy,s.challenge||"",s.phases||[]);
+    }
+    S({summary:s,reportDiagram,step:"summary",busy:false,statusMsg:""});
     saveCurrent();
   }catch(e){
     if(e.message==="__CANCELLED__")return;
@@ -1614,7 +1820,7 @@ function confirmReset(){
     }
   },150);
 }
-function resetCurrent(){st={...st,step:"input",phaseIdx:0,questions:null,ctx:"",answers:{},loading:null,history:[],mgrState:null,loopCount:0,summary:null,error:"",busy:false,statusMsg:"",brushupProgress:null,brushupLog:[],needsReattach:null};render();}
+function resetCurrent(){st={...st,step:"input",phaseIdx:0,questions:null,ctx:"",answers:{},loading:null,history:[],mgrState:null,loopCount:0,mgrHistory:[],mgrNotes:[],summary:null,reportDiagram:null,error:"",busy:false,statusMsg:"",brushupProgress:null,brushupLog:[],needsReattach:null};render();}
 
 // ── INIT ──
 (function(){
