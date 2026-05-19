@@ -552,8 +552,10 @@ function renderProjects(){
         ?`<span class="proj-status status-done">✓ DONE${p.score?` · ${p.score}pt`:""}</span>`
         :`<span class="proj-status status-running">● 進行中</span>`;
       const icon=p.status==="done"?ICONS.done:ICONS.running;
+      const iconBg=p.status==="done"?"var(--green-light)":"var(--accent-light)";
+      const iconColor=p.status==="done"?"var(--green)":"var(--accent)";
       return`<div class="proj-card" onclick="openProject('${p.id}')">
-        <div class="proj-icon" style="background:${p.status==="done"?"#071A0F":"#0A0E1A"}">${icon}</div>
+        <div class="proj-icon" style="background:${iconBg};color:${iconColor};box-shadow:none">${icon}</div>
         <div class="proj-info">
           <div class="proj-name">${p.name||"無題"}</div>
           <div class="proj-meta">更新: ${dateStr}</div>
@@ -619,9 +621,16 @@ async function resumeFromSave(){
     S({busy:true,statusMsg:"マネージャー審査を再開中...",error:""});
     const histText=buildHistText(h);
     const loopCount=st.loopCount||0;
-    await runManagerAuto(histText,"",loopCount,h);
+    if(st.mgrState&&loopCount>0){
+      // スコアが出ている状態 → ブラッシュアップから再開（蓄積コンテキスト保持）
+      await brushupAuto(histText,st.mgrState,loopCount+1,h);
+    } else {
+      // 初回評価 or mgrStateなし → 最初から評価
+      await runManagerAuto(histText,st.mgrState?.revisedStrategy||"",loopCount,h);
+    }
   } else if(phasesDone<PHASE_JA.length){
-    const nextPhase=phasesDone;
+    // フェーズ途中 → 現在のフェーズから再開（st.phaseIdxを使用）
+    const nextPhase=st.phaseIdx||phasesDone;
     S({busy:true,statusMsg:`Phase ${nextPhase+1}から再開中...`,answers:{},questions:null,error:""});
     await runPhase(nextPhase,h);
   } else {
@@ -684,23 +693,53 @@ function renderMeeting(){
     return`<div class="prog-stage ${cls}"><div class="prog-dot">${i<st.phaseIdx?"✓":i+1}</div><div class="prog-name">${name}</div></div>`;
   }).join("");
   const sdot=st.error?`<div class="sdot err"></div>`:`<div class="sdot ${st.busy?"running":"ok"}"></div>`;
-  const statusBox=`<div class="status-bar">${sdot}<span id="statusMsg" style="font-size:12px">${st.error||st.statusMsg||"自動実行中..."}</span></div>`;
-  const reattachBanner="";
-  const hist=st.history.map((r,ri)=>`<div class="hist-block"><div class="hist-div">── ${PHASES[ri]} · ${PHASE_JA[ri]} ──</div>${Object.entries(r.answers).map(([id,a])=>`<div class="agent-card" style="border-color:var(--border2)"><div class="agent-head"><span style="color:var(--text3);display:flex">${ICONS[AGENTS[id].icon]}</span><span class="agent-name" style="color:var(--accent)">${AGENTS[id].name}</span></div><div class="agent-ans">${a}</div></div>`).join("")}</div>`).join("");
+  // 一時停止中なら再開ボタンをステータスバーに表示
+  const resumeBtn=(!st.busy&&!st.error)?`<button onclick="retryFromError()" style="margin-left:auto;padding:5px 14px;border-radius:var(--r-sm);border:1.5px solid var(--accent);background:var(--accent-light);color:var(--accent);font-size:11px;font-family:inherit;cursor:pointer;font-weight:700;white-space:nowrap">▶ 再開</button>`:"";
+  const statusBox=`<div class="status-bar">${sdot}<span id="statusMsg" style="font-size:12px;flex:1">${st.error||st.statusMsg||"自動実行中..."}</span>${resumeBtn}</div>`;
+
+  // 過去フェーズをアコーディオンで表示
+  const accOpen=st.phaseAccOpen||{};
+  const hist=st.history.map((r,ri)=>{
+    const isOpen=accOpen[ri]===true;
+    const preview=Object.values(r.answers)[0]?.replace(/<[^>]*>/g,"").slice(0,35)||"";
+    const agentRows=Object.entries(r.answers).map(([id,a])=>`
+      <div class="accordion-agent">
+        <div class="accordion-agent-head">
+          <span style="color:var(--text3);display:flex">${ICONS[AGENTS[id].icon]}</span>
+          <span class="accordion-agent-name" style="color:var(--accent)">${AGENTS[id].name}</span>
+        </div>
+        <div class="accordion-agent-ans">${a}</div>
+      </div>`).join("");
+    const chevron=`<svg style="color:var(--text3);transition:transform .25s;transform:${isOpen?"rotate(180deg)":"rotate(0deg)"};flex-shrink:0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+    return`<div class="accordion" style="margin-bottom:8px;opacity:.8">
+      <div class="accordion-header" onclick="togglePhaseAcc(${ri})">
+        <span class="accordion-phase">Phase ${ri+1}</span>
+        <span class="accordion-title" style="font-size:12px">${PHASE_JA[ri]}</span>
+        <span class="accordion-summary">${preview}…</span>
+        ${chevron}
+      </div>
+      <div class="accordion-body${isOpen?" open":""}">${agentRows}</div>
+    </div>`;
+  }).join("");
+
   let cur="";
   if(!st.questions&&!st.busy){
-    // 止まっている状態 - 再開ボタンを表示
-    cur=`<div style="text-align:center;padding:32px 0">
-      <div style="font-size:13px;color:var(--text2);margin-bottom:16px">会議が一時停止しています</div>
+    cur=`<div style="text-align:center;padding:40px 0">
+      <div style="font-size:32px;margin-bottom:12px">⏸</div>
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">会議が一時停止しています</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:20px">ステータスバーの「▶ 再開」ボタンで続きから再開できます</div>
       <button class="btn btn-accent" style="max-width:240px" onclick="retryFromError()">▶ 続きから再開する</button>
     </div>`;
-  } else if(!st.questions&&st.busy){cur=`<div class="spinner">質問を生成中...</div>`;}
-  else if(st.questions){
+  } else if(!st.questions&&st.busy){
+    cur=`<div class="spinner">質問を生成中...</div>`;
+  } else if(st.questions){
+    const allAnswered=Object.keys(AGENTS).every(id=>st.answers[id]);
+    const pausedMid=!st.busy&&!allAnswered;
     const cards=Object.keys(AGENTS).map(id=>{
       const a=st.answers[id],isL=st.loading===id,q=st.questions[id]||"";
       return`<div class="agent-card" style="border-color:${a?AGENTS[id].color+"30":"var(--border)"}">
         <div class="agent-head"><span style="color:var(--text3);display:flex;align-items:center">${ICONS[AGENTS[id].icon]||""}</span><span class="agent-name" style="color:var(--accent)">${AGENTS[id].name}</span>
-        <span style="margin-left:auto;font-size:10px;color:${a?"var(--green)":isL?"var(--accent)":"var(--text3)"}">${a?"✓ 完了":isL?"考え中...":"待機中..."}</span>
+        <span style="margin-left:auto;font-size:10px;color:${a?"var(--green)":isL?"var(--accent)":pausedMid?"var(--amber)":"var(--text3)"}">${a?"✓ 完了":isL?"考え中...":pausedMid?"⏸ 停止中":"待機中..."}</span>
         </div>${q?`<div class="agent-q">${q}</div>`:""}
         ${a?`<div class="agent-ans">${a}</div>`:isL?`<div class="dots"><div class="dot b1" style="background:${AGENTS[id].color}"></div><div class="dot b2" style="background:${AGENTS[id].color}"></div><div class="dot b3" style="background:${AGENTS[id].color}"></div></div>`:""}
       </div>`;
@@ -708,7 +747,11 @@ function renderMeeting(){
     const researchBadge=st.phaseResearch?`<div style="display:inline-flex;align-items:center;gap:5px;font-size:10px;padding:3px 10px;border-radius:100px;background:linear-gradient(135deg,#EBF6FF,#E0F0FF);color:#2195ca;border:1.5px solid rgba(33,149,202,.25);font-weight:700;margin-bottom:10px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Gemini Deep Research 適用済み</div>`:"";
     cur=`<div class="fade"><div class="phase-lbl">${PHASES[st.phaseIdx]}</div><div class="phase-ttl">${PHASE_JA[st.phaseIdx]}</div>${researchBadge}${st.ctx?`<div class="ctx-box">${st.ctx}</div>`:""}${cards}</div>`;
   }
-  return`<div><div class="prog-wrap"><div class="prog-stages">${progDots}</div></div>${statusBox}${reattachBanner}${hist}${cur}${st.error?`<div class="err">${st.error}<br><button class="retry-btn" onclick="retryFromError()">リトライ</button></div>`:""}</div>`;
+  return`<div><div class="prog-wrap"><div class="prog-stages">${progDots}</div></div>${statusBox}${hist}${cur}${st.error?`<div class="err">${st.error}<br><button class="retry-btn" onclick="retryFromError()">リトライ</button></div>`:""}</div>`;
+}
+function togglePhaseAcc(ri){
+  const current=st.phaseAccOpen||{};
+  S({phaseAccOpen:{...current,[ri]:!(current[ri]===true)}});
 }
 
 // ── MANAGER ──
