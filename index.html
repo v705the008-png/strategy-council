@@ -650,10 +650,31 @@ async function resumeFromSave(){
   }
   const h=st.history||[];
   const phasesDone=h.length;
+  // ── ベストスコアが既に95点以上 → 最終レポート生成から再開 ──
+  const bestTotal=Object.values((st.bestMgrState||st.mgrState)?.scores||{}).reduce((a,b)=>a+b,0);
+  if((st.step==="manager"||st.step==="summary")&&bestTotal>=95&&!st.summary){
+    S({busy:true,statusMsg:"承認済み戦略から最終レポート生成を再開中...",error:""});
+    await generateFinalAuto(h,st.bestMgrState||st.mgrState);
+    return;
+  }
+  // ── summary画面だが summary が無い → レポート生成中に離脱 → 再生成 ──
+  if(st.step==="summary"&&!st.summary&&st.mgrState){
+    S({busy:true,statusMsg:"最終レポート生成を再開中...",error:""});
+    await generateFinalAuto(h,st.bestMgrState||st.mgrState);
+    return;
+  }
   if(st.step==="manager"){
     S({busy:true,statusMsg:"マネージャー審査を再開中...",error:""});
     const histText=buildHistText(h);
     const loopCount=st.loopCount||0;
+    // 中断時にbrushupLogの最終ラウンドが未完了なら除去（agent.thinking状態を破棄）
+    if(Array.isArray(st.brushupLog)&&st.brushupLog.length>0){
+      const last=st.brushupLog[st.brushupLog.length-1];
+      const anyThinking=Object.values(last.agents||{}).some(e=>e&&e.status==="thinking");
+      if(anyThinking){
+        st.brushupLog=st.brushupLog.slice(0,-1);
+      }
+    }
     if(st.mgrState&&loopCount>0){
       // スコアが出ている状態 → ブラッシュアップから再開（蓄積コンテキスト保持）
       await brushupAuto(histText,st.mgrState,loopCount+1,h);
@@ -884,28 +905,34 @@ function renderBrushupProgress(){
   const rounds=st.brushupLog.map(function(round,ri){
     const isLast=ri===st.brushupLog.length-1;
     const allDone=Object.values(round.agents||{}).every(function(e){return e&&e.status==="done";});
-    // ブランドトーンに統一：done=パープル(#7B5CF0), thinking=プライマリブルー(#3A3AF5)
-    const hc=allDone?"#7B5CF0":"#3A3AF5";
-    const hbg=allDone?"#F0ECFF":"#EEEEFF";
+    // 最新ラウンドのみハイライト、過去ラウンドは彩度を落とした淡いブルーグレーで統一
+    const isCurrent=isLast;
+    // ブランドトーン：current.done=パープル / current.thinking=プライマリブルー / past=低彩度グレーブルー
+    const hc=isCurrent?(allDone?"#7B5CF0":"#3A3AF5"):"#8E97C0";
+    const hbg=isCurrent?(allDone?"#F0ECFF":"#EEEEFF"):"#F4F6FB";
+    const hBorder=isCurrent?(allDone?"rgba(123,92,240,.25)":"rgba(58,58,245,.25)"):"#E2E6F0";
     const fb=(round.feedback||"品質改善中").slice(0,40);
     const cards=Object.keys(AGENTS).map(function(id){
       const entry=round.agents[id];if(!entry)return"";
       const done=entry.status==="done";const thinking=entry.status==="thinking";
-      const dc=done?"#7B5CF0":thinking?"#3A3AF5":"#8E97C0";
-      const cbg=done?"#F0ECFF":thinking?"#EEEEFF":"#F8FAFB";
-      const cb=done?"rgba(123,92,240,.25)":thinking?"rgba(58,58,245,.25)":"#E2E6F0";
+      // 過去ラウンドは done でもグレーに（情報過多を抑える）
+      const dc=isCurrent?(done?"#7B5CF0":thinking?"#3A3AF5":"#8E97C0"):"#8E97C0";
+      const cbg=isCurrent?(done?"#F0ECFF":thinking?"#EEEEFF":"#F8FAFB"):"#F8FAFB";
+      const cb=isCurrent?(done?"rgba(123,92,240,.25)":thinking?"rgba(58,58,245,.25)":"#E2E6F0"):"#E2E6F0";
+      const nameColor=isCurrent?"#0F1128":"#4A5280";
+      const ansColor=isCurrent?"#4A5280":"#8E97C0";
       return'<div style="border:1px solid '+cb+';border-radius:8px;padding:10px 12px;margin-bottom:6px;background:'+cbg+'">'+
         '<div style="display:flex;align-items:center;gap:7px;margin-bottom:'+(done&&entry.ans?"6px":"0")+'">'+
         '<span style="color:'+dc+';display:flex">'+(ICONS[AGENTS[id].icon]||"")+'</span>'+
-        '<span style="font-size:11px;font-weight:700;color:#0F1128">'+AGENTS[id].name+'</span>'+
+        '<span style="font-size:11px;font-weight:700;color:'+nameColor+'">'+AGENTS[id].name+'</span>'+
         '<span style="margin-left:auto;font-size:10px;color:'+dc+';font-weight:600">'+(done?"✓ 完了":thinking?"改善中...":"待機")+'</span>'+
         '</div>'+
         (thinking?'<div style="display:flex;gap:4px;padding:4px 0"><div class="dot b1" style="background:#3A3AF5"></div><div class="dot b2" style="background:#3A3AF5"></div><div class="dot b3" style="background:#3A3AF5"></div></div>':"")+
-        (done&&entry.ans?'<div style="font-size:12px;color:#4A5280;line-height:1.75">'+entry.ans+'</div>':"")+
+        (done&&entry.ans?'<div style="font-size:12px;color:'+ansColor+';line-height:1.75">'+entry.ans+'</div>':"")+
       '</div>';
     }).join("");
     const chev='style="color:#8E97C0;transition:transform .2s;transform:'+(isLast?"rotate(180deg)":"rotate(0)")+'"';
-    return'<div style="border:1.5px solid '+(allDone?"rgba(123,92,240,.2)":"rgba(58,58,245,.2)")+';border-radius:12px;overflow:hidden;margin-bottom:8px">'+
+    return'<div style="border:1.5px solid '+hBorder+';border-radius:12px;overflow:hidden;margin-bottom:8px;opacity:'+(isCurrent?"1":"0.78")+'">'+
       '<div onclick="toggleRound('+round.round+')" style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;background:'+hbg+';user-select:none">'+
       '<span style="width:22px;height:22px;border-radius:50%;background:'+hc+';color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+round.round+'</span>'+
       '<span style="font-size:11px;font-weight:700;color:'+hc+'">Round '+round.round+'</span>'+
@@ -935,6 +962,14 @@ function renderFlowDiagram(diagram){
   </div>`;
 }
 function renderSummary(){
+  // summary未生成（生成中・離脱からの再開含む）→ 進捗表示
+  if(!st.summary){
+    return`<div class="fade" style="padding:48px 24px;text-align:center">
+      <div class="spinner" style="margin-bottom:14px">${st.busy?(st.statusMsg||"最終レポートを生成中..."):"レポート生成が中断されています"}</div>
+      ${!st.busy?`<button class="btn btn-accent" style="margin-top:14px" onclick="resumeFromSave()">レポート生成を再開する</button>`:""}
+      <button class="btn btn-ghost" style="margin-top:8px" onclick="goProjects()">← プロジェクト一覧へ</button>
+    </div>`;
+  }
   const s=st.summary||{};
   const m=st.bestMgrState||st.mgrState;
   const total=Object.values(m?.scores||{}).reduce((a,b)=>a+b,0);
@@ -1541,7 +1576,8 @@ async function runAgentsAuto(qs,phaseIdx,researchCtx){
       const mgrHint=prevMgrNote?.directive?`
 【マネージャー指示】${prevMgrNote.directive}
 不足観点を補強せよ：${prevMgrNote.gap}`:"";
-      const ans=await api(ROLES[id]+researchNote,`企画：${st.project}${factsNote}${mgrHint}
+      const ans=await api(ROLES[id]+researchNote,`【現在日付】${todayStr()}（時系列・期限は必ず本日以降の未来日付で記述。過去の日付禁止）
+企画：${st.project}${factsNote}${mgrHint}
 質問：${qs[id]||"このフェーズについて専門的見解を述べてください。"}`);
       answers[id]=ans;
       st.answers={...st.answers,[id]:ans};
@@ -1567,7 +1603,7 @@ async function runManagerAuto(histText,prevRevised,loopCount,history){
   try{
     checkCancelled();
     const factsNote=st.facts&&st.facts.trim()?"\n【確定事実】"+st.facts.slice(0,150):"";
-    const mgrMsg="企画："+st.project+"\n【現在日付】"+todayStr()+factsNote+"\n\n戦略案：\n"+combined+"\nブラッシュアップ回数："+loopCount;
+    const mgrMsg="企画："+st.project+"\n【現在日付】"+todayStr()+"（全ての時系列・期限・BEP・開発時期は本日以降の未来日付で記述。時系列の前後矛盾【例：BEP達成が開発開始より前】は減点対象。発見したら指摘せよ）"+factsNote+"\n\n戦略案：\n"+combined+"\nブラッシュアップ回数："+loopCount;
     const raw=await api(MGR,mgrMsg);
 
     // ── JSONパース（3段階） ──
@@ -1628,7 +1664,9 @@ async function runManagerAuto(histText,prevRevised,loopCount,history){
     // ── ループ継続判定 ──
     if(total>=95){
       // 承認！最終レポート生成
-      S({statusMsg:"✓ 承認されました！最終レポートを生成中..."});
+      // 離脱時に再開可能にするため、レポート生成フェーズに入る前にステップを遷移
+      S({step:"summary",statusMsg:"✓ 承認されました！最終レポートを生成中..."});
+      saveCurrent();
       setTimeout(function(){generateFinalAuto(history,m);},600);
     } else if(loopCount>=40){
       // 40回到達 → 上位3案を統合してワンモアチャンス
@@ -1703,7 +1741,8 @@ async function brushupAuto(histText,prevMgr,newCount,history){
         :"";
       const ans=await api(
         ROLES[id]+brushupResearchNote,
-        "企画："+st.project.slice(0,150)
+        "【現在日付】"+todayStr()+"（時系列・期限・BEP達成時期・開発開始時期は全て本日以降の未来日付で記述。前後関係に矛盾が無いよう順序を保つこと。過去の日付禁止）\n"
+        +"企画："+st.project.slice(0,150)
         +factsConstraint
         +bestBase
         +"\n\n現在の評価スコア："+scoresSummary
