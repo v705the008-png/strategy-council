@@ -431,6 +431,9 @@ const ROLES={
   cfo:"あなたはGoldman Sachs・SoftBank出身のCFOです。専門：財務モデリング・資金調達・ROI算定・コスト最適化・Exit戦略。【必須ルール】①初期投資・月次コスト・BEP（損益分岐点）を具体的に試算②資金調達額と調達手段を明記③競合の財務規模（資金調達額・売上）と比較④確定数値は推論で変えるな⑤250字で回答。",
   growthhacker:"あなたはAirbnb・Uber出身のGrowth Hackerです。専門：バイラルループ設計・A/Bテスト・リテンション施策・PLG（Product-Led Growth）戦略。【必須ルール】①獲得単価（CAC）と目標を具体的に提示②バイラル係数（K-factor）の設計を明示③競合のグロース施策を固有名詞で引用④確定数値は推論で変えるな⑤250字で回答。",
 };
+// プロジェクト間データ漏洩防止：あらゆるプロンプトの先頭に注入する強固なスコープ宣言
+const ISOLATION_RULE="【プロジェクト独立性ルール — 厳守】①本プロンプトに明示された企画情報・確定事実・会議ログ・添付ファイルのみを情報源とする②他のクライアント・他企画・あなたの一般知識から固有名詞や数値を流用するな（例：日本政策金融公庫・特定の融資制度・特定の屋号など、本プロジェクトの記述に無い固有名詞を勝手に登場させない）③資金調達手段・予算規模・補助金・金融機関名は、企画／確定事実に明記された情報のみを使う。明記が無い場合は『資金調達手段は別途検討』と中立表記し、特定機関名を作るな④競合の屋号・社名は実在企業に限り、本企画と無関係なローカル固有名詞を出すな⑤ペルソナや顧客像は本企画の文脈で新規構築する（前回・他案件の人物像を流用するな）";
+
 const PHASES=["課題定義","市場分析","戦略立案","実行計画"];
 const PHASE_JA=["課題・ゴール定義","市場・ユーザー分析","戦略立案","実行計画・KPI"];
 const SCORE_ITEMS=["市場性","実現性","独自性","戦略整合性","ユーザー共感度"];
@@ -617,21 +620,28 @@ function openProject(id){
   const proj=projs.find(p=>p.id===id);
   if(!proj){alert("プロジェクトが見つかりません");return;}
   currentProjId=id;
+  // ── プロジェクト間データ漏洩防止：常に完全な初期stateから始める ──
+  // （Object.assign を使うと前のプロジェクトの facts / mgrState / summary 等が残留してしまう）
+  const fresh={
+    step:"input",project:"",files:[],facts:"",phaseIdx:0,questions:null,ctx:"",answers:{},
+    loading:null,history:[],mgrState:null,bestMgrState:null,mgrHistory:[],mgrNotes:[],
+    loopCount:0,summary:null,reportDiagram:null,reportImages:null,concreteSteps:null,
+    error:"",busy:false,statusMsg:"",brushupProgress:null,brushupLog:[],
+    needsReattach:null,extraMode:false,extraUsed:false,extraQuestions:[],extraAnswers:{},
+    phaseAccOpen:{},phaseResearch:null
+  };
   if(proj.state&&proj.state.step){
-    // stateが存在して有効なstepがある場合のみ復元
-    Object.assign(st,proj.state);
+    // 保存stateを fresh の上にマージ（fresh に無いキーは無視されるため、許可されたフィールドのみ復元）
+    st=Object.assign({},fresh,proj.state);
     st.busy=false;st.loading=null;st.error="";
     if(!Array.isArray(st.brushupLog))st.brushupLog=[];
     if(!Array.isArray(st.files))st.files=[];
     if(!Array.isArray(st.history))st.history=[];
     if(!st.step||st.step==="projects")st.step="input";
   } else {
-    // stateがない場合はinput画面で開く
-    st.step="input";
+    // stateがない場合は完全に新規プロジェクトとして開く（前プロジェクトの記憶ゼロ）
+    st=fresh;
     st.project=proj.name||"";
-    st.files=[];
-    st.history=[];
-    st.brushupLog=[];
   }
   render();
 }
@@ -650,16 +660,22 @@ async function resumeFromSave(){
   }
   const h=st.history||[];
   const phasesDone=h.length;
-  // ── ベストスコアが既に95点以上 → 最終レポート生成から再開 ──
+  // ── ベストスコアが既に95点以上 → 解像度向上 → 最終レポート生成から再開 ──
   const bestTotal=Object.values((st.bestMgrState||st.mgrState)?.scores||{}).reduce((a,b)=>a+b,0);
   if((st.step==="manager"||st.step==="summary")&&bestTotal>=95&&!st.summary){
-    S({busy:true,statusMsg:"承認済み戦略から最終レポート生成を再開中...",error:""});
+    S({busy:true,statusMsg:"承認済み戦略から再開中...",error:""});
+    if(!st.concreteSteps){
+      await concretizeStrategy(h,st.bestMgrState||st.mgrState);
+    }
     await generateFinalAuto(h,st.bestMgrState||st.mgrState);
     return;
   }
   // ── summary画面だが summary が無い → レポート生成中に離脱 → 再生成 ──
   if(st.step==="summary"&&!st.summary&&st.mgrState){
     S({busy:true,statusMsg:"最終レポート生成を再開中...",error:""});
+    if(!st.concreteSteps){
+      await concretizeStrategy(h,st.bestMgrState||st.mgrState);
+    }
     await generateFinalAuto(h,st.bestMgrState||st.mgrState);
     return;
   }
@@ -863,7 +879,7 @@ function renderManager(){
     :canResume
       ?`<button onclick="retryFromError()" style="margin-left:auto;padding:4px 12px;border-radius:var(--r-sm);border:1.5px solid var(--accent);background:var(--accent-light);color:var(--accent);font-size:11px;font-family:inherit;cursor:pointer;font-weight:700">▶ 再開</button>`
       :"";
-  const statusMsg=approved?`<div style="font-size:12px;color:var(--accent);padding:6px 0;animation:blink 1.5s infinite">✓ Approved — 最終レポートを生成中...</div>`
+  const statusMsg=approved?`<div style="font-size:12px;color:var(--accent);padding:6px 0;animation:blink 1.5s infinite">✓ Approved — 解像度向上 → 最終レポート生成中...</div>`
     :st.loopCount>=40?`<div class="err" style="background:#FEF0EF;color:#c0392b">最大回数（40回）に到達しました。最高スコア案でレポートを生成します。</div>`
     :st.loopCount>=30&&!st.extraMode&&!st.extraUsed&&!st.busy?`<div style="border:1.5px solid #2195ca;border-radius:12px;padding:18px;margin-top:12px;background:#EBF6FF">
         <div style="font-size:13px;font-weight:700;color:#2195ca;margin-bottom:6px">追加ブラッシュアップで精度を上げる</div>
@@ -1009,6 +1025,122 @@ function renderSummary(){
       ${mo.motivation?`<div style="margin:8px 0 0 6px;font-size:11px;color:var(--text3);font-style:italic;line-height:1.55;display:flex;gap:6px"><span style="color:${col};flex-shrink:0">✦</span><span>${mo.motivation}</span></div>`:""}
     </div>`;
   }).join(`<div style="display:flex;justify-content:center;padding:6px 0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C8CEEA" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>`);
+
+  // ── 解像度向上ステップから派生する詳細セクション ──
+  const cs=st.concreteSteps||{};
+
+  // Week1-4 詳細タスク表
+  const weeksHtml=(cs.week1to4||[]).map((w,i)=>{
+    const col=["#3A3AF5","#4A5EE8","#5B8DEF","#7B5CF0"][i%4];
+    const tasks=(w.tasks||[]).map(t=>`<div style="display:flex;gap:8px;padding:6px 0;font-size:12px;color:var(--text2);line-height:1.55"><span style="color:${col};font-weight:800;flex-shrink:0">●</span><span>${t}</span></div>`).join("");
+    return`<div style="background:var(--bg2);border:1.5px solid var(--border);border-left:4px solid ${col};border-radius:var(--r-md);padding:14px 16px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="background:${col};color:#fff;font-size:10px;font-weight:800;padding:3px 10px;border-radius:100px;letter-spacing:.06em">WEEK ${w.week||i+1}</div>
+        <div style="font-size:13px;font-weight:700;color:var(--text)">${w.focus||""}</div>
+      </div>
+      <div style="border-top:1px dashed var(--border);padding-top:8px;margin-bottom:8px">${tasks}</div>
+      ${w.deliverable?`<div style="background:${col}14;border-radius:8px;padding:8px 12px;display:flex;gap:8px;align-items:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${col}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg><div style="font-size:11px;color:var(--text);line-height:1.5"><span style="color:${col};font-weight:800;font-size:9px;letter-spacing:.1em;margin-right:6px">DELIVERABLE</span>${w.deliverable}</div></div>`:""}
+    </div>`;
+  }).join("");
+
+  // KPI Playbook（現状→ギャップ→ドライバー）+ SVGバー
+  const kpiPlaybookHtml=(cs.kpiPlaybook||[]).map((k,i)=>{
+    const col=["#3A3AF5","#5B8DEF","#7B5CF0","var(--blue3)"][i%4];
+    // 数値抽出（パーセンテージ計算は雑だが、視覚的進捗バーとして使う）
+    const curNum=parseFloat((k.current||"0").replace(/[^0-9.]/g,""))||0;
+    const tgtNum=parseFloat((k.target||"0").replace(/[^0-9.]/g,""))||1;
+    const pct=Math.min(100,Math.max(0,tgtNum>0?(curNum/tgtNum)*100:0));
+    return`<div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r-md);padding:16px 18px;margin-bottom:10px;box-shadow:var(--shadow-sm)">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;gap:10px;flex-wrap:wrap">
+        <div style="font-size:14px;font-weight:800;color:var(--text)">${k.kpi||""}</div>
+        <div style="font-size:11px;color:var(--text3);font-weight:600">${k.current||"-"} <span style="color:${col};margin:0 5px">→</span> <span style="color:${col};font-weight:800">${k.target||"-"}</span></div>
+      </div>
+      <div style="height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;margin-bottom:10px;position:relative">
+        <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,${col},${col}88);border-radius:4px;transition:width .8s"></div>
+        <div style="position:absolute;right:8px;top:-1px;font-size:9px;color:var(--text3);font-weight:700">${pct.toFixed(0)}%</div>
+      </div>
+      ${k.gap?`<div style="font-size:11px;color:var(--text3);margin-bottom:6px"><span style="color:var(--text);font-weight:700">ギャップ：</span>${k.gap}</div>`:""}
+      ${k.weeklyDriver?`<div style="background:${col}10;border-left:3px solid ${col};border-radius:0 8px 8px 0;padding:8px 12px;margin-top:8px"><div style="font-size:9px;color:${col};font-weight:800;letter-spacing:.1em;margin-bottom:2px">WEEKLY DRIVER</div><div style="font-size:12px;color:var(--text);line-height:1.55">${k.weeklyDriver}</div></div>`:""}
+      ${k.measureMethod?`<div style="font-size:10px;color:var(--text3);margin-top:8px;display:flex;gap:5px;align-items:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>測定：${k.measureMethod}</div>`:""}
+    </div>`;
+  }).join("");
+
+  // Process Flow（入力→アクション→出力）
+  const processFlowHtml=(cs.processFlow||[]).map((p,i)=>{
+    return`<div style="display:flex;gap:10px;align-items:stretch;margin-bottom:8px">
+      <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0">
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(58,58,245,.3)">${p.step||i+1}</div>
+        ${i<(cs.processFlow.length-1)?`<div style="width:2px;flex:1;background:var(--border);margin:4px 0"></div>`:""}
+      </div>
+      <div style="flex:1;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r-md);padding:12px 14px">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">${p.name||""}${p.owner?`<span style="font-size:10px;color:var(--text3);font-weight:500;margin-left:8px">(${p.owner})</span>`:""}</div>
+        <div style="display:grid;grid-template-columns:1fr 16px 1fr 16px 1fr;gap:6px;align-items:center;font-size:11px">
+          <div style="background:var(--bg3);padding:6px 10px;border-radius:6px;color:var(--text2)"><span style="font-size:8px;color:var(--text3);font-weight:800;letter-spacing:.1em;display:block;margin-bottom:1px">INPUT</span>${p.input||"-"}</div>
+          <div style="text-align:center;color:var(--accent)">→</div>
+          <div style="background:var(--accent-light);padding:6px 10px;border-radius:6px;color:var(--accent);font-weight:600"><span style="font-size:8px;color:var(--accent);font-weight:800;letter-spacing:.1em;display:block;margin-bottom:1px">ACTION</span>${p.action||"-"}</div>
+          <div style="text-align:center;color:var(--purple)">→</div>
+          <div style="background:var(--purple-light);padding:6px 10px;border-radius:6px;color:var(--purple);font-weight:600"><span style="font-size:8px;color:var(--purple);font-weight:800;letter-spacing:.1em;display:block;margin-bottom:1px">OUTPUT</span>${p.output||"-"}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+
+  // Decision Gates（チェックポイント）
+  const gatesHtml=(cs.decisionPoints||[]).map(d=>{
+    return`<div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r-md);padding:14px 16px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="background:var(--purple);color:#fff;font-size:10px;font-weight:800;padding:3px 10px;border-radius:100px">MONTH ${d.month||"?"} GATE</div>
+        <div style="font-size:12px;font-weight:700;color:var(--text);flex:1;line-height:1.4">${d.checkpoint||""}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px">
+        <div style="background:#EEEEFF;border-left:3px solid var(--accent);padding:8px 10px;border-radius:0 6px 6px 0"><span style="font-size:9px;color:var(--accent);font-weight:800;letter-spacing:.1em;display:block;margin-bottom:2px">✓ IF PASS</span><span style="color:var(--text2);line-height:1.5">${d.ifPass||""}</span></div>
+        <div style="background:#FFF0F0;border-left:3px solid var(--red);padding:8px 10px;border-radius:0 6px 6px 0"><span style="font-size:9px;color:var(--red);font-weight:800;letter-spacing:.1em;display:block;margin-bottom:2px">✗ IF FAIL — PIVOT</span><span style="color:var(--text2);line-height:1.5">${d.ifFail||""}</span></div>
+      </div>
+    </div>`;
+  }).join("");
+
+  // KPI Targets 用の簡易SVGバーチャート（s.kpi 文字列から数値抽出）
+  function buildKpiChart(){
+    const kpis=s.kpi||[];
+    if(!kpis.length)return"";
+    const W=540,BARH=22,GAP=14,LEFT=180,RIGHT=24;
+    const H=kpis.length*(BARH+GAP)+20;
+    const bars=kpis.map((kStr,i)=>{
+      // パース：「指標:現状→目標・期限」形式から数値2つ抽出
+      const nums=(kStr.match(/[\d,]+(?:\.\d+)?/g)||[]).map(n=>parseFloat(n.replace(/,/g,"")));
+      const cur=nums[0]||0;
+      const tgt=nums[1]||(cur*2)||1;
+      const pct=Math.min(100,Math.max(5,tgt>0?(cur/tgt)*100:0));
+      const col=["#3A3AF5","#5B8DEF","#7B5CF0","#8BA8F0"][i%4];
+      const label=kStr.split(":")[0]||"KPI";
+      const y=15+i*(BARH+GAP);
+      return`<g><text x="0" y="${y+BARH/2+4}" font-size="11" fill="#4A5280" font-weight="600">${label.slice(0,16)}</text>
+        <rect x="${LEFT}" y="${y}" width="${W-LEFT-RIGHT}" height="${BARH}" fill="#F0F2FF" rx="4"/>
+        <rect x="${LEFT}" y="${y}" width="${(W-LEFT-RIGHT)*pct/100}" height="${BARH}" fill="${col}" rx="4"/>
+        <text x="${W-RIGHT-6}" y="${y+BARH/2+4}" font-size="10" fill="#fff" font-weight="700" text-anchor="end">${cur.toLocaleString()}→${tgt.toLocaleString()}</text></g>`;
+    }).join("");
+    return`<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:560px;height:auto;display:block;margin:8px auto 0" xmlns="http://www.w3.org/2000/svg">${bars}</svg>`;
+  }
+  const kpiChartSvg=buildKpiChart();
+
+  // 月次マイルストーン推移チャート（数値抽出）
+  function buildMilestoneChart(){
+    const arr=s.monthlyPlan||[];
+    if(arr.length<2)return"";
+    const W=560,H=170,PAD=30;
+    const values=arr.map(m=>{const ns=(m.milestone||"").match(/[\d,]+(?:\.\d+)?/g)||["0"];return parseFloat(ns[0].replace(/,/g,""))||0;});
+    const maxV=Math.max(...values,1);
+    const stepX=(W-PAD*2)/(values.length-1);
+    const points=values.map((v,i)=>{const x=PAD+i*stepX;const y=H-PAD-((v/maxV)*(H-PAD*2));return{x,y,v};});
+    const path=points.map((p,i)=>(i===0?"M":"L")+p.x+","+p.y).join(" ");
+    const area=path+` L${points[points.length-1].x},${H-PAD} L${PAD},${H-PAD} Z`;
+    const dots=points.map((p,i)=>`<g><circle cx="${p.x}" cy="${p.y}" r="5" fill="#3A3AF5" stroke="#fff" stroke-width="2"/><text x="${p.x}" y="${p.y-10}" font-size="10" fill="#3A3AF5" font-weight="700" text-anchor="middle">${p.v.toLocaleString()}</text><text x="${p.x}" y="${H-12}" font-size="10" fill="#8E97C0" text-anchor="middle">M${i+1}</text></g>`).join("");
+    return`<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:580px;height:auto;display:block;margin:0 auto" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="grdMS" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#3A3AF5" stop-opacity=".25"/><stop offset="100%" stop-color="#3A3AF5" stop-opacity="0"/></linearGradient></defs>
+      <path d="${area}" fill="url(#grdMS)"/><path d="${path}" stroke="#3A3AF5" stroke-width="2.5" fill="none" stroke-linecap="round"/>${dots}
+    </svg>`;
+  }
+  const milestoneChartSvg=buildMilestoneChart();
   // Competitors
   const compRows=(s.competitors||[]).map(c=>{
     const nameCell=c.url?`<a href="${c.url}" target="_blank" rel="noopener" style="font-weight:600;color:var(--accent);text-decoration:none;display:flex;align-items:center;gap:4px">${c.name||""}<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>`
@@ -1114,11 +1246,47 @@ function renderSummary(){
     <!-- PHASE ROADMAP -->
     ${s.phases&&s.phases.length?`<div class="rpt-section"><div class="rpt-label">Strategy Roadmap</div><div class="rpt-phase-wrap">${phasesHtml}</div></div>`:""}
 
+    <!-- CURRENT GAP — 解像度向上ステップで導出 -->
+    ${cs.currentGap||cs.unlockHypothesis?`<div class="rpt-section" style="border-left:4px solid var(--purple);padding-left:18px">
+      <div class="rpt-label"><span class="rpt-label-hl">Current Gap</span> — 現状とゴールの差分</div>
+      ${cs.currentGap?`<div style="font-size:13px;font-weight:600;color:var(--text);line-height:1.75;margin-bottom:${cs.unlockHypothesis?"12px":"0"}">${cs.currentGap}</div>`:""}
+      ${cs.unlockHypothesis?`<div style="background:var(--bg3);border-radius:10px;padding:12px 14px;margin-top:8px"><div style="font-size:9px;color:var(--purple);letter-spacing:.12em;font-weight:800;margin-bottom:4px">UNLOCK HYPOTHESIS — 達成の鍵</div><div style="font-size:12px;color:var(--text);line-height:1.65">${cs.unlockHypothesis}</div></div>`:""}
+    </div>`:""}
+
+    <!-- WEEK 1-4 — 立ち上げ4週の日次プロセス -->
+    ${weeksHtml?`<div class="rpt-section">
+      <div class="rpt-label"><span class="rpt-label-hl">First 4 Weeks</span> — 立ち上げ4週の実行プロセス</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:16px;line-height:1.6">承認直後から始める具体タスク。週末までに何が完成しているかを明示。</div>
+      ${weeksHtml}
+    </div>`:""}
+
     <!-- MONTHLY PLAN — 月次TODOと未来像 -->
     ${monthlyHtml?`<div class="rpt-section">
       <div class="rpt-label"><span class="rpt-label-hl">6-Month Action Plan</span> — 月次ロードマップ</div>
       <div style="font-size:12px;color:var(--text3);margin-bottom:18px;line-height:1.6">毎月の具体TODOと到達状態。1ヶ月後・2ヶ月後...の自分が見えてきます。</div>
+      ${milestoneChartSvg?`<div style="background:var(--bg3);border-radius:var(--r-md);padding:14px 12px;margin-bottom:18px"><div style="font-size:10px;color:var(--text3);letter-spacing:.1em;font-weight:700;margin-bottom:6px;text-align:center">MILESTONE TRAJECTORY — 月次到達数値の推移</div>${milestoneChartSvg}</div>`:""}
       <div style="display:flex;flex-direction:column;gap:0">${monthlyHtml}</div>
+    </div>`:""}
+
+    <!-- PROCESS FLOW — 入力→アクション→出力 -->
+    ${processFlowHtml?`<div class="rpt-section">
+      <div class="rpt-label">Process Flow — 実行プロセスの流れ</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px;line-height:1.6">各ステップで何を入力し、何をやり、何が生まれるか。担当者を明示。</div>
+      ${processFlowHtml}
+    </div>`:""}
+
+    <!-- KPI PLAYBOOK — KPIごとの週次ドライバー -->
+    ${kpiPlaybookHtml?`<div class="rpt-section">
+      <div class="rpt-label"><span class="rpt-label-hl">KPI Playbook</span> — KPI別の達成プレイブック</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px;line-height:1.6">各KPIの現状→目標・差分・毎週積み上げる施策・測定方法を完全に詳細化。</div>
+      ${kpiPlaybookHtml}
+    </div>`:""}
+
+    <!-- DECISION GATES — 月次チェックポイントとピボット案 -->
+    ${gatesHtml?`<div class="rpt-section">
+      <div class="rpt-label">Decision Gates — 判断ゲート</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px;line-height:1.6">月次の通過判定と、未達時のピボット案。盲目的に走り続けない安全弁。</div>
+      ${gatesHtml}
     </div>`:""}
 
     <!-- FLOW DIAGRAM (Gemini) -->
@@ -1141,7 +1309,7 @@ function renderSummary(){
     </div>`:""}
 
     <!-- KPIs -->
-    ${kpisHtml?`<div class="rpt-section"><div class="rpt-label">KPI Targets</div><div style="display:grid;gap:8px">${kpisHtml}</div></div>`:""}
+    ${kpisHtml?`<div class="rpt-section"><div class="rpt-label">KPI Targets</div>${kpiChartSvg?`<div style="background:var(--bg3);border-radius:var(--r-md);padding:14px 12px;margin-bottom:14px"><div style="font-size:10px;color:var(--text3);letter-spacing:.1em;font-weight:700;margin-bottom:6px;text-align:center">CURRENT → TARGET — 数値ベース進捗</div>${kpiChartSvg}</div>`:""}<div style="display:grid;gap:8px">${kpisHtml}</div></div>`:""}
 
     <!-- RISKS -->
     ${risksHtml?`<div class="rpt-section"><div class="rpt-label">Risks & Mitigation</div>${risksHtml}</div>`:""}
@@ -1617,7 +1785,8 @@ async function runAgentsAuto(qs,phaseIdx,researchCtx){
       const mgrHint=prevMgrNote?.directive?`
 【マネージャー指示】${prevMgrNote.directive}
 不足観点を補強せよ：${prevMgrNote.gap}`:"";
-      const ans=await api(ROLES[id]+researchNote,`【現在日付】${todayStr()}（時系列・期限は必ず本日以降の未来日付で記述。過去の日付禁止）
+      const ans=await api(ROLES[id]+researchNote,`${ISOLATION_RULE}
+【現在日付】${todayStr()}（時系列・期限は必ず本日以降の未来日付で記述。過去の日付禁止）
 企画：${st.project}${factsNote}${mgrHint}
 質問：${qs[id]||"このフェーズについて専門的見解を述べてください。"}`);
       answers[id]=ans;
@@ -1644,7 +1813,7 @@ async function runManagerAuto(histText,prevRevised,loopCount,history){
   try{
     checkCancelled();
     const factsNote=st.facts&&st.facts.trim()?"\n【確定事実】"+st.facts.slice(0,150):"";
-    const mgrMsg="企画："+st.project+"\n【現在日付】"+todayStr()+"（全ての時系列・期限・BEP・開発時期は本日以降の未来日付で記述。時系列の前後矛盾【例：BEP達成が開発開始より前】は減点対象。発見したら指摘せよ）"+factsNote+"\n\n戦略案：\n"+combined+"\nブラッシュアップ回数："+loopCount;
+    const mgrMsg=ISOLATION_RULE+"\n企画："+st.project+"\n【現在日付】"+todayStr()+"（全ての時系列・期限・BEP・開発時期は本日以降の未来日付で記述。時系列の前後矛盾【例：BEP達成が開発開始より前】は減点対象。発見したら指摘せよ）"+factsNote+"\n\n戦略案：\n"+combined+"\nブラッシュアップ回数："+loopCount+"\n【採点追加観点】本企画の文脈と無関係な固有名詞（融資制度・他案件の屋号・他クライアントの人物像など）が混入していたら戦略整合性を-5点。";
     const raw=await api(MGR,mgrMsg);
 
     // ── JSONパース（3段階） ──
@@ -1704,11 +1873,15 @@ async function runManagerAuto(histText,prevRevised,loopCount,history){
 
     // ── ループ継続判定 ──
     if(total>=95){
-      // 承認！最終レポート生成
-      // 離脱時に再開可能にするため、レポート生成フェーズに入る前にステップを遷移
-      S({step:"summary",statusMsg:"✓ 承認されました！最終レポートを生成中..."});
+      // 承認！解像度を上げる → 最終レポート生成
+      S({step:"summary",statusMsg:"✓ 承認されました！戦略の解像度を上げています..."});
       saveCurrent();
-      setTimeout(function(){generateFinalAuto(history,m);},600);
+      setTimeout(async function(){
+        try{
+          await concretizeStrategy(history,m);
+          await generateFinalAuto(history,m);
+        }catch(e){if(e.message!=="__CANCELLED__")S({error:e.message,busy:false});}
+      },600);
     } else if(loopCount>=40){
       // 40回到達 → 上位3案を統合してワンモアチャンス
       S({statusMsg:"最大回数（40回）到達。上位3案を統合して最終評価を行います..."});
@@ -1768,7 +1941,17 @@ async function brushupAuto(histText,prevMgr,newCount,history){
     ?"\n\n【Gemini Deep Research — 改善参考データ】\n"+brushupResearch+"\n★上記データを引用して改善施策を提示せよ"
     :"";
 
-  for(const id of Object.keys(AGENTS)){
+  // ── Round1の議案を抽出（各エージェントの初期提案）。これを「議題」として全員に共有する ──
+  const round1Proposals=(history&&history[history.length-1]&&history[history.length-1].answers)?history[history.length-1].answers:{};
+  // ── 直前ラウンドで他エージェントが出した補強・修正案を抽出（連携の素材） ──
+  const prevRoundAgents=(st.brushupLog&&st.brushupLog.length>=2)?st.brushupLog[st.brushupLog.length-2].agents||{}:{};
+
+  // 各エージェントが処理する順序：マーケター→コンサル→リサーチャー→CFO→グロース→デザイナー
+  // （戦略の骨格→財務→グロース→UXの順で肉付けされる流れ）
+  const agentOrder=["marketer","consultant","researcher","cfo","growthhacker","designer"];
+
+  for(const id of agentOrder){
+    if(!AGENTS[id])continue;
     // thinking state - fully immutable update
     S({brushupLog:updateLog(id,{status:"thinking",ans:""}),
        statusMsg:`ブラッシュアップ ${newCount}/${maxBrushupRounds}回 — ${AGENTS[id].name} が改善中...`});
@@ -1778,19 +1961,51 @@ async function brushupAuto(histText,prevMgr,newCount,history){
         ?"\n\n【絶対遵守の確定事実・制約（これに反する提案は禁止）】\n"+st.facts.slice(0,200)
         :"";
       const bestBase=st.bestMgrState?.revisedStrategy
-        ?"\n\n【現在のベスト戦略案（この内容を土台にして、弱点部分のみ改善せよ。良い部分は必ず保持すること）】\n"+st.bestMgrState.revisedStrategy
+        ?"\n\n【現在のベスト戦略案 — これが議題の中心。新規案を出さず、この案を専門観点で補強・修正・削ぎ落とししなさい】\n"+st.bestMgrState.revisedStrategy
         :"";
+
+      // Round1議案（他エージェント含む全員の初期案）を表示
+      const round1Block=Object.keys(round1Proposals).length>0
+        ?"\n\n【Round1議案（議論の出発点）】\n"+Object.entries(round1Proposals).map(([aid,txt])=>`◆${AGENTS[aid]?.name||aid}: ${(txt||"").slice(0,180)}`).join("\n")
+        :"";
+
+      // 同じラウンドで既に発言済みのエージェント（連携の対象）
+      const inRoundSoFar=Object.entries(revised).map(([aid,txt])=>`◆${AGENTS[aid].name}: ${txt.slice(0,160)}`).join("\n");
+      const liveBlock=inRoundSoFar
+        ?"\n\n【本ラウンドで既に発言済みの同僚エージェント（このラウンド内の連携対象。重複させず補完せよ）】\n"+inRoundSoFar
+        :"";
+
+      // 直前ラウンドで他エージェントが出した補強案
+      const prevRoundList=Object.entries(prevRoundAgents).filter(([aid])=>aid!==id&&prevRoundAgents[aid]?.ans).map(([aid,e])=>`◆${AGENTS[aid].name}: ${(e.ans||"").slice(0,140)}`).join("\n");
+      const prevBlock=prevRoundList
+        ?"\n\n【前ラウンドで他エージェントが出した修正案（合意できる部分は引き継ぎ、不要なら反論し削除提案せよ）】\n"+prevRoundList
+        :"";
+
       const ans=await api(
         ROLES[id]+brushupResearchNote,
-        "【現在日付】"+todayStr()+"（時系列・期限・BEP達成時期・開発開始時期は全て本日以降の未来日付で記述。前後関係に矛盾が無いよう順序を保つこと。過去の日付禁止）\n"
+        ISOLATION_RULE+"\n"
+        +"【現在日付】"+todayStr()+"（時系列・期限・BEP達成時期・開発開始時期は全て本日以降の未来日付で記述。前後関係に矛盾が無いよう順序を保つこと。過去の日付禁止）\n"
         +"企画："+st.project.slice(0,150)
         +factsConstraint
         +bestBase
+        +round1Block
+        +prevBlock
+        +liveBlock
         +"\n\n現在の評価スコア："+scoresSummary
         +"\n改善が必要な項目："+weakAreas
-        +"\nマネージャー改善指示："+feedback
-        +"\n\n上記のベスト戦略案をベースに、特に「"+weakAreas+"」を改善する施策を250字で提案せよ。"
-        +"確定事実に違反しないこと。競合固有名詞・具体数値・実施期限・測定KPIを必ず含め断言口調で。"
+        +"\nマネージャー指示："+feedback
+        +"\n\n【あなたの役割】"
+        +"\nあなたは新規の0→1提案をする立場ではない。マネージャー進行のもと、上の【ベスト戦略案】を100点に仕上げるための"+AGENTS[id].name+"観点での共同編集者である。"
+        +"\n以下のいずれか／複数を行え（必要に応じて組み合わせる）："
+        +"\n①ベスト戦略案の特定箇所を引用しつつ、専門観点で【補強】する数値・固有名詞・施策を追加"
+        +"\n②他エージェントの提案・現状案の中で、専門観点から不適切・矛盾・冗長な箇所を【修正／削ぎ落とし】"
+        +"\n③他エージェントの良い案を【支持・連携】し、自分の専門観点で深掘り"
+        +"\n④どうしても既存案が機能しない場合のみ【部分的に差し替え】を提案（全面否定は禁止）"
+        +"\n\n出力フォーマット（250字）："
+        +"\n冒頭で「【補強】／【修正】／【削除】／【支持】／【差替】」のラベルから1〜3個選んで明示。"
+        +"\nその後に、どの記述を対象に、なぜ、どう変えるかを具体的に250字で。"
+        +"\n抽象的な意見だけの新規提案は禁止。必ず既存案の特定要素に紐づけよ。"
+        +"\n競合固有名詞・具体数値・実施期限・測定KPIを含め断言口調で。"
       );
       revised[id]=ans;
       // done state - fully immutable update
@@ -1808,12 +2023,12 @@ async function brushupAuto(histText,prevMgr,newCount,history){
     checkCancelled();
     const factsConstraintSynth=st.facts&&st.facts.trim()?"\n\n【絶対遵守の制約（違反禁止）】"+st.facts.slice(0,200):"";
     const synthRaw=await api(
-      "あなたは戦略統合AIです。ベスト戦略案をベースに各エージェントの改善提案を統合し、弱点項目のみを改善した最強の一貫した戦略案を出力してください。良い要素は必ず保持。JSONのみ出力（マークダウン禁止）：{\"updatedStrategy\":\"統合改善戦略300字以上（競合固有名詞・具体数値・実施期限を必ず含む）\"}",
+      "あなたはマーケティングマネージャー（議論進行役）です。各エージェントが【補強】【修正】【削除】【支持】【差替】のラベルで提示した編集提案を取りまとめ、ベスト戦略案を【一貫した1つの戦略】に磨き上げてください。【取りまとめのルール】①新規アイディアを勝手に追加しない②全員の【補強】は出来る限り反映③【修正】【削除】は専門家の主張として尊重し採用④【支持】が複数集まった部分は厚みを持たせる⑤【差替】は2人以上が同方向なら採用、1人だけなら却下⑥矛盾する主張は専門領域の優先度（市場性=マーケター/コンサル、財務=CFO、UX=デザイナー/リサーチャー、グロース=Growth）で裁定⑦冗長・抽象表現を削ぎ落とし、最終的に1つの主張に統合。JSONのみ出力（マークダウン禁止）：{\"updatedStrategy\":\"統合改善戦略300字以上（競合5社以上の固有名詞・具体数値・実施期限を必ず含む。一貫した1つの戦略として記述）\"}",
       "ベスト戦略案：\n"+(st.bestMgrState?.revisedStrategy||prevMgr?.revisedStrategy||"なし")
       +factsConstraintSynth
       +"\n\n評価スコア："+scoresSummary
       +"\n改善が必要な項目："+weakAreas
-      +"\n\n各エージェントの改善提案：\n"+revisedText
+      +"\n\n各エージェントの編集提案（補強・修正・削除・支持・差替）：\n"+revisedText
     );
     let sp=null;
     try{sp=JSON.parse(synthRaw);}catch(e){}
@@ -1947,6 +2162,32 @@ async function generateStrategyImage(strategy,keyInsight,projectName){
   return null;
 }
 
+// ── 解像度を上げるステップ：戦略 → 現状ギャップ → 具体的プロセス・スケジュール ──
+async function concretizeStrategy(history,mgrResult){
+  S({busy:true,statusMsg:"現状ギャップから具体的な実行プロセスを構築中..."});
+  try{
+    checkCancelled();
+    const m=st.bestMgrState||mgrResult;
+    const strategy=m?.revisedStrategy||"";
+    const factsNote=st.facts&&st.facts.trim()?"\n【確定事実】"+st.facts.slice(0,300):"";
+    const histSlim=buildHistText(history).slice(0,1500);
+    const sys="あなたは実行計画策定の専門家（McKinsey出身のシニアコンサルタント）です。承認された戦略を、現状から目標までの【具体的な手順・週次タスク・必要リソース】に分解してください。【絶対ルール】①抽象的な指針（〜を強化する／〜に注力する等）は禁止。誰がいつ何をどう測るかが明確な実行レベルに分解せよ②各KPIごとに『現状→ギャップ→週次の獲得計画→測定方法』を提示③立ち上げ4週（Week1〜4）の具体タスクを日次レベルで設計④必要なツール・外注先・予算は固有名詞で明記。JSONのみ（マークダウン禁止）：{\"currentGap\":\"現状とゴールのギャップを80字で（数値ベース）\",\"unlockHypothesis\":\"これを実行すれば目標が達成できる理由・主要ドライバーを80字で\",\"week1to4\":[{\"week\":1,\"focus\":\"今週の焦点20字\",\"tasks\":[\"曜日・担当・成果物が明確な具体タスク1\",\"タスク2\",\"タスク3\",\"タスク4\"],\"deliverable\":\"今週末までに完成しているもの30字\"},{\"week\":2,\"focus\":\"...\",\"tasks\":[\"...\"],\"deliverable\":\"...\"},{\"week\":3,\"focus\":\"...\",\"tasks\":[\"...\"],\"deliverable\":\"...\"},{\"week\":4,\"focus\":\"...\",\"tasks\":[\"...\"],\"deliverable\":\"...\"}],\"kpiPlaybook\":[{\"kpi\":\"KPI名\",\"current\":\"現状値\",\"target\":\"目標値・期限\",\"gap\":\"差分の数値\",\"weeklyDriver\":\"毎週これだけ積み上げれば届く具体施策\",\"measureMethod\":\"測定ツール・頻度（例：GA4で毎週月曜計測）\"}],\"processFlow\":[{\"step\":1,\"name\":\"プロセス名\",\"input\":\"このステップの入力\",\"action\":\"具体的にやること\",\"output\":\"アウトプット\",\"owner\":\"担当（不明ならユーザー）\"}],\"decisionPoints\":[{\"month\":2,\"checkpoint\":\"2ヶ月目に達成すべき数値ゲート\",\"ifPass\":\"通過時の次アクション\",\"ifFail\":\"未達時のピボット案\"}]}";
+    const usr=ISOLATION_RULE+"\n企画："+st.project+factsNote+"\n\n承認された戦略：\n"+strategy+"\n\n会議要約：\n"+histSlim+"\n\n現状認識：会議ログから現在の数値・状態を抽出して使用。記述が無い項目は「未測定」とし、まず測定タスクを Week1 に入れること。";
+    const raw=await api(sys,usr,0,3000);
+    let c=null;
+    try{c=JSON.parse(raw);}catch(e){}
+    if(!c){try{c=JSON.parse(raw.replace(/```json\n?|```/g,"").trim());}catch(e){}}
+    if(!c){const si=raw.indexOf("{"),ei=raw.lastIndexOf("}");if(si>=0&&ei>si)try{c=JSON.parse(raw.slice(si,ei+1));}catch(e){}}
+    if(c){
+      S({concreteSteps:c,statusMsg:"✓ 解像度向上完了。最終レポート生成へ..."});
+      saveCurrent();
+    }
+  }catch(e){
+    if(e.message==="__CANCELLED__")throw e;
+    console.warn("concretizeStrategy failed:",e.message);
+  }
+}
+
 async function generateFinalAuto(history,mgrResult){
   S({busy:true,statusMsg:"最終レポートを生成中..."});
   const useBest=st.bestMgrState||mgrResult;
@@ -1954,7 +2195,8 @@ async function generateFinalAuto(history,mgrResult){
   try{
     const factsForSum=st.facts&&st.facts.trim()?"\n\n【重要な制約・確定事実（これに反する提案・施策は絶対に出力しないこと）】\n"+st.facts:"";
     const bestStrategyForSum=useBest?.revisedStrategy?"\n\n【採用するベスト戦略案】\n"+useBest.revisedStrategy:"";
-    const sumMsg="企画："+st.project+"\n\n【本日の日付】"+todayStr()+"（フェーズ開始時期・期限は全てこの日付を基準に計算すること。過去の日付を使用禁止）"+factsForSum+bestStrategyForSum+"\n\n会議ログ：\n"+buildHistText(history)+"\nManagerスコア："+total+"点\n総評："+(useBest&&useBest.verdict||"");
+    const concreteForSum=st.concreteSteps?"\n\n【解像度向上ステップで確定した実行プロセス（最重要 — レポートはこの実行計画を反映せよ）】\n"+JSON.stringify(st.concreteSteps).slice(0,2400):"";
+    const sumMsg=ISOLATION_RULE+"\n企画："+st.project+"\n\n【本日の日付】"+todayStr()+"（フェーズ開始時期・期限は全てこの日付を基準に計算すること。過去の日付を使用禁止）"+factsForSum+bestStrategyForSum+concreteForSum+"\n\n会議ログ：\n"+buildHistText(history)+"\nManagerスコア："+total+"点\n総評："+(useBest&&useBest.verdict||"")+"\n\n【出力指示】monthlyPlan・kpi・phases は上の【実行プロセス】の week1to4・kpiPlaybook・processFlow を必ず反映すること。抽象的な指針表現を禁止し、誰がいつ何を測るかが分かるレベルで記述せよ。";
     const raw=await api(SUM,sumMsg,0,2000);
 
     // ── 4段階パース ──
@@ -2134,7 +2376,7 @@ function confirmReset(){
     }
   },150);
 }
-function resetCurrent(){st={...st,step:"input",phaseIdx:0,questions:null,ctx:"",answers:{},loading:null,history:[],mgrState:null,loopCount:0,mgrHistory:[],mgrNotes:[],summary:null,reportDiagram:null,reportImages:null,error:"",busy:false,statusMsg:"",brushupProgress:null,brushupLog:[],needsReattach:null};render();}
+function resetCurrent(){st={...st,step:"input",phaseIdx:0,questions:null,ctx:"",answers:{},loading:null,history:[],mgrState:null,bestMgrState:null,loopCount:0,mgrHistory:[],mgrNotes:[],summary:null,reportDiagram:null,reportImages:null,concreteSteps:null,error:"",busy:false,statusMsg:"",brushupProgress:null,brushupLog:[],needsReattach:null};render();}
 
 // ── INIT ──
 (function(){
