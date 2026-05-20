@@ -322,9 +322,9 @@ textarea::placeholder,input::placeholder{color:var(--text3)}
 /* REPORT */
 .rpt-section{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r-lg);padding:28px 24px;margin-bottom:22px;box-shadow:var(--shadow-sm)}
 /* 基本のセクションラベル：amber下線は付けない（強調したい箇所のみ .rpt-label-hl を併用） */
-.rpt-label{font-size:10px;color:var(--accent);letter-spacing:.18em;font-weight:800;margin-bottom:14px;text-transform:uppercase;display:inline-block}
+.rpt-label{font-size:15px;color:var(--accent);letter-spacing:.16em;font-weight:800;margin-bottom:16px;text-transform:uppercase;display:inline-block}
 /* 強調用：太めの amber アンダーバー（今っぽい厚みの帯） */
-.rpt-label-hl{box-shadow:inset 0 -6px 0 0 var(--amber);padding:0 2px 1px}
+.rpt-label-hl{box-shadow:inset 0 -9px 0 0 var(--amber);padding:0 3px 1px}
 .rpt-phase-wrap{display:flex;align-items:stretch;gap:8px;overflow-x:auto;padding-bottom:4px}
 .rpt-phase{flex:1;min-width:140px;background:var(--bg3);border-radius:12px;padding:14px 12px;border-top:3px solid var(--accent)}
 .rpt-phase-num{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -884,27 +884,28 @@ function renderBrushupProgress(){
   const rounds=st.brushupLog.map(function(round,ri){
     const isLast=ri===st.brushupLog.length-1;
     const allDone=Object.values(round.agents||{}).every(function(e){return e&&e.status==="done";});
-    const hc=allDone?"#23956a":"#2195ca";
-    const hbg=allDone?"#F0FAF5":"#EBF6FF";
+    // ブランドトーンに統一：done=パープル(#7B5CF0), thinking=プライマリブルー(#3A3AF5)
+    const hc=allDone?"#7B5CF0":"#3A3AF5";
+    const hbg=allDone?"#F0ECFF":"#EEEEFF";
     const fb=(round.feedback||"品質改善中").slice(0,40);
     const cards=Object.keys(AGENTS).map(function(id){
       const entry=round.agents[id];if(!entry)return"";
       const done=entry.status==="done";const thinking=entry.status==="thinking";
-      const dc=done?"#23956a":thinking?"#2195ca":"#8AA0B0";
-      const cbg=done?"#F0FAF5":thinking?"#EBF6FF":"#F8FAFB";
-      const cb=done?"rgba(35,149,106,.25)":thinking?"rgba(33,149,202,.25)":"#E4EAF0";
+      const dc=done?"#7B5CF0":thinking?"#3A3AF5":"#8E97C0";
+      const cbg=done?"#F0ECFF":thinking?"#EEEEFF":"#F8FAFB";
+      const cb=done?"rgba(123,92,240,.25)":thinking?"rgba(58,58,245,.25)":"#E2E6F0";
       return'<div style="border:1px solid '+cb+';border-radius:8px;padding:10px 12px;margin-bottom:6px;background:'+cbg+'">'+
         '<div style="display:flex;align-items:center;gap:7px;margin-bottom:'+(done&&entry.ans?"6px":"0")+'">'+
         '<span style="color:'+dc+';display:flex">'+(ICONS[AGENTS[id].icon]||"")+'</span>'+
-        '<span style="font-size:11px;font-weight:700;color:#1A2A38">'+AGENTS[id].name+'</span>'+
+        '<span style="font-size:11px;font-weight:700;color:#0F1128">'+AGENTS[id].name+'</span>'+
         '<span style="margin-left:auto;font-size:10px;color:'+dc+';font-weight:600">'+(done?"✓ 完了":thinking?"改善中...":"待機")+'</span>'+
         '</div>'+
-        (thinking?'<div style="display:flex;gap:4px;padding:4px 0"><div class="dot b1" style="background:#2195ca"></div><div class="dot b2" style="background:#2195ca"></div><div class="dot b3" style="background:#2195ca"></div></div>':"")+
-        (done&&entry.ans?'<div style="font-size:12px;color:#4A6070;line-height:1.75">'+entry.ans+'</div>':"")+
+        (thinking?'<div style="display:flex;gap:4px;padding:4px 0"><div class="dot b1" style="background:#3A3AF5"></div><div class="dot b2" style="background:#3A3AF5"></div><div class="dot b3" style="background:#3A3AF5"></div></div>':"")+
+        (done&&entry.ans?'<div style="font-size:12px;color:#4A5280;line-height:1.75">'+entry.ans+'</div>':"")+
       '</div>';
     }).join("");
-    const chev='style="color:#8AA0B0;transition:transform .2s;transform:'+(isLast?"rotate(180deg)":"rotate(0)")+'"';
-    return'<div style="border:1.5px solid '+(allDone?"rgba(35,149,106,.2)":"rgba(33,149,202,.2)")+';border-radius:12px;overflow:hidden;margin-bottom:8px">'+
+    const chev='style="color:#8E97C0;transition:transform .2s;transform:'+(isLast?"rotate(180deg)":"rotate(0)")+'"';
+    return'<div style="border:1.5px solid '+(allDone?"rgba(123,92,240,.2)":"rgba(58,58,245,.2)")+';border-radius:12px;overflow:hidden;margin-bottom:8px">'+
       '<div onclick="toggleRound('+round.round+')" style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;background:'+hbg+';user-select:none">'+
       '<span style="width:22px;height:22px;border-radius:50%;background:'+hc+';color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+round.round+'</span>'+
       '<span style="font-size:11px;font-weight:700;color:'+hc+'">Round '+round.round+'</span>'+
@@ -1215,8 +1216,8 @@ function exportPDF(){
     .hero{background:#3A3AF5;color:#fff;padding:30px 28px 26px;margin-bottom:20px;position:relative;overflow:hidden;border-radius:18px;box-shadow:0 8px 32px rgba(58,58,245,.22)}
     .hero::after{content:'';position:absolute;right:-40px;top:-40px;width:200px;height:200px;background:rgba(255,255,255,.05);border-radius:50%}
     .section{background:#fff;border:1.5px solid #E2E6F0;border-radius:14px;padding:22px 20px;margin-bottom:18px;box-shadow:0 1px 4px rgba(58,58,245,.07)}
-    .label{font-size:9px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#3A3AF5;margin-bottom:12px;display:inline-block}
-    .label-hl{box-shadow:inset 0 -5px 0 0 #dbff00;padding:0 2px 1px}
+    .label{font-size:14px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#3A3AF5;margin-bottom:14px;display:inline-block}
+    .label-hl{box-shadow:inset 0 -8px 0 0 #dbff00;padding:0 3px 1px}
     .why-section{background:#fff;border:1.5px solid #E2E6F0;border-radius:14px;padding:22px 20px;margin-bottom:18px;border-left:4px solid #3A3AF5;box-shadow:0 1px 4px rgba(58,58,245,.07)}
     table{width:100%;border-collapse:collapse}
     th{background:#F0F2FF;padding:7px 10px;font-size:9px;font-weight:700;text-align:left;border-bottom:1.5px solid #E2E6F0;color:#8E97C0;letter-spacing:.08em}
